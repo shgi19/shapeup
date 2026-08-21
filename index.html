@@ -16,103 +16,108 @@
 /* ============================================================================
    ShapeUp — מערכת עיצוב
    ----------------------------------------------------------------------------
-   השפה היא זכוכית שקופה־למחצה: משטחים חצי־שקופים שמטשטשים את מה שמאחוריהם,
-   עם קו שוליים דק שתופס אור. כדי שזכוכית תיראה כזכוכית חייב להיות משהו מאחוריה,
-   ולכן הרקע אינו צבע שטוח אלא הילות רכות.
+   השפה היא מכשיר מדידה, לא צעצוע: משטחים אטומים ושקטים, קו שוליים בעובי
+   שיער במקום צל כבד, והמספר הוא הגיבור. האפליקציה הזאת עושה דבר אחד —
+   מודדת גוף לאורך זמן — ולכן היא צריכה לקרוא כמו שעון או מד לחץ.
 
-   שלושה מצבים לערכת הצבע, ולא שניים: `data-theme` על השורש כשהמשתמש בחר
+   הצבע: פחם חמים עם נחושת. הנחושת היא צבע המותג ותשומת הלב גם יחד;
+   הכתום הסמנטי הוסר, כי כתום ליד נחושת הורס את שניהם. נשארו שלושה
+   מצבים ברורים — ירוק לטוב, אלמוג לרע, נחושת לשים לב.
+
+   שלושה מצבים לערכת הצבע ולא שניים: `data-theme` על השורש כשהמשתמש בחר
    במפורש, ובלי סימון — הבחירה של המכשיר דרך prefers-color-scheme.
    ============================================================================ */
 :root{
-  --bg:#EEF3FB;
-  --glow1:rgba(0,122,255,0.16);
-  --glow2:rgba(90,200,250,0.15);
-  --card:rgba(255,255,255,0.70);
-  --card2:rgba(255,255,255,0.55);
-  --brd:rgba(255,255,255,0.75);
-  --label:#0A0A0C;
-  --label2:rgba(60,60,67,0.86);   /* היה 0.62 = 3.5:1 — נופל בתקן */
-  --label3:rgba(60,60,67,0.76);   /* היה 0.32 = 1.8:1 */
-  --sep:rgba(60,60,67,0.16);
-  --blue:#007AFF;
-  --accent:#007AFF;
-  --green:#2FB457;
-  --btn-bg:#0A63D6;      /* רקע כפתור ראשי — לבן על #007AFF מגיע ל-4:1 בלבד */
-  --accent-txt:#0B4AA8;  /* כחול לטקסט — #007AFF מגיע ל-3:1 בלבד על רקע בהיר */
-  --warn-txt:#8A5200;    /* כתום לטקסט — #F08A00 מגיע ל-2.2:1 */
-  --good-txt:#177A38;   /* ירוק לטקסט — 5.4:1 על לבן. #2FB457 מגיע ל־2.7 בלבד ונופל בניגודיות */
-  --red:#FF3B30;
-  --bad-txt:#B01F16;    /* אדום לטקסט */
-  --orange:#F08A00;
-  --purple:#AF52DE;
-  --teal:#0FA8D8;
-  --fill:rgba(120,120,128,0.12);
-  --fill2:rgba(120,120,128,0.22);
-  --bar:rgba(255,255,255,0.62);
-  --shadow:0 1px 1px rgba(16,42,80,0.04), 0 8px 28px rgba(16,42,80,0.10);
-  --blur:22px;
-  --r-card:20px;
-  --r-inner:13px;
+  /* בהיר: נייר חם, לא לבן כחלחל. */
+  --bg:#F5F3EF;
+  --glow1:rgba(168,114,42,0.05);
+  --glow2:rgba(168,114,42,0.03);
+  --card:#FFFFFF;
+  --card2:#FAF8F4;
+  --brd:rgba(28,25,20,0.11);
+  --label:#1A1815;
+  --label2:rgba(26,24,21,0.66);
+  --label3:rgba(26,24,21,0.70);
+  --sep:rgba(28,25,20,0.10);
+  --blue:#A8722A;
+  --accent:#A8722A;
+  --green:#2E8B5F;
+  --btn-bg:#8A5A18;      /* לבן על נחושת כהה — 5.9:1 */
+  --accent-txt:#8A5A18;
+  --warn-txt:#8A5A18;    /* אין כתום נפרד: נחושת היא צבע תשומת הלב */
+  --good-txt:#1F7A4D;
+  --red:#C2453A;
+  --bad-txt:#A8342A;
+  --orange:#A8722A;
+  --purple:#6D5296;
+  --teal:#20718A;
+  --fill:rgba(28,25,20,0.055);
+  --fill2:rgba(28,25,20,0.11);
+  --bar:rgba(255,255,255,0.94);
+  --shadow:0 1px 2px rgba(28,25,20,0.05);
+  --blur:0px;
+  --r-card:16px;
+  --r-inner:11px;
 }
-/* מצב לילה — שחור עם תכלת. מוגדר פעם אחת ומשמש גם לבחירה מפורשת
+/* מצב לילה — פחם חמים ונחושת. מוגדר פעם אחת ומשמש גם לבחירה מפורשת
    וגם להעדפת המכשיר, כדי שלא ייווצר הפרש בין השניים. */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#000000;
-    --glow1:rgba(10,132,255,0.20);
-    --glow2:rgba(100,210,255,0.14);
-    --card:rgba(28,28,32,0.62);
-    --card2:rgba(58,58,64,0.42);
-    --brd:rgba(255,255,255,0.10);
-    --label:#FFFFFF;
-    --label2:rgba(235,235,245,0.80);
-    --label3:rgba(235,235,245,0.62);
-    --sep:rgba(235,235,245,0.14);
-    --blue:#64D2FF;
-    --accent:#64D2FF;
-    --green:#30D158;
-    --btn-bg:#0A84FF;
-    --accent-txt:#64D2FF;
-    --warn-txt:#FFA836;
-    --good-txt:#30D158;  /* על רקע כהה הצבע עצמו כבר עומד בניגודיות — 7.5:1 */
-    --red:#FF6961;
-    --bad-txt:#FF6961;   /* 5.3:1 */
-    --orange:#FFA836;
-    --purple:#BF5AF2;
-    --teal:#5AC8FA;
-    --fill:rgba(120,120,128,0.26);
-    --fill2:rgba(120,120,128,0.40);
-    --bar:rgba(20,20,24,0.62);
-    --shadow:0 1px 1px rgba(0,0,0,0.30), 0 10px 34px rgba(0,0,0,0.45);
+    --bg:#0E0F12;
+    --glow1:rgba(232,178,92,0.055);
+    --glow2:rgba(232,178,92,0.025);
+    --card:#16181D;
+    --card2:#1C1F26;
+    --brd:rgba(255,255,255,0.075);
+    --label:#F2F1EE;
+    --label2:rgba(242,241,238,0.64);
+    --label3:rgba(242,241,238,0.64);
+    --sep:rgba(255,255,255,0.075);
+    --blue:#E8B25C;
+    --accent:#E8B25C;
+    --green:#7FD1A6;
+    --btn-bg:#E8B25C;
+    --accent-txt:#E8B25C;
+    --warn-txt:#E8B25C;
+    --good-txt:#7FD1A6;
+    --red:#E8877A;
+    --bad-txt:#F0A99E;
+    --orange:#E8B25C;
+    --purple:#B9A0E0;
+    --teal:#7EC8D8;
+    --fill:rgba(255,255,255,0.055);
+    --fill2:rgba(255,255,255,0.11);
+    --bar:rgba(14,15,18,0.92);
+    --shadow:0 1px 2px rgba(0,0,0,0.34);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#000000;
-  --glow1:rgba(10,132,255,0.20);
-  --glow2:rgba(100,210,255,0.14);
-  --card:rgba(28,28,32,0.62);
-  --card2:rgba(58,58,64,0.42);
-  --brd:rgba(255,255,255,0.10);
-  --label:#FFFFFF;
-  --label2:rgba(235,235,245,0.80);
-  --label3:rgba(235,235,245,0.62);
-  --sep:rgba(235,235,245,0.14);
-  --blue:#64D2FF;
-  --accent:#64D2FF;
-  --green:#30D158;
-  --btn-bg:#0A84FF;
-  --accent-txt:#64D2FF;
-  --warn-txt:#FFA836;
-  --good-txt:#30D158;
-  --red:#FF6961;
-  --bad-txt:#FF6961;
-  --orange:#FFA836;
-  --purple:#BF5AF2;
-  --teal:#5AC8FA;
-  --fill:rgba(120,120,128,0.26);
-  --fill2:rgba(120,120,128,0.40);
-  --bar:rgba(20,20,24,0.62);
-  --shadow:0 1px 1px rgba(0,0,0,0.30), 0 10px 34px rgba(0,0,0,0.45);
+  --bg:#0E0F12;
+  --glow1:rgba(232,178,92,0.055);
+  --glow2:rgba(232,178,92,0.025);
+  --card:#16181D;
+  --card2:#1C1F26;
+  --brd:rgba(255,255,255,0.075);
+  --label:#F2F1EE;
+  --label2:rgba(242,241,238,0.64);
+  --label3:rgba(242,241,238,0.64);
+  --sep:rgba(255,255,255,0.075);
+  --blue:#E8B25C;
+  --accent:#E8B25C;
+  --green:#7FD1A6;
+  --btn-bg:#E8B25C;
+  --accent-txt:#E8B25C;
+  --warn-txt:#E8B25C;
+  --good-txt:#7FD1A6;
+  --red:#E8877A;
+  --bad-txt:#F0A99E;
+  --orange:#E8B25C;
+  --purple:#B9A0E0;
+  --teal:#7EC8D8;
+  --fill:rgba(255,255,255,0.055);
+  --fill2:rgba(255,255,255,0.11);
+  --bar:rgba(14,15,18,0.92);
+  --shadow:0 1px 2px rgba(0,0,0,0.34);
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -135,19 +140,23 @@ body{
 
 /* ---------- layout ---------- */
 .wrap{max-width:660px;margin:0 auto;padding:0 16px}
-.lgtitle{font-size:34px;font-weight:700;letter-spacing:-0.4px;padding:14px 0 4px}
-.sub{color:var(--label2);font-size:15px;margin:0 0 18px}
+.lgtitle{font-size:32px;font-weight:600;letter-spacing:-0.6px;padding:18px 0 4px;line-height:1.2}
+.sub{color:var(--label2);font-size:14.5px;margin:0 0 22px;line-height:1.6}
 
-/* בועת זכוכית: משטח חצי־שקוף, טשטוש של מה שמאחור, וקו שוליים דק שתופס אור */
+/* משטח שקט: אטום, קו שוליים בעובי שיער, וצל כמעט בלתי מורגש.
+   זכוכית מטושטשת נראית עשירה בצילום ורועשת בשימוש — כל כרטיס
+   מושך תשומת לב לעצמו במקום לתוכן שבתוכו. */
 .card,.list,.authcard{
   background:var(--card);
-  -webkit-backdrop-filter:saturate(180%) blur(var(--blur));
-  backdrop-filter:saturate(180%) blur(var(--blur));
   border:1px solid var(--brd);
   box-shadow:var(--shadow);
 }
-.card{ border-radius:var(--r-card); padding:16px; margin:0 0 14px }
-.card h2{font-size:20px;font-weight:650;letter-spacing:-0.2px;margin:0 0 12px}
+.card{ border-radius:var(--r-card); padding:18px 17px; margin:0 0 13px }
+/* כותרת מקטע: קטנה, מרווחת ושקטה — היא תווית ולא הצהרה.
+   הקו שנמתח אחריה נותן מבנה בלי להוסיף עוד מסגרת. */
+.card h2{font-size:11.5px;font-weight:600;letter-spacing:1.5px;color:var(--label2);
+  margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.card h2::after{content:'';flex:1;height:1px;background:var(--sep)}
 .card h3{font-size:15px;font-weight:600;color:var(--label2);margin:18px 0 8px;text-transform:none}
 .card p{margin:0 0 10px}
 .tiny{font-size:13px;color:var(--label2);line-height:1.4}
@@ -252,11 +261,13 @@ input[type=date]{direction:ltr;text-align:start}
 .b-mute{background:var(--fill);color:var(--label2)}
 
 /* ---------- stat tiles ---------- */
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px}
-.tile{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:12px 10px;text-align:center}
-.tile .t{font-size:11px;color:var(--label2);font-weight:600;margin-bottom:3px}
-.tile .n{font-size:22px;font-weight:700;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;direction:ltr}
-.tile .d{font-size:11px;font-variant-numeric:tabular-nums;direction:ltr;margin-top:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:14px 8px}
+.tile{background:transparent;border:0;border-radius:0;padding:4px 6px 2px;text-align:center}
+.tile .t{font-size:11px;color:var(--label2);font-weight:500;letter-spacing:.4px;margin-bottom:5px}
+/* ספרות דקות וגדולות נקראות מדויקות; ספרות שמנות נקראות זולות. */
+.tile .n{font-size:29px;font-weight:300;letter-spacing:-1.2px;line-height:1.05;
+  font-variant-numeric:tabular-nums;direction:ltr}
+.tile .d{font-size:11.5px;font-variant-numeric:tabular-nums;direction:ltr;margin-top:4px}
 .up{color:var(--good-txt)}.dn{color:var(--bad-txt)}.flat{color:var(--label2)}
 
 /* ---------- analysis block ---------- */
