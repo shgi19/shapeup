@@ -272,6 +272,41 @@ input[type=date]{direction:ltr;text-align:start}
 .chart{width:100%;height:230px;display:block;overflow:visible}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--label2);margin-top:8px}
 .legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-inline-end:5px}
+/* ---------- גרף אינטראקטיבי: בועת פרטים ופקדי זום ---------- */
+.chartwrap{position:relative}
+.chart{touch-action:none}
+.chart:focus-visible{outline:2px solid var(--accent-txt);outline-offset:3px;border-radius:8px}
+/* הבועה יושבת מעל הגרף. השוליים ב-transform מונעים ממנה לצאת מהמסך
+   בקצוות, בלי לחשב מיקום ידנית. */
+.ctip{
+  position:absolute;top:6px;transform:translateX(-50%);
+  min-width:112px;max-width:190px;
+  background:var(--card);border:1px solid var(--brd);border-radius:11px;
+  box-shadow:var(--shadow);padding:9px 11px;pointer-events:none;z-index:3;
+  display:flex;flex-direction:column;gap:2px;text-align:center;
+  -webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);
+}
+.ctip b{font-size:20px;font-weight:680;line-height:1.15;letter-spacing:-.3px}
+.ctip .cunit{font-size:12px;font-weight:500;color:var(--label2)}
+.ctip .cdate{font-size:12px;color:var(--label2)}
+.ctip .cdelta{font-size:12px;color:var(--label2);margin-top:2px}
+.ctip .cdelta.up{color:var(--good-txt)} .ctip .cdelta.dn{color:var(--bad-txt)}
+.ctip .cflag{font-size:11.5px;color:var(--bad-txt);font-weight:600;margin-top:2px}
+/* בקצה השמאלי והימני הבועה נצמדת פנימה במקום לגלוש */
+.ctip[style*="left:0"],.ctip[style*="left:1"],.ctip[style*="left:2"]{transform:translateX(-18%)}
+.ctip[style*="left:9"]{transform:translateX(-82%)}
+
+.czoom{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
+.cz{
+  font:inherit;font-size:19px;font-weight:600;line-height:1;
+  min-width:44px;min-height:44px;padding:0 12px;cursor:pointer;
+  background:var(--fill);border:1px solid transparent;border-radius:11px;color:var(--accent-txt);
+}
+.cz.wide{font-size:13.5px;font-weight:600;padding:0 15px}
+.cz:hover:not([disabled]){border-color:var(--accent-txt)}
+.cz[disabled]{opacity:.4;cursor:not-allowed}
+.cz:focus-visible{outline:2px solid var(--accent-txt);outline-offset:2px}
+.czlab{font-size:13px;color:var(--label2);margin-inline-start:2px}
 
 /* ---------- exercise ---------- */
 .ex{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:12px 14px;margin-bottom:9px}
@@ -3819,7 +3854,7 @@ function weeklyCard(key){
 function viewTrend(){
   let h='<div class="lgtitle">מגמות</div>';
   h+='<div class="seg" id="segMetric">'+METRICS.map(m=>'<button data-metric="'+m.id+'" aria-selected="'+(ui.metric===m.id)+'">'+m.label+'</button>').join("")+'</div>';
-  h+='<div class="card">'+chart(ui.metric,rangeDays())+'</div>';
+  h+='<div class="card" id="chartBox">'+chart(ui.metric,rangeDays())+'</div>';
 
   /* בחירת תקופה — מתחת לגרף, ומזינה גם אותו וגם את הדוח המילולי */
   h+='<p class="tiny" style="padding:0 6px;margin-bottom:6px">בחר תקופה כדי לראות מה השתנה בה:</p>';
@@ -3891,6 +3926,35 @@ function viewTrend(){
   return h;
 }
 
+/* ---- מצב התצוגה של הגרף ----
+   לא נשמר בין כניסות בכוונה: גרף שנפתח מוגדל למקום אקראי מבלבל.
+   מתאפס לבד כשמחליפים מדד או תקופה. */
+let CHART_VIEW={z:1,c:0.5,sel:null,key:null,days:null};
+const CHART_ZMAX=10;
+function chartReset(key,days){
+  if(CHART_VIEW.key!==key||CHART_VIEW.days!==days)
+    CHART_VIEW={z:1,c:0.5,sel:null,key:key,days:days};
+}
+function chartZoom(mult,at){
+  const v=CHART_VIEW, z0=v.z;
+  const z=Math.max(1,Math.min(CHART_ZMAX,z0*mult));
+  if(z===z0) return;
+  /* מגדילים סביב הנקודה שנגעו בה ולא סביב המרכז — אחרת מה שרצית
+     לראות בורח מהמסך בדיוק כשאתה מתקרב אליו. */
+  if(at!=null){
+    const span0=1/z0, s0=v.c-span0/2;
+    const abs=s0+at*span0;
+    v.c=abs-(at-0.5)*(1/z);
+  }
+  v.z=z;
+  const half=1/(2*z);
+  v.c=Math.max(half,Math.min(1-half,v.c));
+}
+function chartPan(frac){
+  const v=CHART_VIEW, half=1/(2*v.z);
+  v.c=Math.max(half,Math.min(1-half,v.c+frac/v.z));
+}
+
 function chart(key,days){
   const rows=official().filter(r=>r[key]!=null);
   if(rows.length<2) return '<div class="empty">אין מספיק נתונים לגרף.</div>';
@@ -3898,62 +3962,243 @@ function chart(key,days){
   const sub=rows.filter(r=>last-dayNum(r.date)<=days);
   if(sub.length<2) return '<div class="empty">אין מספיק נתונים בטווח הזה.</div>';
 
+  chartReset(key,days);
+  const V=CHART_VIEW;
   const out=markOutliers(rows,"bf");
   const W=640,H=230,PL=44,PR=12,PT=16,PB=26;
-  const xs0=dayNum(sub[0].date),xs1=last;
-  const vals=sub.map(r=>r[key]);
-  const ma=movingAvg(rows,key,days>120?28:7).filter(p=>p.d>=xs0);
-  ma.forEach(p=>vals.push(p.v));
-  let lo=Math.min(...vals),hi=Math.max(...vals);
+
+  /* התחום המלא, ומתוכו החלון שרואים כרגע */
+  const f0=dayNum(sub[0].date), f1=last, fSpan=(f1-f0)||1;
+  const vSpan=fSpan/V.z;
+  let v0=f0+(V.c*fSpan)-vSpan/2;
+  v0=Math.max(f0,Math.min(f1-vSpan,v0));
+  const v1=v0+vSpan;
+
+  const visible=sub.filter(r=>{ const d=dayNum(r.date); return d>=v0-0.5&&d<=v1+0.5 });
+  const shown=visible.length>1?visible:sub;
+
+  const maAll=movingAvg(rows,key,days>120?28:7).filter(p=>p.d>=f0);
+  const maVis=maAll.filter(p=>p.d>=v0-0.5&&p.d<=v1+0.5);
+  const ma=maVis.length>1?maVis:maAll;
+
+  /* הסקאלה האנכית נגזרת ממה שרואים — אחרת זום פנימה לא מגלה כלום */
+  const vals=shown.map(r=>r[key]).concat(ma.map(p=>p.v));
+  let lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals);
   const pad=(hi-lo)*0.14||0.5; lo-=pad; hi+=pad;
 
-  const X=d=> PL+(xs1===xs0?0.5:(d-xs0)/(xs1-xs0))*(W-PL-PR);
+  const X=d=> PL+(v1===v0?0.5:(d-v0)/(v1-v0))*(W-PL-PR);
   const Y=v=> PT+(1-(v-lo)/(hi-lo||1))*(H-PT-PB);
 
-  /* גרף הוא תמונה. בלי חלופה טקסטואלית מי שמשתמש בקורא מסך שומע "גרפיקה"
-     ותו לא. התיאור נבנה מהנתונים עצמם ולא מנוסח מראש, כדי שלא ישקר כשהם משתנים. */
+  /* חלופה טקסטואלית — נבנית מהנתונים כדי שלא תשקר כשהם משתנים */
   const mLab=(METRICS.filter(m=>m.id===key)[0]||{label:key}).label;
-  const fV=sub[0][key], lV=sub[sub.length-1][key], dV=lV-fV;
-  const chartAlt=mLab+": "+sub.length+" מדידות מ־"+fmtDate(sub[0].date)+
-    " עד "+fmtDate(sub[sub.length-1].date)+". מ־"+n2(fV)+" ל־"+n2(lV)+", "+
+  const fV=shown[0][key], lV=shown[shown.length-1][key], dV=lV-fV;
+  const chartAlt=mLab+": "+shown.length+" מדידות מ־"+fmtDate(shown[0].date)+
+    " עד "+fmtDate(shown[shown.length-1].date)+". מ־"+n2(fV)+" ל־"+n2(lV)+", "+
     (Math.abs(dV)<0.005?"כמעט בלי שינוי":(dV>0?"עלייה של ":"ירידה של ")+n2(Math.abs(dV)))+
-    ". הנמוך ביותר "+n2(Math.min.apply(null,vals))+", הגבוה ביותר "+n2(Math.max.apply(null,vals))+".";
-  let g='<svg class="chart" role="img" aria-label="'+esc(chartAlt)+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" dir="ltr">'+
+    ". הנמוך ביותר "+n2(Math.min.apply(null,vals))+", הגבוה ביותר "+n2(Math.max.apply(null,vals))+"."+
+    (V.z>1?" מוגדל פי "+n1(V.z)+".":"");
+
+  let g='<svg class="chart" id="chartSvg" role="img" aria-label="'+esc(chartAlt)+
+        '" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" dir="ltr">'+
         '<title>'+esc(chartAlt)+'</title>';
-  /* רשת */
   for(let i=0;i<=3;i++){
-    const v=lo+(hi-lo)*i/3, y=Y(v);
-    g+='<line x1="'+PL+'" y1="'+y.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+y.toFixed(1)+'" stroke="var(--sep)" stroke-width="1"/>';
-    g+='<text x="'+(PL-7)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--label2)">'+n1(v)+'</text>';
+    const gv=lo+(hi-lo)*i/3, gy=Y(gv);
+    g+='<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+gy.toFixed(1)+'" stroke="var(--sep)" stroke-width="1"/>';
+    g+='<text x="'+(PL-7)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--label2)">'+n1(gv)+'</text>';
   }
-  /* נקודות גולמיות */
-  sub.forEach(r=>{
+  /* קו הסימון נמתח לפני הנקודות כדי שלא יסתיר אותן */
+  const selRow=V.sel?shown.filter(r=>r.date===V.sel)[0]:null;
+  if(selRow){
+    const sx=X(dayNum(selRow.date));
+    g+='<line x1="'+sx.toFixed(1)+'" y1="'+PT+'" x2="'+sx.toFixed(1)+'" y2="'+(H-PB)+
+       '" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.85"/>';
+  }
+  shown.forEach(r=>{
     const x=X(dayNum(r.date)),y=Y(r[key]);
     if(out[r.id]) g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="none" stroke="var(--red)" stroke-width="2"/>';
-    else g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.6" fill="var(--label3)"/>';
+    else g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.6" fill="var(--label2)"/>';
   });
-  /* ממוצע נע — הקו הבולט */
   if(ma.length>1){
     g+='<path d="'+ma.map((p,i)=>(i?"L":"M")+X(p.d).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ")+
        '" fill="none" stroke="var(--blue)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
     const lp=ma[ma.length-1];
     g+='<circle cx="'+X(lp.d).toFixed(1)+'" cy="'+Y(lp.v).toFixed(1)+'" r="4.5" fill="var(--blue)"/>';
   }
-  /* קו רגרסיה */
-  const reg=regress(sub.map(r=>({x:dayNum(r.date),y:r[key]})));
-  if(reg&&sub.length>=MIN_POINTS&&(xs1-xs0)>=MIN_SPAN){
-    g+='<line x1="'+X(xs0).toFixed(1)+'" y1="'+Y(reg.slope*xs0+reg.icpt).toFixed(1)+
-       '" x2="'+X(xs1).toFixed(1)+'" y2="'+Y(reg.slope*xs1+reg.icpt).toFixed(1)+
+  const reg=regress(shown.map(r=>({x:dayNum(r.date),y:r[key]})));
+  if(reg&&shown.length>=MIN_POINTS&&(v1-v0)>=MIN_SPAN){
+    g+='<line x1="'+X(v0).toFixed(1)+'" y1="'+Y(reg.slope*v0+reg.icpt).toFixed(1)+
+       '" x2="'+X(v1).toFixed(1)+'" y2="'+Y(reg.slope*v1+reg.icpt).toFixed(1)+
        '" stroke="var(--orange)" stroke-width="1.6" stroke-dasharray="5 4" opacity="0.8"/>';
   }
-  g+='<text x="'+PL+'" y="'+(H-6)+'" font-size="11" fill="var(--label2)">'+fmtDate(sub[0].date)+'</text>';
-  g+='<text x="'+(W-PR)+'" y="'+(H-6)+'" font-size="11" fill="var(--label2)" text-anchor="end">'+fmtDate(sub[sub.length-1].date)+'</text>';
+  if(selRow){
+    const sx=X(dayNum(selRow.date)), sy=Y(selRow[key]);
+    g+='<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="6.5" fill="var(--accent)" stroke="var(--bar)" stroke-width="2"/>';
+  }
+  g+='<text x="'+PL+'" y="'+(H-6)+'" font-size="11" fill="var(--label2)">'+fmtDate(shown[0].date)+'</text>';
+  g+='<text x="'+(W-PR)+'" y="'+(H-6)+'" font-size="11" fill="var(--label2)" text-anchor="end">'+fmtDate(shown[shown.length-1].date)+'</text>';
+  /* שכבת מגע על כל שטח הגרף — נוגעים איפשהו ונבחרת המדידה הקרובה.
+     לרדוף אחרי עיגול של שלושה פיקסלים באצבע זה לא ממשק. */
+  g+='<rect id="chartHit" x="'+PL+'" y="0" width="'+(W-PL-PR)+'" height="'+H+
+     '" fill="transparent" style="cursor:crosshair;touch-action:none"/>';
   g+='</svg>';
-  g+='<div class="legend"><span><i style="background:var(--blue)"></i>ממוצע נע '+(days>120?28:7)+' ימים</span>'+
-     '<span><i style="background:var(--label3)"></i>מדידות בודדות</span>'+
+
+  let h='<div class="chartwrap">'+g;
+  if(selRow){
+    const sxPct=(X(dayNum(selRow.date))/W*100);
+    const unit=(METRICS.filter(m=>m.id===key)[0]||{}).unit||"";
+    const idx=sub.map(r=>r.date).indexOf(selRow.date);
+    const prev=idx>0?sub[idx-1]:null;
+    const dd=prev?selRow[key]-prev[key]:null;
+    h+='<div class="ctip" style="left:'+sxPct.toFixed(2)+'%">'+
+       '<b class="num">'+n2(selRow[key])+(unit?' <span class="cunit">'+esc(unit)+'</span>':'')+'</b>'+
+       '<span class="cdate">'+fmtDate(selRow.date)+'</span>'+
+       (dd!=null?'<span class="cdelta '+(dd>0?"up":(dd<0?"dn":""))+'">'+
+          (dd>0?"▴ ":(dd<0?"▾ ":""))+n2(Math.abs(dd))+' מהמדידה הקודמת</span>':'')+
+       (out[selRow.id]?'<span class="cflag">סומנה כחריגה</span>':'')+
+       '</div>';
+  }
+  h+='</div>';
+  h+='<div class="czoom">'+
+     '<button class="cz" id="czOut" aria-label="הקטן את הגרף"'+(V.z<=1?' disabled':'')+'>−</button>'+
+     '<button class="cz" id="czIn" aria-label="הגדל את הגרף"'+(V.z>=CHART_ZMAX?' disabled':'')+'>+</button>'+
+     '<span class="czlab">'+(V.z>1?'פי '+n1(V.z):'טווח מלא')+'</span>'+
+     (V.z>1?'<button class="cz wide" id="czReset">כל הטווח</button>':'')+
+     (selRow?'<button class="cz wide" id="czClear">נקה בחירה</button>':'')+
+     '</div>';
+  if(V.z>1)
+    h+='<p class="tiny" style="margin:6px 6px 0">גרור ימינה ושמאלה כדי לנוע בזמן. צביטה מגדילה ומקטינה.</p>';
+  else if(!selRow)
+    h+='<p class="tiny" style="margin:6px 6px 0">גע בגרף כדי לראות תאריך וערך. צביטה או «+» מגדילים.</p>';
+  h+='<div class="legend"><span><i style="background:var(--blue)"></i>ממוצע נע '+(days>120?28:7)+' ימים</span>'+
+     '<span><i style="background:var(--label2)"></i>מדידות בודדות</span>'+
      '<span><i style="background:var(--orange)"></i>קו מגמה</span>'+
      '<span><i style="background:var(--red)"></i>חריג</span></div>';
-  return g;
+  return h;
+}
+/* ציור מחדש של הגרף בלבד. render() המלא גם גולל לראש הדף, וקפיצה
+   למעלה בכל נגיעה בגרף הופכת אותו לבלתי שמיש. */
+/* ---- אינטראקציה עם הגרף ----
+   נגיעה בוחרת את המדידה הקרובה, גרירה מזיזה בזמן, צביטה מגדילה.
+   הכול דרך Pointer Events — עכבר ומגע באותו קוד, בלי כפילות. */
+function bindChart(){
+  const svg=document.getElementById("chartSvg");
+  const hit=document.getElementById("chartHit");
+  const zin=document.getElementById("czIn"), zout=document.getElementById("czOut");
+  const zres=document.getElementById("czReset"), zclr=document.getElementById("czClear");
+  if(zin)  zin.onclick =()=>{ chartZoom(1.6,0.5); redrawChart() };
+  if(zout) zout.onclick=()=>{ chartZoom(1/1.6,0.5); redrawChart() };
+  if(zres) zres.onclick=()=>{ CHART_VIEW.z=1; CHART_VIEW.c=0.5; redrawChart() };
+  if(zclr) zclr.onclick=()=>{ CHART_VIEW.sel=null; redrawChart() };
+  if(!svg||!hit) return;
+
+  const W=640,PL=44,PR=12,plotW=W-PL-PR;
+  /* מיקום האצבע ביחס לשטח הגרף, ב-0..1 */
+  const frac=cx=>{
+    const r=svg.getBoundingClientRect();
+    if(!r.width) return 0.5;
+    const x=(cx-r.left)/r.width*W;
+    return Math.max(0,Math.min(1,(x-PL)/plotW));
+  };
+  /* מאיזה תאריך מדובר, ואיזו מדידה הכי קרובה אליו */
+  const pick=f=>{
+    const rows=official().filter(r=>r[ui.metric]!=null);
+    if(rows.length<2) return null;
+    const days=rangeDays(), last=dayNum(rows[rows.length-1].date);
+    const sub=rows.filter(r=>last-dayNum(r.date)<=days);
+    if(sub.length<2) return null;
+    const V=CHART_VIEW;
+    const f0=dayNum(sub[0].date), f1=last, fSpan=(f1-f0)||1;
+    const vSpan=fSpan/V.z;
+    let v0=f0+(V.c*fSpan)-vSpan/2;
+    v0=Math.max(f0,Math.min(f1-vSpan,v0));
+    const target=v0+f*vSpan;
+    let best=null,bd=Infinity;
+    sub.forEach(r=>{ const d=Math.abs(dayNum(r.date)-target); if(d<bd){bd=d;best=r} });
+    return best;
+  };
+
+  const pts=new Map();
+  let mode=null, startX=0, startC=0, startDist=0, startZ=1, moved=0;
+
+  hit.onpointerdown=e=>{
+    hit.setPointerCapture&&hit.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId,e.clientX);
+    if(pts.size===2){
+      const v=[...pts.values()];
+      mode="pinch"; startDist=Math.abs(v[0]-v[1])||1; startZ=CHART_VIEW.z;
+    }else{
+      mode="drag"; startX=e.clientX; startC=CHART_VIEW.c; moved=0;
+    }
+  };
+  hit.onpointermove=e=>{
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId,e.clientX);
+    if(mode==="pinch"&&pts.size===2){
+      const v=[...pts.values()];
+      const dist=Math.abs(v[0]-v[1])||1;
+      const mid=(v[0]+v[1])/2;
+      const want=startZ*(dist/startDist);
+      chartZoom(want/CHART_VIEW.z,frac(mid));
+      redrawChart(); return;
+    }
+    if(mode==="drag"){
+      const dx=e.clientX-startX;
+      moved=Math.max(moved,Math.abs(dx));
+      if(CHART_VIEW.z>1&&Math.abs(dx)>3){
+        const r=svg.getBoundingClientRect();
+        const plotPx=r.width*(plotW/W)||1;
+        /* בעברית הדף מיושר לימין אבל ציר הזמן נשאר משמאל לימין,
+           ולכן גרירה שמאלה מקדמת בזמן — בלי היפוך. */
+        CHART_VIEW.c=Math.max(1/(2*CHART_VIEW.z),
+          Math.min(1-1/(2*CHART_VIEW.z), startC-(dx/plotPx)/CHART_VIEW.z));
+        redrawChart();
+      }
+    }
+  };
+  const finish=e=>{
+    if(mode==="drag"&&moved<=4){
+      const r=pick(frac(e.clientX));
+      if(r) CHART_VIEW.sel=(CHART_VIEW.sel===r.date?null:r.date);
+      redrawChart();
+    }
+    pts.delete(e.pointerId);
+    if(pts.size<2) mode=pts.size?"drag":null;
+  };
+  hit.onpointerup=finish;
+  hit.onpointercancel=e=>{ pts.delete(e.pointerId); if(pts.size<2) mode=pts.size?"drag":null };
+  /* גלגלת בעכבר — מגדילה סביב הסמן */
+  hit.onwheel=e=>{
+    e.preventDefault();
+    chartZoom(e.deltaY<0?1.25:1/1.25,frac(e.clientX));
+    redrawChart();
+  };
+  /* מקלדת: חיצים מזיזים בין מדידות, בלי להיות תלוי בעכבר */
+  svg.setAttribute("tabindex","0");
+  svg.onkeydown=e=>{
+    const rows=official().filter(r=>r[ui.metric]!=null);
+    const days=rangeDays(), last=rows.length?dayNum(rows[rows.length-1].date):0;
+    const sub=rows.filter(r=>last-dayNum(r.date)<=days);
+    if(sub.length<2) return;
+    let i=CHART_VIEW.sel?sub.map(r=>r.date).indexOf(CHART_VIEW.sel):-1;
+    if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+      e.preventDefault();
+      /* ציר הזמן בגרף רץ משמאל לימין גם בעברית, ולכן חץ שמאלה
+         הוא אחורה בזמן — כלומר אינדקס קטן יותר. */
+      const step=(e.key==="ArrowLeft")?-1:1;
+      i=(i<0)?sub.length-1:Math.max(0,Math.min(sub.length-1,i+step));
+      CHART_VIEW.sel=sub[i].date; redrawChart();
+      const s2=document.getElementById("chartSvg"); if(s2) s2.focus();
+    }else if(e.key==="Escape"){ CHART_VIEW.sel=null; redrawChart() }
+    else if(e.key==="+"||e.key==="="){ chartZoom(1.6,0.5); redrawChart() }
+    else if(e.key==="-"||e.key==="_"){ chartZoom(1/1.6,0.5); redrawChart() }
+  };
+}
+function redrawChart(){
+  const box=document.getElementById("chartBox");
+  if(!box) return;
+  box.innerHTML=chart(ui.metric,rangeDays());
+  try{ bindChart() }catch(e){}
+  try{ a11yPass(box) }catch(e){}
 }
 
 /* ============================================================================
@@ -8563,6 +8808,7 @@ function bindSetup(){
 }
 
 function bind(){
+  try{ bindChart() }catch(e){ window.__chartErr=e }
   /* סלקטור ממוקד: [data-theme] לבדו תופס גם את תגית ה־HTML,
      והמאזין היה נצמד לכל הדף. */
   document.querySelectorAll("#segTheme button[data-theme]").forEach(b=>b.onclick=()=>{
