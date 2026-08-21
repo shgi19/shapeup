@@ -3940,11 +3940,11 @@ function viewTrend(){
 /* ---- מצב התצוגה של הגרף ----
    לא נשמר בין כניסות בכוונה: גרף שנפתח מוגדל למקום אקראי מבלבל.
    מתאפס לבד כשמחליפים מדד או תקופה. */
-let CHART_VIEW={z:1,c:0.5,sel:null,key:null,days:null};
+let CHART_VIEW={z:1,c:0.5,sel:null,hov:null,key:null,days:null};
 const CHART_ZMAX=10;
 function chartReset(key,days){
   if(CHART_VIEW.key!==key||CHART_VIEW.days!==days)
-    CHART_VIEW={z:1,c:0.5,sel:null,key:key,days:days};
+    CHART_VIEW={z:1,c:0.5,sel:null,hov:null,key:key,days:days};
 }
 function chartZoom(mult,at){
   const v=CHART_VIEW, z0=v.z;
@@ -4018,7 +4018,9 @@ function chart(key,days){
     g+='<text x="'+(PL-7)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--label2)">'+n1(gv)+'</text>';
   }
   /* קו הסימון נמתח לפני הנקודות כדי שלא יסתיר אותן */
-  const selRow=V.sel?shown.filter(r=>r.date===V.sel)[0]:null;
+/* ריחוף גובר על בחירה מקובעת: העכבר הוא מה שהעין עוקבת אחריו כרגע. */
+  const showDate=V.hov||V.sel;
+  const selRow=showDate?shown.filter(r=>r.date===showDate)[0]:null;
   if(selRow){
     const sx=X(dayNum(selRow.date));
     g+='<line x1="'+sx.toFixed(1)+'" y1="'+PT+'" x2="'+sx.toFixed(1)+'" y2="'+(H-PB)+
@@ -4079,7 +4081,7 @@ function chart(key,days){
   if(V.z>1)
     h+='<p class="tiny" style="margin:6px 6px 0">גרור ימינה ושמאלה כדי לנוע בזמן. צביטה מגדילה ומקטינה.</p>';
   else if(!selRow)
-    h+='<p class="tiny" style="margin:6px 6px 0">גע בגרף כדי לראות תאריך וערך. צביטה או «+» מגדילים.</p>';
+    h+='<p class="tiny" style="margin:6px 6px 0">העבר עכבר או גע בגרף כדי לראות תאריך וערך. צביטה או «+» מגדילים.</p>';
   h+='<div class="legend"><span><i style="background:var(--blue)"></i>ממוצע נע '+(days>120?28:7)+' ימים</span>'+
      '<span><i style="background:var(--label2)"></i>מדידות בודדות</span>'+
      '<span><i style="background:var(--orange)"></i>קו מגמה</span>'+
@@ -4142,7 +4144,17 @@ function bindChart(){
     }
   };
   hit.onpointermove=e=>{
-    if(!pts.has(e.pointerId)) return;
+    /* ריחוף בעכבר: מציג בלי לחיצה. מציירים מחדש רק כשהמדידה הקרובה
+       באמת התחלפה — ציור בכל פיקסל של תזוזה היה מקרטע. */
+    if(!pts.has(e.pointerId)){
+      if(e.pointerType==="mouse"){
+        const r=pick(frac(e.clientX));
+        const d=r?r.date:null;
+        if(d!==CHART_VIEW.hov){ CHART_VIEW.hov=d; redrawChart() }
+      }
+      return;
+    }
+    CHART_VIEW.hov=null;   /* מרגע שנגעו — הנגיעה מנהלת, לא הריחוף */
     pts.set(e.pointerId,e.clientX);
     if(mode==="pinch"&&pts.size===2){
       const v=[...pts.values()];
@@ -4170,6 +4182,7 @@ function bindChart(){
     if(mode==="drag"&&moved<=4){
       const r=pick(frac(e.clientX));
       if(r) CHART_VIEW.sel=(CHART_VIEW.sel===r.date?null:r.date);
+      CHART_VIEW.hov=null;
       redrawChart();
     }
     pts.delete(e.pointerId);
@@ -4178,6 +4191,9 @@ function bindChart(){
   hit.onpointerup=finish;
   hit.onpointercancel=e=>{ pts.delete(e.pointerId); if(pts.size<2) mode=pts.size?"drag":null };
   /* גלגלת בעכבר — מגדילה סביב הסמן */
+  hit.onpointerleave=e=>{
+    if(CHART_VIEW.hov!==null){ CHART_VIEW.hov=null; redrawChart() }
+  };
   hit.onwheel=e=>{
     e.preventDefault();
     chartZoom(e.deltaY<0?1.25:1/1.25,frac(e.clientX));
