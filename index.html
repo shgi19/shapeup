@@ -750,6 +750,12 @@ a.yt,a.ytmore{min-height:44px}
 .pcard.open .num{font-size:1.06em}
 .pcard.open .ptop{margin-bottom:12px}
 .pcard.open .pmore{font-size:14px;padding:6px 13px}
+/* ---------- הפרטים שלי ---------- */
+.prof{display:flex;flex-direction:column}
+.prow{display:flex;align-items:baseline;gap:12px;padding:12px 0;border-bottom:1px solid var(--sep)}
+.prow:last-child{border-bottom:0}
+.pk2{flex:0 0 auto;min-width:96px;font-size:14.5px;color:var(--label2)}
+.pv2{flex:1;font-size:16.5px;font-weight:500;text-align:end}
 .empty{text-align:center;color:var(--label2);padding:34px 16px;font-size:15px}
 .toast{
   position:fixed;bottom:calc(94px + env(safe-area-inset-bottom));inset-inline:0;margin:0 auto;
@@ -8210,6 +8216,63 @@ function viewLog(){
    עובר לשמירה או לחיטוב, והיעדים נגזרים מחדש. לכן אותו מסך משמש גם להגדרה
    הראשונה וגם לעדכון.
    ============================================================================ */
+/* ---- הפרטים שלי ----
+   מופרד ממסך המטרות בכוונה: שם וגובה משתנים פעם בחיים, מטרה ורמת
+   פעילות משתנות כל כמה חודשים. ערבוב שלהם גורם למי שבא לתקן שם
+   להיתקל בשאלות על אימונים.
+   המשקל כאן לקריאה בלבד — הוא מגיע מהשקילה האחרונה ולא נערך ידנית,
+   אחרת היו שני מקורות אמת לאותו מספר. */
+function fullName(u){
+  u=u||me||{};
+  return [u.name,u.lastName].filter(Boolean).join(" ").trim()||u.username||"";
+}
+function profileCard(){
+  const p=ui.editProfile;
+  const last=official().slice(-1)[0];
+  const age=myAge();
+  let h='<div class="card"><h2>הפרטים שלי</h2>';
+  if(!p){
+    h+='<div class="prof">';
+    const rows=[
+      ["שם", fullName()||"—"],
+      ["תאריך לידה", me&&me.dob?fmtDate(me.dob)+(age?"  ·  בן "+age:""):"—"],
+      ["גובה", me&&me.height?me.height+' ס"מ':"—"],
+      ["מין", me&&me.sex==="f"?"אישה":(me&&me.sex==="m"?"גבר":"—")]
+    ];
+    rows.forEach(r=>{
+      h+='<div class="prow"><span class="pk2">'+esc(r[0])+'</span>'+
+         '<span class="pv2">'+esc(String(r[1]))+'</span></div>';
+    });
+    h+='<div class="prow"><span class="pk2">משקל</span><span class="pv2">'+
+       (last?n2(last.weight)+' ק"ג':"עוד לא נשקלת")+'</span></div>';
+    h+='</div>';
+    h+='<p class="tiny">המשקל מתעדכן לבד מהשקילה האחרונה'+
+       (last?' ('+fmtDate(last.date)+')':'')+' — אין מה לערוך אותו כאן.</p>';
+    h+='<div class="btnrow"><button class="btn sec" id="profEdit">ערוך פרטים</button></div>';
+    h+='</div>';
+    return h;
+  }
+  /* מצב עריכה */
+  h+='<form id="profForm"><div class="fields">';
+  h+='<div class="f"><label for="pfName">שם פרטי</label>'+
+     '<input id="pfName" name="name" type="text" autocomplete="given-name" required value="'+esc((me&&me.name)||"")+'"></div>';
+  h+='<div class="f"><label for="pfLast">שם משפחה</label>'+
+     '<input id="pfLast" name="lastName" type="text" autocomplete="family-name" placeholder="לא חובה" value="'+esc((me&&me.lastName)||"")+'"></div>';
+  h+='<div class="f"><label for="pfDob">תאריך לידה</label>'+
+     '<input id="pfDob" name="dob" type="date" max="'+today()+'" value="'+esc((me&&me.dob)||"")+'"></div>';
+  h+='<div class="f"><label for="pfH">גובה (ס"מ)</label>'+
+     '<input id="pfH" name="height" type="number" inputmode="numeric" min="120" max="230" value="'+esc((me&&me.height)||"")+'"></div>';
+  h+='<div class="f wide"><label for="pfSex">מין</label><select id="pfSex" name="sex">'+
+     '<option value="m"'+(me&&me.sex==="m"?" selected":"")+'>גבר</option>'+
+     '<option value="f"'+(me&&me.sex==="f"?" selected":"")+'>אישה</option></select></div>';
+  h+='</div>';
+  h+='<p class="tiny">הגובה והמין נכנסים לחישוב הקלוריות, ותאריך הלידה קובע את הגיל '+
+     'שמשמש בו. שינוי כאן מעדכן את היעדים מיד.</p>';
+  h+='<div class="btnrow"><button class="btn" type="submit">שמור</button>'+
+     '<button class="btn sec" type="button" id="profCancel">בטל</button></div>';
+  h+='</form></div>';
+  return h;
+}
 function viewSetup(){
   const first=!me.goal;
   const g=me.goal||"mass", a=(me.act!=null)?me.act:2;
@@ -8661,6 +8724,8 @@ function viewData(){
   h+='<p class="tiny">מצב כהה הוא רקע שחור עם תכלת. «לפי המכשיר» מתחלף לבד לפי ההגדרה של הטלפון או המחשב.</p>';
   h+='</div>';
 
+  h+=profileCard();
+
   h+='<div class="list">';
   h+='<div class="row"><div class="k">מחובר כ־<b>'+esc(me?me.username:"")+'</b>'+
      (me&&me.contact?'<div class="tiny">'+esc(me.contact)+'</div>':'')+'</div>'+
@@ -8853,7 +8918,7 @@ function bindAuth(){
     const u=auth.pending.user;
     session=u.id; save(K_SESS,session);
     auth={screen:"login",err:null,msg:null,pending:null};
-    loadUser(u); render(); toast("ברוך הבא, "+(u.name||u.username));
+    loadUser(u); render(); toast("ברוך הבא, "+fullName(u));
   };
 
   const fl=$("#fLogin");
@@ -8883,7 +8948,7 @@ function bindAuth(){
       render(); return;
     }
     session=u.id; save(K_SESS,session);
-    loadUser(u); auth.err=null; auth.form=null; render(); toast("שלום, "+(u.name||u.username));
+    loadUser(u); auth.err=null; auth.form=null; render(); toast("שלום, "+fullName(u));
   };
 
   const fs=$("#fSignup");
@@ -8997,6 +9062,36 @@ function bind(){
   document.querySelectorAll("#segTheme button[data-theme]").forEach(b=>b.onclick=()=>{
     setTheme(b.dataset.theme); render();
   });
+  /* ---- הפרטים שלי ---- */
+  const profBtn=$("#profEdit");
+  if(profBtn) profBtn.onclick=()=>{ ui.editProfile=true; persist(); render() };
+  const profX=$("#profCancel");
+  if(profX) profX.onclick=()=>{ ui.editProfile=false; persist(); render() };
+  const profF=$("#profForm");
+  if(profF) profF.onsubmit=ev=>{
+    ev.preventDefault();
+    const f=new FormData(profF);
+    const nm=String(f.get("name")||"").trim();
+    if(!nm){ toast("שם פרטי הוא שדה חובה"); return }
+    const hRaw=String(f.get("height")||"").trim();
+    const h=hRaw?+hRaw:null;
+    if(hRaw&&(!isFinite(h)||h<120||h>230)){ toast('גובה צריך להיות בין 120 ל-230 ס"מ'); return }
+    const dob=String(f.get("dob")||"").trim();
+    if(dob&&dob>today()){ toast("תאריך לידה בעתיד?"); return }
+    me.name=nm;
+    me.lastName=String(f.get("lastName")||"").trim()||null;
+    if(dob) me.dob=dob;
+    if(h) me.height=h;
+    const sx=String(f.get("sex")||"");
+    if(sx==="m"||sx==="f") me.sex=sx;
+    /* המשתמש נשמר ברשימת החשבונות, לא רק בזיכרון */
+    const i=users.findIndex(u=>u&&u.id===me.id);
+    if(i>-1) users[i]=me;
+    save(K_USERS,users);
+    window.__lastAnalysis=null;
+    ui.editProfile=false; persist(); render();
+    toast("הפרטים עודכנו");
+  };
   const lo=$("#logout");
   if(lo) lo.onclick=()=>ask("להתנתק? הנתונים יישארו שמורים במכשיר.",logout,{ok:"התנתק"});;
 
