@@ -450,6 +450,28 @@ details.param .pbody p:last-child{margin:0}
 .dsrc{font-size:11.5px;color:var(--label2);background:var(--fill);
   border-radius:999px;padding:2px 9px;white-space:nowrap}
 .phEdit{margin-bottom:10px}
+
+/* ---------- השוואת שתי תקופות במסך מלא ---------- */
+.phclick{cursor:zoom-in;transition:opacity .15s}
+.phclick:hover{opacity:.86}
+.phclick:focus-visible{outline:2px solid var(--accent-txt);outline-offset:3px}
+.cmpwrap{align-items:flex-start;padding:14px;overflow-y:auto}
+.cmpbox{width:100%;max-width:720px;margin:auto;background:var(--card);
+  border:1px solid var(--brd);box-shadow:var(--shadow);
+  border-radius:var(--r-card);padding:16px}
+.cmptop{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-bottom:10px}
+.cmptop b{font-size:18px;font-weight:600}
+.cmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmpi img{width:100%;display:block;border-radius:var(--r-inner);
+  background:var(--card2);object-fit:contain;max-height:52vh}
+.cmpsolo{width:100%;display:block;border-radius:var(--r-inner);
+  background:var(--card2);object-fit:contain;max-height:56vh}
+.cmpnav{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-top:14px}
+.cmpnav .btn[disabled]{opacity:.4;pointer-events:none}
+@media (max-width:380px){ .cmpnav .btn{font-size:15px;padding:0 10px} }
+
 .plab{font-size:13px;color:var(--label2);margin-bottom:6px;font-weight:600}
 .pstats{display:flex;gap:7px;margin-top:9px}
 .pstats.none{display:block;font-size:13px;color:var(--label2);
@@ -3497,13 +3519,14 @@ function render(){
         .replace(/**(.+?)**/g,"<b></b>")+'</p>'+
       '<div class="btnrow"><button class="btn sec" id="storeChk">בדוק מה קורה כאן</button></div></div>'
     : "";
-  app.innerHTML='<div class="wrap">'+warn+body+'</div>'+askCard();
+  app.innerHTML='<div class="wrap">'+warn+body+'</div>'+askCard()+(function(){ try{ return photoCmpCard() }catch(e){ return "" } })();
   window.scrollTo(0,0);
   try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
   /* גם החיווט עצמו מוגן — שגיאה בכפתור אחד לא תשתק את סרגל הלשוניות */
   try{ bind() }catch(e){ window.__bindErr=e }
   try{ bindCards() }catch(e){}
   try{ bindAsk() }catch(e){}
+  try{ bindCmp() }catch(e){}
   const sc2=document.getElementById("storeChk");
   if(sc2) sc2.onclick=storageProbe;
   const er=document.getElementById("errReset");
@@ -4267,6 +4290,97 @@ function photoTimeline(){
   return out.filter(p=>{ if(seen[p.id]) return false; seen[p.id]=1; return true });
 }
 
+/* ---- השוואת שתי תקופות במסך מלא ----
+   לוחצים על תמונה והיא נפתחת בגדול מול **הקודמת לה ברצף**. זו לא אותה
+   השוואה כמו "מאיפה לאן": שם רואים את כל הדרך, וכאן את הקפיצה בין שתי
+   נקודות סמוכות — מה השתנה בפרק זמן אחד. */
+function cmpPair(){
+  if(!ui.cmpPhoto) return null;
+  const srt=photos.slice().sort((a,b)=>a.date<b.date?-1:1);
+  let i=-1;
+  for(let k=0;k<srt.length;k++) if(srt[k].id===ui.cmpPhoto){ i=k; break }
+  if(i<0) return null;
+  return {srt,i,cur:srt[i],prev:i>0?srt[i-1]:null};
+}
+function photoCmpCard(){
+  const P=cmpPair();
+  if(!P) return "";
+  const {srt,i,cur,prev}=P;
+  const mCur=photoMetrics(cur.date), mPrev=prev?photoMetrics(prev.date):null;
+  let h='<div class="askwrap cmpwrap" id="cmpWrap"><div class="cmpbox">';
+  h+='<div class="cmptop"><b>השוואה בין שתי תקופות</b>'+
+     '<button class="btn sec mini" id="cmpX">סגור</button></div>';
+
+  if(!prev){
+    h+='<p class="tiny" style="margin:0 0 12px">זו התמונה הראשונה שלך — '+
+       'אין לפניה מה להשוות. היא נקודת הבסיס שכל השאר נמדד מולה.</p>';
+    h+='<img class="cmpsolo" src="'+(PHOTO_URLS[cur.id]||"")+'" alt="תמונה מ־'+
+       esc(fmtDate(cur.date))+'">'+photoStats(mCur);
+  }else{
+    const days=dayNum(cur.date)-dayNum(prev.date);
+    h+='<p class="tiny" style="margin:0 0 12px"><span class="num">'+
+       fmtDate(prev.date)+'</span> מול <span class="num">'+fmtDate(cur.date)+
+       '</span> — <b class="num">'+days+'</b> ימים ביניהן.</p>';
+    h+='<div class="cmpgrid">';
+    [[prev,mPrev,"לפני"],[cur,mCur,"אחרי"]].forEach(([p,m,lab])=>{
+      h+='<div class="cmpi"><div class="plab">'+esc(lab)+' · <span class="num">'+
+         fmtDate(p.date)+'</span></div>'+
+         (PHOTO_URLS[p.id]?'<img src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+'">'
+                          :'<div class="pload">לא נמצאה באחסון</div>')+
+         photoStats(m)+'</div>';
+    });
+    h+='</div>';
+
+    /* מה השתנה במספרים — אותו מנוע שמנתח את כל הדרך */
+    const st=photoStory(mPrev,mCur);
+    if(st){
+      const b=st.tone==="good"?"b-ok":st.tone==="warn"?"b-warn":"b-mute";
+      h+='<div class="pcard" style="margin-top:14px"><div class="ptop">'+
+         '<span class="pnm">מה השתנה</span><span class="badge '+b+'">'+esc(st.title)+'</span></div>';
+      st.lines.forEach(l=>{ h+='<p class="pline">'+esc(l)+'</p>' });
+      if(st.cheer) h+='<p class="pcheer">'+esc(st.cheer)+'</p>';
+      h+='</div>';
+    }else{
+      /* בלי זה המסך פשוט שותק, והוא לא יידע אם זו תקלה או שאין מה לומר.
+         זה נתפס בבדיקה: תמונה בלי שקילה בסביבתה לא קיבלה שום הסבר. */
+      const miss=[!mPrev?fmtDate(prev.date):null,!mCur?fmtDate(cur.date):null]
+                   .filter(Boolean);
+      h+='<div class="pcard" style="margin-top:14px"><div class="ptop">'+
+         '<span class="pnm">מה השתנה</span>'+
+         '<span class="badge b-mute">אין מספיק מדידות</span></div>'+
+         '<p class="pline">התמונות כאן, אבל אין שקילה קרובה ל־'+
+         esc(miss.join(" ול־"))+', ולכן אין מה להשוות במספרים.</p>'+
+         '<p class="tiny">שקילה אחת ליד כל תמונה הופכת את הגלריה מאלבום לכלי '+
+         'מדידה. אני מחפש שקילה עד ארבעה ימים מהתמונה.</p></div>';
+    }
+  }
+
+  /* מעבר בין זוגות סמוכים, בלי לצאת מהמסך */
+  h+='<div class="cmpnav">'+
+     '<button class="btn sec" id="cmpPrev"'+(i<=1?" disabled":"")+'>← זוג קודם</button>'+
+     '<span class="tiny num">'+(i+1)+' מתוך '+srt.length+'</span>'+
+     '<button class="btn sec" id="cmpNext"'+(i>=srt.length-1?" disabled":"")+'>זוג הבא →</button>'+
+     '</div>';
+  return h+'</div></div>';
+}
+function bindCmp(){
+  const w=$("#cmpWrap"); if(!w) return;
+  const close=()=>{ ui.cmpPhoto=null; persist(); render() };
+  const x=$("#cmpX"); if(x) x.onclick=close;
+  w.onclick=e=>{ if(e.target===w) close() };
+  const P=cmpPair(); if(!P) return;
+  const go=k=>{ const t=P.srt[k]; if(t){ ui.cmpPhoto=t.id; persist(); render() } };
+  const pv=$("#cmpPrev"); if(pv&&!pv.disabled) pv.onclick=()=>go(P.i-1);
+  const nx=$("#cmpNext"); if(nx&&!nx.disabled) nx.onclick=()=>go(P.i+1);
+  /* מקלדת: חצים לניווט, Escape לסגירה */
+  w.tabIndex=-1; try{ w.focus() }catch(e){}
+  w.onkeydown=e=>{
+    if(e.key==="Escape"){ e.preventDefault(); return close() }
+    if(e.key==="ArrowRight"&&P.i>1){ e.preventDefault(); go(P.i-1) }
+    if(e.key==="ArrowLeft"&&P.i<P.srt.length-1){ e.preventDefault(); go(P.i+1) }
+  };
+}
+
 /* הקטנה לפני שמירה. הערכים למעלה נבחרו מהמדידה, לא מהתחושה. */
 function photoScale(im){
   const sc=Math.min(1,PHOTO_MAX/Math.max(im.width,im.height));
@@ -4748,7 +4862,7 @@ function viewPhotos(){
         const tag=i===0?"נקודת הבסיס":(i===line.length-1?"היום":"");
         h+='<div class="ptli">'+
            '<div class="plab">'+(tag?esc(tag)+' · ':'')+'<span class="num">'+fmtDate(p.date)+'</span></div>'+
-           (PHOTO_URLS[p.id]?'<img src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+'">'
+           (PHOTO_URLS[p.id]?'<img class="phclick" data-cmp="'+p.id+'" tabindex="0" role="button" src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+' — לחץ להשוואה">'
                             :'<div class="pload">לא נמצאה באחסון</div>')+
            (m?'<div class="ptlm"><span class="num">'+n1(m.weight)+'</span> ק"ג'+
               (m.bf!=null?' · <span class="num">'+n1(m.bf)+'</span>% שומן':'')+'</div>'
@@ -4763,7 +4877,7 @@ function viewPhotos(){
     [[first,mA,"הראשונה"],[last,mB,"האחרונה"]].forEach(([p,m,lab])=>{
       h+='<div class="pcmpi"><div class="plab">'+esc(lab)+' · <span class="num">'+
          fmtDate(p.date)+'</span></div>'+
-         (PHOTO_URLS[p.id]?'<img src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+'">'
+         (PHOTO_URLS[p.id]?'<img class="phclick" data-cmp="'+p.id+'" tabindex="0" role="button" src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+' — לחץ להשוואה">'
                           :'<div class="pload">התמונה לא נמצאה באחסון</div>')+
          photoStats(m)+'</div>';
     });
@@ -4807,7 +4921,7 @@ function viewPhotos(){
          esc(p.note||"")+'"></div></div>'+
          '<div class="btnrow"><button class="btn" type="submit">שמור</button></div></form>';
     }
-    h+=(PHOTO_URLS[p.id]?'<img src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+'">'
+    h+=(PHOTO_URLS[p.id]?'<img class="phclick" data-cmp="'+p.id+'" tabindex="0" role="button" src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+' — לחץ להשוואה">'
                         :'<div class="pload">התמונה לא נמצאה באחסון</div>')+
        photoStats(m)+'</div>';
   });
@@ -10144,6 +10258,12 @@ function bind(){
       if(f) addPhoto(f);
     });
   }
+  /* לחיצה על תמונה פותחת אותה בגדול מול הקודמת לה ברצף */
+  document.querySelectorAll("[data-cmp]").forEach(im=>{
+    const open=()=>{ ui.cmpPhoto=im.dataset.cmp; persist(); render() };
+    im.onclick=open;
+    im.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open() } };
+  });
   document.querySelectorAll("[data-editph]").forEach(b=>b.onclick=()=>{
     ui.editPhoto=(ui.editPhoto===b.dataset.editph)?null:b.dataset.editph;
     persist(); render();
