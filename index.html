@@ -719,6 +719,17 @@ a.yt,a.ytmore{min-height:44px}
 .storewarn{border:1px solid var(--bad-txt)}
 .storewarn .btnrow{margin-top:12px}
 .askbox .btnrow{margin-top:16px}
+/* ---------- מונח מקצועי כנלווה ומילון המונחים ---------- */
+.pro{font-size:0.82em;font-weight:500;color:var(--label3);white-space:nowrap}
+.gloss{display:flex;flex-direction:column;gap:2px}
+.gitem{padding:12px 0;border-bottom:1px solid var(--sep)}
+.gitem:last-child{border-bottom:0}
+.gitem:first-child{padding-top:0}
+.gtop{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:4px}
+.gtop b{font-size:15.5px;font-weight:600}
+.gpro{font-size:12.5px;font-weight:500;color:var(--accent-txt);
+  background:var(--fill);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.gdesc{margin:0;font-size:13.5px;color:var(--label2);line-height:1.65}
 .empty{text-align:center;color:var(--label2);padding:34px 16px;font-size:15px}
 .toast{
   position:fixed;bottom:calc(94px + env(safe-area-inset-bottom));inset-inline:0;margin:0 auto;
@@ -1730,7 +1741,7 @@ const PARAM_INFO={
   what:"אחוז שריר השלד, מחושב מאותה מדידת התנגדות.",
   drivers:"נע כמעט תמיד הפוך לאחוז השומן, כי שניהם חלוקה של אותו סך.",
   real:"שינוי אמיתי איטי מאוד. תנודה יומית היא ארתמטיקה, לא שריר."},
- smi:{lab:"מדד שריר",unit:"",noise:0.2,direct:false,
+ smi:{lab:"מדד שריר (SMI)",unit:"",noise:0.2,direct:false,
   what:"מסת שריר הגפיים חלקי גובה בריבוע. מדד לסרקופניה.",
   drivers:"מחושב ממסת השריר המוערכת, ולכן זז איתה.",
   real:"מהמדדים האיטיים ביותר. שינוי משמעותי נמדד בחודשים."},
@@ -1750,7 +1761,7 @@ const PARAM_INFO={
   what:"כל השריר, כולל חלק והלב, בניגוד לשריר השלד בלבד.",
   drivers:"אותה משפחת חישוב. תמיד גבוה מאחוז שריר השלד.",
   real:"נע יחד עם שריר השלד ואינו מוסיף מידע עצמאי."},
- bmr:{lab:"קלוריות במנוחה",unit:'קק"ל',noise:60,direct:false,
+ bmr:{lab:"קלוריות במנוחה (BMR)",unit:'קק"ל',noise:60,direct:false,
   what:"קצב חילוף חומרים במנוחה, שהמכשיר גוזר מהמסה ללא שומן.",
   drivers:"זז רק כי המסה ללא שומן זזה. אינו מדידה עצמאית של המטבוליזם.",
   real:"אם המסה ללא שומן קפצה ממים, גם מספר הקלוריות במנוחה 'עלה' בלי ששום דבר קרה."},
@@ -2121,13 +2132,13 @@ const OCR_FIELDS=[
  {key:"fat",    core:1, lab:'כמות שומן',         unit:'ק"ג',min:1,  max:120, dec:1, labels:["body fat mass(kg)","body fat mass","fat mass(kg)"]},
  {key:"lean",   core:1, lab:'מסת גוף רזה',      unit:'ק"ג',min:20, max:150, dec:1, labels:["lean body mass(kg)","lean body mass","lean bodymass","lean body","lean mass"]},
  {key:"smmPct", core:1, lab:'שריר שלד',         unit:'%',  min:15, max:75,  dec:1, labels:["skeletal muscle(%)","skeletal muscle (%)"]},
- {key:"smi",    core:1, lab:'מדד שריר',              unit:'',   min:3,  max:16,  dec:1, labels:["smi(skeletal muscle mass index)","smi(skeletal","smi("]},
+ {key:"smi",    core:1, lab:'SMI · מדד שריר',              unit:'',   min:3,  max:16,  dec:1, labels:["smi(skeletal muscle mass index)","smi(skeletal","smi("]},
  /* --- מדדים נוספים מהדוח --- */
  {key:"water",   lab:'אחוז מים',        unit:'%',   min:30, max:80,  dec:1, labels:["body water(%)","body water (%)"]},
  {key:"protein", lab:'חלבון',           unit:'%',   min:5,  max:30,  dec:1, labels:["protein(%)","protein (%)"]},
  {key:"salt",    lab:'מלחים אנאורגניים',unit:'%',   min:2,  max:12,  dec:1, labels:["inorganic salt(%)","inorganic salt"]},
  {key:"muscle",  lab:'שריר כולל',       unit:'%',   min:40, max:95,  dec:1, labels:["muscle(%)","muscle (%)"]},
- {key:"bmr",     lab:'קלוריות במנוחה',             unit:'קק"ל',min:700,max:4000,dec:0, labels:["bmr(kcal)","bmr (kcal)","bmr"]},
+ {key:"bmr",     lab:'BMR · קלוריות במנוחה',             unit:'קק"ל',min:700,max:4000,dec:0, labels:["bmr(kcal)","bmr (kcal)","bmr"]},
  {key:"bmi",     lab:'BMI',             unit:'',    min:10, max:60,  dec:1, labels:["bmi"]},
  /* תוויות קצרות בסוף הרשימה: בדוח הן נשברות לשתי שורות עם המספר ביניהן,
     ואז ההתאמה המלאה נכשלת. הקצרה תופסת אחריה. */
@@ -2740,12 +2751,12 @@ const COLS=[
  {key:"fat",     lab:"כמות שומן",       syn:["body fat mass","fat mass","כמות שומן"]},
  {key:"lean",    lab:"מסת גוף רזה",    syn:["lean body mass","fat free mass","fat-free mass","lean mass","ffm","מסת גוף רזה","מסה ללא שומן"]},
  {key:"smmPct",  lab:"שריר שלד",       syn:["skeletal muscle percentage","skeletal muscle rate","skeletal muscle","smm","שריר שלד","מסת שריר שלד"]},
- {key:"smi",     lab:"מדד שריר",            syn:["smi","skeletal muscle mass index"]},
+ {key:"smi",     lab:"SMI · מדד שריר",            syn:["smi","skeletal muscle mass index"]},
  {key:"water",   lab:"אחוז מים",       syn:["body water percentage","body water rate","body water","water rate","moisture","total body water","אחוז מים","מים"]},
  {key:"protein", lab:"חלבון",          syn:["protein rate","protein percentage","protein","חלבון"]},
  {key:"salt",    lab:"מלחים",          syn:["inorganic salt","bone mineral","bone mass","mineral","salt","מלחים","מינרלים","מסת עצם"]},
  {key:"muscle",  lab:"שריר כולל",      syn:["muscle percentage","muscle rate","muscle mass","muscle","שריר כולל","אחוז שריר","מסת שריר"]},
- {key:"bmr",     lab:"קלוריות במנוחה",            syn:["bmr","basal metabolic rate","metabolism","חילוף חומרים"]},
+ {key:"bmr",     lab:"BMR · קלוריות במנוחה",            syn:["bmr","basal metabolic rate","metabolism","חילוף חומרים"]},
  {key:"bmi",     lab:"BMI",            syn:["bmi","body mass index"]},
  {key:"visceral",lab:"שומן ויסצרלי",   syn:["visceral fat index","visceral fat level","visceral fat","visceral","שומן ויסצרלי"]},
  {key:"subcut",  lab:"שומן תת־עורי",   syn:["subcutaneous fat","subcutaneous","שומן תת עורי"]},
@@ -3682,6 +3693,66 @@ function rangeDays(){
   const rows=official().filter(r=>r[ui.metric]!=null);
   const last=dayNum(rows[rows.length-1].date);
   return Math.max(WEEK_CHART_DAYS, last-dayNum(w[w.length-1].week)+7);
+}
+/* ---- מילון המונחים ----
+   המונח המקצועי נשאר זמין לצד ההסבר הפשוט, וזה נכון משתי סיבות:
+   הדוח של המשקל מדפיס SMI ו-BMR באנגלית, ומי שילך למאמן או לרופא ישמע
+   "מסה רזה". אפליקציה שמסתירה את המילה המקצועית מנתקת את המשתמש משני
+   המקומות האלה.
+   הכלל: **הפשוט מוביל, המקצועי נלווה בשקט.** חוץ ממסך ייבוא הצילום,
+   שם המונח האנגלי הוא הגשר לדוח עצמו ולכן הוא זה שמופיע ראשון. */
+const TERMS=[
+  {k:"lean",  p:"מסה ללא שומן",     pro:"מסה רזה",
+   d:"כל מה שאינו שומן: שריר, עצם, מים ואיברים. זה מה שרוצים לשמור עליו כשיורדים במשקל."},
+  {k:"fat",   p:"כמות שומן",        pro:"מסת שומן",
+   d:"כמה קילוגרמים של שומן יש בגוף, במספר ולא באחוז."},
+  {k:"bf",    p:"אחוז שומן",        pro:"אחוז שומן",
+   d:"איזה חלק מהמשקל הוא שומן. יורד גם כשמעלים שריר בלי לרדת בקילוגרמים."},
+  {k:"smi",   p:"מדד שריר",         pro:"SMI",
+   d:"מסת השריר ביחס לגובה. מאפשר להשוות בין אנשים בגבהים שונים."},
+  {k:"bmr",   p:"קלוריות במנוחה",   pro:"BMR",
+   d:"כמה קלוריות הגוף שורף ביום גם אם תשכב במיטה ולא תזוז."},
+  {k:"bia",   p:"המשקל החכם",       pro:"BIA",
+   d:"המשקל לא מודד שומן — הוא מעביר זרם חשמלי חלש ומסיק הרכב גוף מההתנגדות. "+
+     "לכן מים, מלח ואוכל משפיעים על התוצאה."},
+  {k:"water", p:"כמות המים בגוף",   pro:"הידרציה",
+   d:"כמה מים יש בגוף כרגע. הגורם מספר אחת לקפיצות בין שקילות."},
+  {k:"visc",  p:"שומן פנימי",       pro:"שומן ויסצרלי",
+   d:"שומן שעוטף את האיברים בבטן, להבדיל מזה שמתחת לעור. הוא שמשפיע על הבריאות."},
+  {k:"nipple",p:"חזה",              pro:"היקף פטמות",
+   d:"מודדים בגובה הפטמות, כשהסרט מקביל לרצפה והידיים רפויות."},
+  {k:"tdee",  p:"שריפה יומית",      pro:"TDEE",
+   d:"סך הקלוריות שהגוף שורף ביום — מנוחה ותנועה יחד."},
+  {k:"rir",   p:"כמה נשאר בכוח",    pro:"RIR",
+   d:"בסוף סט: כמה חזרות נוספות יכולת לעשות. 2 פירושו שנשארו לך שתיים."},
+  {k:"deload",p:"שבוע הקלה",        pro:"Deload",
+   d:"שבוע עם פחות משקל ופחות סטים, כדי לתת לגוף להדביק את הקצב."}
+];
+function termOf(k){ return TERMS.filter(t=>t.k===k)[0]||null }
+/* המקצועי כנלווה שקט. אם הוא זהה לפשוט — לא מציגים פעמיים. */
+function withPro(k){
+  const t=termOf(k); if(!t) return "";
+  return esc(t.p)+(t.pro&&t.pro!==t.p?' <span class="pro">'+esc(t.pro)+'</span>':"");
+}
+/* במסך ייבוא הצילום הסדר הפוך: מה שכתוב על הדוח מופיע ראשון. */
+function proFirst(k,fallback){
+  const t=termOf(k);
+  if(!t) return esc(fallback||"");
+  return esc(t.pro)+' <span class="pro">'+esc(t.p)+'</span>';
+}
+function glossaryCard(){
+  let h='<div class="card"><h2>מילון מונחים</h2>';
+  h+='<p class="tiny" style="margin-bottom:14px">האפליקציה מדברת בשפה פשוטה, '+
+     'אבל הדוח של המשקל והמאמן שלך משתמשים במונחים המקצועיים. '+
+     'כאן שניהם, זה מול זה.</p>';
+  h+='<div class="gloss">';
+  TERMS.forEach(t=>{
+    h+='<div class="gitem"><div class="gtop"><b>'+esc(t.p)+'</b>'+
+       (t.pro&&t.pro!==t.p?'<span class="gpro">'+esc(t.pro)+'</span>':'')+'</div>'+
+       '<p class="gdesc">'+esc(t.d)+'</p></div>';
+  });
+  h+='</div></div>';
+  return h;
 }
 const METRICS=[{id:"weight",label:"משקל",unit:'ק"ג'},{id:"bf",label:"אחוז שומן",unit:"%"},{id:"lean",label:"מסה ללא שומן",unit:'ק"ג'},{id:"fat",label:"כמות שומן",unit:'ק"ג'}];
 
@@ -8671,6 +8742,7 @@ function viewData(){
   h+='<p class="tiny">כל עוד אתה עובד בשני מכשירים, זכור: שקילה שרשמת באחד לא תופיע בשני '+
      'עד שתעביר שוב. עדיף לבחור מכשיר אחד ראשי.</p>';
   h+='</div>';
+  h+=glossaryCard();
   h+='<div class="card"><h2>איך לקרוא את המספרים</h2>';
   h+='<p class="tiny">המשקל החכם לא מודד שומן — הוא מסיק אותו מהתנגדות חשמלית, ולכן מושפע מכמות המים בגוף, מלח, גליקוגן ותכולת מערכת עיכול. '+
      'מהימנות המכשיר בין מדידות גבוהה, אבל הדיוק המוחלט בינוני. לכן הכיוון לאורך זמן שווה יותר מהמספר של היום.</p>';
