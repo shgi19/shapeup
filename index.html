@@ -394,6 +394,41 @@ details.param .pbody p:last-child{margin:0}
 .rnglbl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--label2);margin-top:6px}
 .rnglbl span:nth-child(2){font-weight:600}
 
+/* ---------- סקלת ייחוס: איפה אני עומד ---------- */
+.sc{margin:11px 0 2px;padding:12px 13px;background:var(--fill);border-radius:var(--r-inner)}
+.sctop{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+.sctop b{font-size:14.5px;font-weight:600}
+.scbar{position:relative;display:flex;height:13px;border-radius:999px}
+.scbar i{display:block;height:100%}
+.scbar i:first-child{border-start-start-radius:999px;border-end-start-radius:999px}
+.scbar i:last-child{border-start-end-radius:999px;border-end-end-radius:999px}
+.sc-low{background:color-mix(in srgb,var(--blue) 45%,transparent)}
+.sc-ok{background:color-mix(in srgb,var(--green) 48%,transparent)}
+.sc-mid{background:color-mix(in srgb,var(--orange) 48%,transparent)}
+.sc-high{background:color-mix(in srgb,var(--red) 45%,transparent)}
+.sc-nul{background:var(--fill2)}
+.scmk{position:absolute;top:-5px;width:5px;height:23px;border-radius:3px;
+  background:var(--label);transform:translate(50%,0);box-shadow:0 0 0 2.5px var(--card2)}
+.scends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--label2);margin-top:7px}
+.sclg{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:9px}
+.sclgi{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--label2);line-height:1.5}
+.sclgi i{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.sclgi.on{color:var(--label);font-weight:600}
+.scv{margin:11px 0 0;font-size:15.5px;line-height:1.65}
+.scsrc{margin:7px 0 0;font-size:13px;color:var(--label2);line-height:1.6}
+.scsrc b{color:var(--label);font-weight:600}
+.pcard.open .sctop b{font-size:18px}
+.pcard.open .scv{font-size:18.5px;line-height:1.7}
+.pcard.open .scsrc{font-size:15.5px}
+.pcard.open .sclgi{font-size:15px}
+.pcard.open .scends{font-size:13.5px}
+
+/* ---------- שעת המדידה בהיקפים ---------- */
+.todchip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;
+  padding:3px 10px;font-size:12.5px;font-weight:600;background:var(--fill);color:var(--label2)}
+.todchip.t3{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--good-txt)}
+.todchip.t2,.todchip.t1{background:color-mix(in srgb,var(--orange) 18%,transparent);color:var(--warn-txt)}
+
 /* ---------- דוח תקופה ---------- */
 .headline{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:14px 15px}
 .headline p{font-size:16.5px;line-height:1.7}
@@ -3967,6 +4002,7 @@ function weeklyCard(key){
            'המדד הזה מגיע מהמשקל החכם, והוא זז עם מים, מלח וגליקוגן לפני שהוא זז עם רקמה.</p>';
       else
         h+='<p class="tiny">שינוי בתוך התנודה הרגילה. אין כאן מה להסביר.</p>';
+      h+=scaleFor(it.key,it.to,it.unit,it.dec);
       h+='</div>';
     });
     const noisy=cmp.filter(x=>!x.direct).length;
@@ -4015,6 +4051,296 @@ function weeklyCard(key){
   return h;
 }
 
+/* ============================================================================
+   סקלות ייחוס — "איפה אני עומד"
+   ----------------------------------------------------------------------------
+   הבקשה הייתה שלכל מדד תהיה סקלה: מתחת לנורמה, טווח תקין, מעל הנורמה, ואיפה
+   הוא עומד עליה.
+
+   הכלל שלא נשבר כאן: אין בקובץ הזה אף מספר שהמצאתי. לכל סקלה רשום המקור
+   שממנו היא באה. מדד שאין לו טווח מוסכם בספרות — כמו מסה ללא שומן בק"ג,
+   או היקף ירך — לא מקבל סקלה מזויפת. הוא מקבל "הסקלה שלך", כלומר מיקום
+   ביחס להיסטוריה שלו עצמו, ואמירה מפורשת שאין תקן. עדיף להגיד "אין תקן"
+   מלהמציא אחד ולתת לו להישמע רפואי.
+   ============================================================================ */
+const SC_TONE={low:"sc-low",ok:"sc-ok",mid:"sc-mid",high:"sc-high"};
+function sexOf(){ return (me&&me.sex==="f")?"f":"m" }
+
+/* טווחי אחוז שומן לפי ACE. מוחזקים בנפרד כי גם מסת השומן בק"ג נגזרת מהם. */
+function bfBands(){
+  return sexOf()==="f"
+    ?[{to:14,lab:"מינימום הכרחי",tone:"low"},{to:21,lab:"רמת ספורטאית",tone:"ok"},
+      {to:25,lab:"כושר טוב",tone:"ok"},{to:32,lab:"ממוצע",tone:"mid"},{to:null,lab:"גבוה",tone:"high"}]
+    :[{to:6, lab:"מינימום הכרחי",tone:"low"},{to:14,lab:"רמת ספורטאי", tone:"ok"},
+      {to:18,lab:"כושר טוב",    tone:"ok"}, {to:25,lab:"ממוצע",       tone:"mid"},{to:null,lab:"גבוה",tone:"high"}];
+}
+const BF_MEAN={
+  low:"מתחת לזה הגוף מתחיל לשלם — הורמונים, שינה ומצב רוח. זו לא מטרה.",
+  ok:"זה הטווח שבו הגוף מתפקד טוב והשרירים נראים. רוב האנשים לא מגיעים לכאן בלי עבודה.",
+  mid:"טווח נפוץ ובריא לגמרי. אם המטרה שלך היא מראה, יש מכאן לאן לרדת.",
+  high:"מכאן ומעלה זה כבר מדד שקשור לבריאות ולא רק למראה — במיוחד יחד עם היקף מותן גבוה."};
+
+/* ---- הסקלה של מדד אחד. מחזיר null כשאין תקן אמיתי. ---- */
+function refScale(key,val){
+  if(val==null||!isFinite(val)) return null;
+  const sex=sexOf(), h=heightCm();
+  const last=official().slice(-1)[0];
+  const w=last?last.weight:null;
+
+  if(key==="bf") return {
+    v:val,unit:"%",dec:1,min:sex==="f"?8:2,max:sex==="f"?40:34,
+    bands:bfBands(), mean:BF_MEAN,
+    src:"American Council on Exercise — טבלת אחוזי שומן לפי מין",
+    caveat:"אחוז השומן שהמשקל החכם נותן הוא הערכה מהתנגדות חשמלית, לא מדידה. "+
+           "המספר המוחלט יכול לסטות; המגמה לאורך זמן אמינה הרבה יותר."};
+
+  if(key==="weight"){
+    if(!h) return null;
+    const m2=Math.pow(h/100,2);
+    return {v:val,unit:'ק"ג',dec:1,min:Math.round(16*m2),max:Math.round(35*m2),
+      bands:[{to:18.5*m2,lab:"תת־משקל",tone:"low"},{to:25*m2,lab:"תקין",tone:"ok"},
+             {to:30*m2,lab:"עודף משקל",tone:"mid"},{to:null,lab:"השמנה",tone:"high"}],
+      mean:{low:"מתחת לטווח שמוגדר תקין לגובה שלך.",
+            ok:"בתוך הטווח שמוגדר תקין לגובה שלך.",
+            mid:"מעל הטווח התקין לפי המדד הזה — אבל תקרא את ההסתייגות למטה לפני שאתה מסיק משהו.",
+            high:"מעל הטווח התקין לפי המדד הזה — אבל תקרא את ההסתייגות למטה לפני שאתה מסיק משהו."},
+      src:"ארגון הבריאות העולמי (WHO) — טווחי BMI, מומרים לק\"ג לפי גובה "+h+' ס"מ',
+      caveat:"ה־BMI לא יודע להבדיל בין שריר לשומן. מי שמתאמן בכוח יכול לצאת ״עודף משקל״ "+
+             "ולהיות עם אחוז שומן נמוך. אצלך אחוז השומן והיקף המותן אמינים יותר מהמדד הזה."};
+  }
+
+  if(key==="fat"){
+    if(!w) return null;
+    const k=w/100;
+    return {v:val,unit:'ק"ג',dec:1,
+      min:+( (sex==="f"?8:2)*k ).toFixed(1), max:+( (sex==="f"?40:34)*k ).toFixed(1),
+      bands:bfBands().map(b=>({to:b.to==null?null:+(b.to*k).toFixed(1),lab:b.lab,tone:b.tone})),
+      mean:BF_MEAN,
+      src:"אותם טווחי ACE של אחוז השומן, מומרים לקילוגרמים לפי המשקל הנוכחי ("+n1(w)+' ק"ג)',
+      caveat:"כי הסקלה נגזרת מהמשקל, היא זזה כשהמשקל זז. אחוז השומן הוא המדד היציב יותר להשוואה."};
+  }
+
+  if(key==="navel") return {
+    v:val,unit:'ס"מ',dec:1,min:sex==="f"?60:70,max:sex==="f"?112:126,
+    bands: sex==="f"
+      ?[{to:80,lab:"תקין",tone:"ok"},{to:88,lab:"סיכון מוגבר",tone:"mid"},{to:null,lab:"סיכון גבוה",tone:"high"}]
+      :[{to:94,lab:"תקין",tone:"ok"},{to:102,lab:"סיכון מוגבר",tone:"mid"},{to:null,lab:"סיכון גבוה",tone:"high"}],
+    mean:{ok:"בתוך הטווח שמוגדר תקין.",
+          mid:"מעל הסף הראשון. זה סימן לשומן בטני, ולא סתם למשקל.",
+          high:"מעל הסף השני. מכל המדדים כאן, זה שהכי קשור לסיכון למחלות לב ולסוכרת — "+
+               "יותר מהמשקל עצמו."},
+    src:"ארגון הבריאות העולמי (WHO) — היקף מותן והסיכון שנלווה אליו",
+    caveat:"נמדד בגובה הטבור, בבוקר, על בטן ריקה. מדידה אחרי אוכל תראה יותר בלי שהשתנה כלום."};
+
+  if(key==="smi") return {
+    v:val,unit:'ק"ג/מ²',dec:2,min:sex==="f"?4:5,max:sex==="f"?9:12,
+    bands:[{to:sex==="f"?5.5:7.0,lab:"נמוך",tone:"high"},{to:null,lab:"מעל הסף",tone:"ok"}],
+    mean:{high:"מתחת לסף שמשמש לאבחון אובדן מסת שריר. שווה להראות את זה לרופא.",
+          ok:"מעל הסף התחתון — כלומר לא נמוך."},
+    src:"EWGSOP2 2019 — סף אבחון לאובדן מסת שריר (סרקופניה)",
+    caveat:"זה סף רפואי תחתון, לא יעד כושר. לעבור אותו זה ״לא נמוך״, לא ״טוב״. "+
+           "אין בספרות טווח ״מצוין״ מוסכם למדד הזה, ולכן לא המצאתי אחד."};
+
+  if(key==="water") return {
+    v:val,unit:"%",dec:1,min:sex==="f"?38:42,max:sex==="f"?68:72,
+    bands:[{to:sex==="f"?45:50,lab:"נמוך",tone:"low"},
+           {to:sex==="f"?60:65,lab:"טווח אופייני",tone:"ok"},{to:null,lab:"גבוה",tone:"mid"}],
+    mean:{low:"נמוך מהאופייני — לרוב פשוט שתית מעט לפני השקילה.",
+          ok:"בתוך התחום האופייני.",
+          mid:"גבוה מהאופייני. קורה אחרי שתייה מרובה או ארוחה מלוחה."},
+    src:"טווחי אחוז המים בגוף בפיזיולוגיה כללית",
+    caveat:"אין לזה סף רפואי מוסכם, וקריאת המים במשקל חכם משתנה עם שתייה, מלח ואוכל. "+
+           "תסתכל על זה כמצפן שמסביר קפיצות בין שקילות, לא כאבחנה."};
+
+  return null;
+}
+
+/* ---- כשאין תקן: הסקלה שלך מול עצמך ---- */
+function personalScale(key,val,unit,dec,rows){
+  if(val==null||!isFinite(val)) return null;
+  const src=rows||official();
+  const vals=src.map(r=>r[key]).filter(x=>x!=null&&isFinite(x));
+  if(vals.length<4) return null;
+  const lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+  if(hi-lo<1e-6) return null;
+  const avg=vals.reduce((s,x)=>s+x,0)/vals.length;
+  const pad=(hi-lo)*0.08;
+  return {personal:true,v:val,unit:unit||"",dec:dec==null?1:dec,
+    min:lo-pad,max:hi+pad,avg,n:vals.length,lo,hi,
+    bands:[{to:null,lab:"הטווח שנמדד אצלך",tone:null}]};
+}
+
+function scBandOf(bands,v){
+  for(let i=0;i<bands.length;i++){
+    const b=bands[i];
+    if(b.to==null||v<b.to) return {b,i,from:i?bands[i-1].to:null};
+  }
+  return {b:bands[bands.length-1],i:bands.length-1,from:null};
+}
+
+/* ---- ההמרה ל־HTML. אחת לשני סוגי הסקלות. ---- */
+function scaleHTML(sc,label){
+  if(!sc) return "";
+  const min=sc.min, max=sc.max, span=(max-min)||1;
+  const P=x=>Math.max(0,Math.min(100,(x-min)/span*100));
+  const f=x=>sc.dec===0?String(Math.round(x)):n1(x);
+  const un=sc.unit?" "+sc.unit:"";
+  let h='<div class="sc">';
+  h+='<div class="sctop"><b>'+esc(label||"איפה אני עומד")+'</b></div>';
+
+  /* הפס */
+  let prev=min, segs="";
+  sc.bands.forEach(b=>{
+    const end=(b.to==null)?max:b.to;
+    segs+='<i class="'+(SC_TONE[b.tone]||"sc-nul")+'" style="width:'+n1(Math.max(0,P(end)-P(prev)))+'%"></i>';
+    prev=end;
+  });
+  h+='<div class="scbar">'+segs+
+     '<span class="scmk" style="inset-inline-start:'+n1(P(sc.v))+'%"></span></div>';
+  h+='<div class="scends"><span class="num">'+f(min)+'</span><span class="num">'+f(max)+'</span></div>';
+
+  if(sc.personal){
+    h+='<p class="scv">אתה על <b class="num">'+f(sc.v)+'</b>'+esc(un)+'. '+
+       'לאורך <span class="num">'+sc.n+'</span> המדידות שלך המדד הזה נע בין '+
+       '<b class="num">'+f(sc.lo)+'</b> ל־<b class="num">'+f(sc.hi)+'</b>'+esc(un)+
+       ', בממוצע <b class="num">'+f(sc.avg)+'</b>.</p>';
+    h+='<p class="scsrc"><b>אין לזה טווח תקין.</b> למדד הזה אין בספרות טווח מוסכם של '+
+       '״תקין / מתחת / מעל״ — הוא תלוי מדי בגובה, במבנה ובמטרה. במקום להמציא תקן '+
+       'שיישמע רפואי, הסקלה כאן היא אתה מול עצמך: איפה המספר של היום יושב בתוך '+
+       'כל מה שנמדד אצלך עד עכשיו.</p>';
+    return h+'</div>';
+  }
+
+  /* מקרא הטווחים */
+  let p2=min, lg="";
+  const cur=scBandOf(sc.bands,sc.v);
+  sc.bands.forEach((b,i)=>{
+    const end=(b.to==null)?null:b.to;
+    const rng=(i===0?"עד "+f(end):(end==null?f(p2)+" ומעלה":f(p2)+"–"+f(end)));
+    lg+='<span class="sclgi'+(i===cur.i?" on":"")+'"><i class="'+(SC_TONE[b.tone]||"sc-nul")+'"></i>'+
+        esc(b.lab)+' <span class="num">'+esc(rng)+'</span></span>';
+    if(end!=null) p2=end;
+  });
+  h+='<div class="sclg">'+lg+'</div>';
+
+  h+='<p class="scv">אתה על <b class="num">'+f(sc.v)+'</b>'+esc(un)+
+     '. זה בטווח ״<b>'+esc(cur.b.lab)+'</b>״.'+
+     ((sc.mean&&sc.mean[cur.b.tone])?' '+esc(sc.mean[cur.b.tone]):'')+'</p>';
+  h+='<p class="scsrc"><b>מקור הטווחים:</b> '+esc(sc.src)+
+     (sc.caveat?'<br>'+esc(sc.caveat):'')+'</p>';
+  return h+'</div>';
+}
+
+/* ---- מסה ללא שומן: אין לה טווח "תקין", אבל יש נקודת ייחוס אחת אמיתית ----
+   FFMI — מסה ללא שומן חלקי גובה בריבוע. אין בספרות טווח מוסכם של תקין/לא
+   תקין, ולכן אין כאן בנדים. יש מספר אחד שכן מבוסס: התקרה של מי שלא משתמש
+   בחומרים. הוא מוצג כקו ולא כשיפוט. */
+function leanNote(lean){
+  const h=heightCm();
+  if(!h||lean==null||!isFinite(lean)) return "";
+  const f=lean/Math.pow(h/100,2);
+  return '<p class="scsrc"><b>נקודת ייחוס אחת שכן קיימת:</b> המסה ללא שומן שלך חלקי '+
+    'הגובה בריבוע נותנת <b class="num">'+n1(f)+'</b> (מדד שנקרא FFMI). '+
+    'הקו שמוכר בספרות הוא <b class="num">25</b> — התקרה שנמצאה אצל מתאמנים שלא '+
+    'השתמשו בחומרים. <b>מקור:</b> Kouri ואחרים, 1995. '+
+    'מתחת לקו הזה אין חלוקה מוסכמת ל״תקין״ ו״לא תקין״, ולכן לא אמציא אחת.</p>';
+}
+
+/* ---- הקריאה היחידה שהתצוגה עושה: תן לי סקלה למדד הזה, מה שיש ---- */
+function scaleFor(key,val,unit,dec,rows){
+  const r=refScale(key,val);
+  if(r) return scaleHTML(r,"איפה אני עומד ביחס לטווח התקין");
+  const extra=(key==="lean")?leanNote(val):"";
+  const p=personalScale(key,val,unit,dec,rows);
+  if(p) return scaleHTML(p,"איפה אני עומד ביחס לעצמי").replace(/<\/div>$/,extra+"</div>");
+  return extra?'<div class="sc">'+extra+'</div>':"";
+}
+
+/* ============================================================================
+   שעת המדידה בהיקפים
+   ----------------------------------------------------------------------------
+   הבקשה הייתה שהאפליקציה תדע מתי נמדד, כדי שתדע כמה המדידה אמינה ותסיק לבד.
+
+   הבסיס האמיתי: היקף הבטן משתנה במהלך היום מתוכן המעיים, מנוזלים ומיציבה.
+   הכיוון ידוע — בוקר על בטן ריקה הוא הנמוך והעקבי ביותר. את *הגודל* של
+   ההפרש אני לא ממציא: אם יש מספיק מדידות בוקר וגם ערב, האפליקציה
+   מחשבת את ההפרש שלו עצמו ומציגה אותו. עד אז היא אומרת בפירוש שאין לה
+   מספיק נתונים כדי לכמת.
+
+   הכלל התפעולי: משווים בוקר מול בוקר. השוואה בין שעות שונות מסומנת
+   כלא־ברת־השוואה במקום להציג הפרש שנשמע אמיתי.
+   ============================================================================ */
+const TOD=[
+  {id:"morning",lab:"בוקר",  trust:3,full:"בוקר, אחרי שירותים ולפני אוכל ושתייה"},
+  {id:"noon",   lab:"צהריים",trust:2,full:"במהלך היום, אחרי שכבר אכלת ושתית"},
+  {id:"eve",    lab:"ערב",   trust:1,full:"ערב, בסוף יום של אוכל ושתייה"}
+];
+function todOf(id){ return TOD.filter(t=>t.id===id)[0]||null }
+function todChip(id){
+  const t=todOf(id);
+  return '<span class="todchip t'+(t?t.trust:0)+'">'+esc(t?t.lab:"שעה לא צוינה")+'</span>';
+}
+/* המדידה שממנה נכון להשוות: אותה שעה ביום, והכי ותיקה שיש */
+function circBase(rec){
+  const older=circ.filter(c=>c!==rec&&c.date<=rec.date).sort((a,b)=>a.date<b.date?-1:1);
+  if(!older.length) return null;
+  const same=older.filter(c=>c.tod&&rec.tod&&c.tod===rec.tod);
+  return {rec:(same[0]||older[0]), same:!!same.length};
+}
+/* מה האפליקציה יודעת להסיק על אמינות ההיקפים שלו */
+function circTrust(){
+  const cnt={}; TOD.forEach(t=>cnt[t.id]=0);
+  let noTod=0;
+  circ.forEach(c=>{ if(c.tod&&cnt[c.tod]!=null) cnt[c.tod]++; else noTod++ });
+  const kinds=TOD.map(t=>t.id).filter(k=>cnt[k]>0);
+  /* ההפרש של המשתמש עצמו בין בוקר לערב — רק אם באמת יש ממה למדוד */
+  const pick=(t)=>circ.filter(c=>c.tod===t&&c.navel!=null).map(c=>c.navel);
+  const m=pick("morning"), e=pick("eve");
+  let gap=null;
+  if(m.length>=3&&e.length>=3){
+    const av=a=>a.reduce((s,x)=>s+x,0)/a.length;
+    gap=av(e)-av(m);
+  }
+  return {cnt,noTod,kinds,gap,mN:m.length,eN:e.length,total:circ.length};
+}
+function circTrustCard(){
+  const t=circTrust();
+  if(!t.total) return "";
+  let b,c,h="";
+  if(t.noTod===t.total){ b="אין מידע על שעת המדידה"; c="b-mute"; }
+  else if(t.kinds.length<=1&&!t.noTod){ b="מדידות ברות־השוואה"; c="b-ok"; }
+  else { b="מדידות מעורבות"; c="b-warn"; }
+
+  h+='<div class="pcard"><div class="ptop"><span class="pnm">אמינות מדידות ההיקפים</span>'+
+     '<span class="badge '+c+'">'+esc(b)+'</span></div>';
+
+  const parts=TOD.filter(x=>t.cnt[x.id]>0)
+                 .map(x=>'<span class="num">'+t.cnt[x.id]+'</span> ב'+esc(x.lab));
+  if(t.noTod) parts.push('<span class="num">'+t.noTod+'</span> בלי שעה רשומה');
+  h+='<p class="pline">מתוך <b class="num">'+t.total+'</b> מדידות: '+parts.join(", ")+'.</p>';
+
+  if(t.kinds.length<=1&&!t.noTod)
+    h+='<p class="tiny">כל המדידות נעשו באותה שעה ביום, ולכן ההפרשים ביניהן משקפים '+
+       'שינוי אמיתי ולא את השעון. ככה צריך.</p>';
+  else
+    h+='<p class="tiny">כשמודדים בשעות שונות, חלק מההפרש הוא תוכן המעיים והנוזלים ולא '+
+       'הגוף עצמו. לכן האפליקציה משווה כל מדידה לקודמת <b>מאותה שעה ביום</b>, וכשאין '+
+       'כזו היא מסמנת את ההפרש כלא־בר־השוואה במקום להציג מספר שנשמע אמיתי.</p>';
+
+  if(t.gap!=null)
+    h+='<p class="tiny"><b>ההפרש שלך, מהנתונים שלך:</b> היקף הטבור שלך בערב גבוה '+
+       'בממוצע ב־<b class="num">'+n1(Math.abs(t.gap))+'</b> ס"מ מהבוקר '+
+       '(<span class="num">'+t.mN+'</span> מדידות בוקר מול <span class="num">'+t.eN+'</span> בערב). '+
+       'זה לא שומן שנוסף ביום — זה אוכל, שתייה ויציבה.</p>';
+  else
+    h+='<p class="tiny">כשיהיו לך לפחות 3 מדידות טבור בבוקר ו־3 בערב, אחשב כאן כמה '+
+       'ההיקף שלך <b>באמת</b> משתנה במהלך היום. לא אכתוב מספר מהספרות — אחשב '+
+       'אותו מהנתונים שלך.</p>';
+  h+='<p class="tiny" style="opacity:.75">הכי אמין: בוקר, אחרי שירותים, לפני אוכל ושתייה, '+
+     'הסרט מקביל לרצפה והנשימה רגילה.</p>';
+  return h+'</div>';
+}
+
 function viewTrend(){
   let h='<div class="lgtitle">מגמות</div>';
   h+='<div class="seg" id="segMetric">'+METRICS.map(m=>'<button data-metric="'+m.id+'" aria-selected="'+(ui.metric===m.id)+'">'+m.label+'</button>').join("")+'</div>';
@@ -4058,6 +4384,7 @@ function viewTrend(){
          (it.unit?' '+it.unit:'')+'.</p>';
       h+='<p class="tiny">'+esc(it.verdict.why)+'</p>';
       h+='<p class="tiny" style="opacity:.7">'+esc(it.what)+'</p>';
+      h+=scaleFor(it.key,it.st.to,it.unit,it.dec);
       h+='</div>';
     });
     h+='<p class="tiny" style="margin-top:12px">מדדים שאין להם מספיק שקילות בתקופה הזו פשוט לא מופיעים כאן — '+
@@ -4070,20 +4397,60 @@ function viewTrend(){
   h+='<div class="card"><h2>היקפים</h2>';
   h+='<form id="cForm"><div class="fields">';
   h+='<div class="f"><label>תאריך</label><input type="date" name="date" value="'+today()+'" required></div>';
+  /* שעת המדידה: ברירת המחדל בוקר כי זו המדידה שאפשר להשוות אליה */
+  h+='<div class="f"><label for="cTod">מתי מדדת</label><select id="cTod" name="tod">'+
+     TOD.map(t=>'<option value="'+t.id+'"'+(t.id==="morning"?" selected":"")+'>'+esc(t.lab)+' — '+esc(t.full)+'</option>').join("")+
+     '</select></div>';
   [["navel","טבור"],["nipple","חזה"],["shoulders","כתפיים"],["thigh","ירך"],["calf","שוק"],["armFlex","יד בכיווץ"],["forearmFlex","אמה בכיווץ"]]
     .forEach(([k,l])=>{ h+='<div class="f"><label>'+l+' (ס"מ)</label><input type="number" step="0.1" inputmode="decimal" name="'+k+'"></div>' });
-  h+='</div><div class="btnrow"><button class="btn" type="submit">שמור מדידה</button></div></form>';
+  h+='</div><p class="tiny" style="margin:2px 0 12px">השעה נשמרת כדי שההשוואה תהיה '+
+     'בוקר מול בוקר. היקף הבטן משתנה במהלך היום מאוכל ומנוזלים, ובלי לדעת מתי מדדת '+
+     'אי אפשר לדעת אם השתנה הגוף או רק השעון.</p>';
+  h+='<div class="btnrow"><button class="btn" type="submit">שמור מדידה</button></div></form>';
 
   if(circ.length){
     const sorted=circ.slice().sort((a,b)=>a.date<b.date?1:-1);
-    const base=circ.slice().sort((a,b)=>a.date<b.date?-1:1)[0];
     h+='<hr class="s">';
+
+    /* סקלת היקף המותן — היחיד מבין ההיקפים שיש לו תקן אמיתי */
+    const lastNav=sorted.filter(c=>c.navel!=null)[0];
+    if(lastNav){
+      h+=scaleFor("navel",lastNav.navel,'ס"מ',1,circ);
+      const hh=heightCm();
+      if(hh){
+        const r=lastNav.navel/hh;
+        const w=r<0.5?["בתוך ההמלצה","b-ok"]:(r<0.6?["מעל ההמלצה","b-warn"]:["גבוה","b-crit"]);
+        h+='<div class="pcard"><div class="ptop"><span class="pnm">מותן ביחס לגובה</span>'+
+           '<span class="badge '+w[1]+'">'+esc(w[0])+'</span></div>'+
+           '<p class="pline">היקף המותן שלך הוא <b class="num">'+n1(r*100)+'%</b> מהגובה '+
+           '('+n1(lastNav.navel)+' מתוך '+hh+' ס"מ).</p>'+
+           '<p class="tiny">ההנחיה פשוטה: לשמור על היקף מותן מתחת ל<b>חצי מהגובה</b> — '+
+           'אצלך זה מתחת ל־<b class="num">'+n1(hh/2)+'</b> ס"מ. '+
+           '<b>מקור:</b> הנחיית NICE הבריטית. היתרון שלה על BMI הוא שהיא לא מבלבלת שריר עם שומן.</p></div>';
+      }
+    }
+
+    h+=circTrustCard();
+    h+='<hr class="s">';
+
     sorted.slice(0,6).forEach(c=>{
+      const bs=circBase(c);
       h+='<div class="ex"><div class="top"><b class="nm num">'+fmtDate(c.date)+'</b>'+
+         todChip(c.tod)+
          '<button class="btn danger mini" data-delc="'+c.id+'">מחק</button></div><div class="mus">';
       [["navel","טבור"],["nipple","חזה"],["shoulders","כתפיים"],["thigh","ירך"],["calf","שוק"],["armFlex","יד"],["forearmFlex","אמה"]]
-        .forEach(([k,l])=>{ if(c[k]!=null){ const d=(base&&base!==c&&base[k]!=null)?" ("+sgn(c[k]-base[k],1)+")":""; h+='<span>'+l+' '+n1(c[k])+d+'</span>' } });
-      h+='</div>'+(c.note?'<p class="tiny" style="margin-top:6px">'+esc(c.note)+'</p>':'')+'</div>';
+        .forEach(([k,l])=>{
+          if(c[k]==null) return;
+          /* הפרש מוצג רק מול מדידה מאותה שעה ביום. אחרת הוא מודד את השעון. */
+          const d=(bs&&bs.same&&bs.rec[k]!=null)?" ("+sgn(c[k]-bs.rec[k],1)+")":"";
+          h+='<span>'+l+' '+n1(c[k])+d+'</span>';
+        });
+      h+='</div>';
+      if(bs&&!bs.same)
+        h+='<p class="tiny" style="margin-top:6px">אין מדידה קודמת מאותה שעה ביום, '+
+           'ולכן לא מוצג כאן הפרש — הוא היה מודד את השעון ולא את הגוף.</p>';
+      if(c.note) h+='<p class="tiny" style="margin-top:6px">'+esc(c.note)+'</p>';
+      h+='</div>';
     });
   }
   h+='</div>';
@@ -9042,6 +9409,8 @@ function bindSetup(){
       entries.push(rec);
     }
     /* היקפים כנקודת בסיס */
+    /* בלי tod בכוונה: טופס הפתיחה לא שואל מתי נמדד, ולהניח "בוקר" זו המצאה.
+       המדידה תוצג כ"שעה לא צוינה" עד שתירשם אחת עם שעה. */
     const cRec={id:uid(),date:today()}; let anyC=false;
     ["navel","nipple","shoulders","armFlex","thigh","calf"].forEach(k=>{
       const v=num("c_"+k); if(v>0&&v<300){ cRec[k]=+v.toFixed(1); anyC=true }
@@ -9215,12 +9584,15 @@ function bind(){
   if(cf) cf.onsubmit=ev=>{
     ev.preventDefault();
     const f=new FormData(cf), rec={id:uid(),date:f.get("date")};
+    const td=String(f.get("tod")||"");
+    rec.tod=todOf(td)?td:"morning";
     let any=false;
     ["navel","nipple","shoulders","thigh","calf","armFlex","forearmFlex"].forEach(k=>{
       const v=f.get(k); if(v!==""&&v!=null){ rec[k]=parseFloat(v); any=true }
     });
     if(!any) return toast("לא הוזן אף היקף");
-    circ.push(rec); persist(); render(); toast("מדידת ההיקפים נשמרה");
+    circ.push(rec); persist(); render();
+    toast("נשמרה מדידת "+(todOf(rec.tod)||{lab:""}).lab);
   };
 
   /* ---- העלאת תוכנית מקובץ ---- */
