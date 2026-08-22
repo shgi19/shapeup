@@ -423,6 +423,32 @@ details.param .pbody p:last-child{margin:0}
 .pcard.open .sclgi{font-size:15px}
 .pcard.open .scends{font-size:13.5px}
 
+/* ---------- גלריית ההתקדמות ---------- */
+.pitem{margin-bottom:18px}
+.pitem:last-child{margin-bottom:0}
+.ptopr{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.ptopr b{font-size:16px}
+.pnote{font-size:13.5px;color:var(--label2);flex:1 1 auto}
+.pitem img,.pcmpi img{width:100%;display:block;border-radius:var(--r-inner);
+  background:var(--card2)}
+.pitem img{max-height:520px;object-fit:contain}
+.pcmpi img{aspect-ratio:3/4;object-fit:cover}
+.pload{height:150px;border-radius:var(--r-inner);background:var(--card2);
+  display:grid;place-items:center;color:var(--label2);font-size:13.5px}
+.pcmp{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.plab{font-size:13px;color:var(--label2);margin-bottom:6px;font-weight:600}
+.pstats{display:flex;gap:7px;margin-top:9px}
+.pstats.none{display:block;font-size:13px;color:var(--label2);
+  background:var(--fill);border-radius:10px;padding:8px 11px;margin-top:9px}
+.pst{flex:1 1 0;background:var(--fill);border-radius:10px;padding:8px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.pst b{font-size:19px;font-weight:680;line-height:1.1;letter-spacing:-.3px}
+.pst span{font-size:11px;color:var(--label2);text-align:center;line-height:1.3}
+.pcheer{margin:10px 0 0;font-size:16px;font-weight:600;color:var(--good-txt);
+  background:color-mix(in srgb,var(--green) 12%,transparent);
+  border-radius:var(--r-inner);padding:11px 13px;line-height:1.6}
+@media (max-width:360px){ .pst b{font-size:16px} .pst span{font-size:10px} }
+
 /* ---------- שעת המדידה בהיקפים ---------- */
 .todchip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;
   padding:3px 10px;font-size:12.5px;font-weight:600;background:var(--fill);color:var(--label2)}
@@ -1434,7 +1460,7 @@ const UI_DEFAULT={tab:"add",range:"180",metric:"weight"};
 let users=load(K_USERS,[]);
 let session=load(K_SESS,null);
 let me=null;
-let entries=[],circ=[],plans=[],workouts=[],meals=[],customFoods=[],steps=[],ui=Object.assign({},UI_DEFAULT);
+let entries=[],circ=[],plans=[],workouts=[],meals=[],customFoods=[],steps=[],photos=[],ui=Object.assign({},UI_DEFAULT);
 let auth={screen:"login",err:null,msg:null,pending:null};
 
 /* חשבון ראשוני, מוזרק פעם אחת יחד עם כל הנתונים שכבר נצברו.
@@ -1450,6 +1476,8 @@ function loadUser(u){
   meals   =load(uk(u.id,"meals"),null)||[];
   customFoods=load(uk(u.id,"foods"),null)||[];
   steps   =load(uk(u.id,"steps"),null)||[];
+  photos  =load(uk(u.id,"photos"),null)||[];
+  PHOTO_URLS={};
   ui      =load(uk(u.id,"ui"),null)||Object.assign({},UI_DEFAULT);
   /* נתוני הזרע שייכים לחשבון הראשון בלבד. משתמש חדש מתחיל ריק —
      גם מבחינת פרטיות וגם מפני שתוכניות האימון שלו הן חומר של המאמן שלו. */
@@ -1472,7 +1500,7 @@ function bootPlans(){
 }
 function logout(){
   session=null; save(K_SESS,null);
-  me=null; entries=[];circ=[];plans=[];workouts=[];ui=Object.assign({},UI_DEFAULT);
+  me=null; entries=[];circ=[];plans=[];workouts=[];photos=[];PHOTO_URLS={};ui=Object.assign({},UI_DEFAULT);
   auth={screen:"login",err:null,msg:null,pending:null};
   render();
 }
@@ -1578,7 +1606,7 @@ function persist(){
   const K_ENTRIES=uk(me.id,"entries");
   save(uk(me.id,"circ"),circ); save(uk(me.id,"plans"),plans);
   save(uk(me.id,"ui"),ui); save(uk(me.id,"workouts"),workouts); save(uk(me.id,"meals"),meals); save(uk(me.id,"foods"),customFoods);
-  save(uk(me.id,"steps"),steps);
+  save(uk(me.id,"steps"),steps); save(uk(me.id,"photos"),photos);
   if(save(K_ENTRIES,entries)) return true;
   const withImg=entries.filter(e=>e.img).sort((a,b)=>a.date<b.date?-1:1);
   for(const e of withImg){
@@ -3023,6 +3051,7 @@ const ICONS={
   plan:'<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="16" height="20" rx="3"/><path d="M10 10h8M10 14h8M10 18h5"/></svg>',
   data:'<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="14" cy="8" rx="8" ry="3.2"/><path d="M6 8v12c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2V8"/><path d="M6 14c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2"/></svg>'
 };
+ICONS.photos='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="21" height="16" rx="3.5"/><circle cx="14" cy="15" r="4.2"/><path d="M10 7l1.6-2.4h4.8L18 7"/></svg>';
 ICONS.work='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h2M22 14h2"/><rect x="6" y="10" width="3.5" height="8" rx="1.2"/><rect x="18.5" y="10" width="3.5" height="8" rx="1.2"/><path d="M9.5 14h9"/></svg>';
 ICONS.food='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v9a3 3 0 003 3v8"/><path d="M8 4v6M11 4v6"/><path d="M19.5 4c-1.6 1.6-2.5 4-2.5 6.5S18 15 19.5 15V24"/></svg>';
 /* טביעת רגל — אותה תיבת 28×28 ואותו עובי קו כמו שאר הסט */
@@ -3033,6 +3062,7 @@ const TABS=[
   {id:"add",  label:"הוספה"},
   {id:"dash", label:"ניתוח"},
   {id:"trend",label:"מגמות"},
+  {id:"photos",label:"תמונות"},
   {id:"steps",label:"צעדים"},
   {id:"learn",label:"למידה"},
   {id:"food", label:"תזונה"},
@@ -3422,7 +3452,7 @@ function render(){
   if(bar) bar.style.display="";
   document.body.classList.remove("noauth");
   renderTabs();
-  const views={add:viewAdd,dash:viewDash,trend:viewTrend,steps:viewSteps,learn:viewLearn,
+  const views={add:viewAdd,dash:viewDash,trend:viewTrend,photos:viewPhotos,steps:viewSteps,learn:viewLearn,
                food:viewFood,work:viewWork,plan:viewPlan,data:viewData};
   /* רשת ביטחון: אם מסך אחד נופל, בלי זה app.innerHTML לא מתעדכן — המסך הישן
      נשאר תקוע — ו-bind() לא רץ, כך ששום כפתור לא לחיץ, כולל סרגל הלשוניות.
@@ -4052,6 +4082,141 @@ function weeklyCard(key){
 }
 
 /* ============================================================================
+   גלריית ההתקדמות
+   ----------------------------------------------------------------------------
+   הרעיון: לראות את השינוי בעיניים, לא רק במספרים.
+
+   שתי החלטות שחשוב שיהיו כתובות:
+
+   1. **התמונות לא נשמרות ב־localStorage.** תמונה מטלפון היא 2–5 מגה, והאחסון
+      כולו הוא כ־5. תמונה אחת הייתה מוחקת את כל השקילות. לכן כל תמונה מוקטנת
+      ל־1100 פיקסל ונשמרת ב־IndexedDB — מחסן נפרד עם מקום אמיתי — ובנתונים
+      הרגילים נשאר רק רישום קטן (תאריך, הערה, גודל).
+
+   2. **האפליקציה לא מסתכלת על התמונה.** אין כאן מודל ראייה, ולא יהיה בקובץ
+      מקומי. מה שהיא כן עושה: צמודה לכל תמונה את המדידות מאותו תאריך, ומנתחת
+      *אותן* מול המטרה. זה ניתוח אמיתי — הוא פשוט קורא מספרים ולא פיקסלים,
+      וזה נאמר במפורש על המסך כדי שלא ייווצר רושם אחר.
+   ============================================================================ */
+/* ---- למה לא IndexedDB ----
+   הבחירה הראשונה שלי הייתה IndexedDB, שיש בו הרבה יותר מקום. בבדיקה
+   התברר שהוא **לא עובד בקובץ מקומי**: ב-file:// הקריאה לפתיחה פשוט לא
+   חוזרת — בלי שגיאה, בלי כלום, נתקעת. וזו בדיוק הדרך שבה רבים פותחים את
+   האפליקציה, בדאבל־קליק על הקובץ. באתר זה היה עובד ואצלו לא, וזה הסוג
+   הגרוע ביותר של תקלה.
+
+   לכן localStorage, עם מפתח נפרד לכל תמונה. מדדתי על צילום אמיתי בגודל
+   4872x5568: ב-900 פיקסל ואיכות 0.72 הוא יורד ל-146KB, כלומר כ-28
+   תמונות בתוך המקום הפנוי — בקצב של תמונה בשבועיים, יותר משנה.
+   מפתח נפרד לכל תמונה הוא העיקר כאן: תמונה שנכשלת נכשלת לבדה, ולא
+   גוררת איתה את השקילות. */
+const PHOTO_MAX=900, PHOTO_Q=0.72;
+const PHOTO_BUDGET=4.0*1024*1024;   /* מה שנשאר מתוך ~5MB אחרי הנתונים */
+let PHOTO_URLS={};
+
+function photoKey(id){ return uk(me?me.id:"x","ph."+id) }
+function photoPut(id,url){
+  try{ localStorage.setItem(photoKey(id),url); return true }catch(e){ return false }
+}
+function photoGet(id){
+  try{ return localStorage.getItem(photoKey(id))||"" }catch(e){ return "" }
+}
+function photoDrop(id){ try{ localStorage.removeItem(photoKey(id)) }catch(e){} }
+
+/* טעינה לזיכרון פעם אחת, כדי שלא נקרא 146KB מהאחסון בכל render.
+   המפתח נרשם תמיד, גם כשאין תמונה מאחוריו — כך רשומה יתומה לא גורמת
+   לניסיון טעינה חוזר בכל פעם. */
+function photosLoad(){
+  photos.forEach(p=>{ if(!(p.id in PHOTO_URLS)) PHOTO_URLS[p.id]=photoGet(p.id) });
+}
+function photoBytes(){
+  let n=0; photos.forEach(p=>{ n+=(PHOTO_URLS[p.id]||"").length }); return n;
+}
+
+/* הקטנה לפני שמירה. הערכים למעלה נבחרו מהמדידה, לא מהתחושה. */
+function photoScale(im){
+  const sc=Math.min(1,PHOTO_MAX/Math.max(im.width,im.height));
+  const c=drawScaled(im,sc);
+  return {url:c.toDataURL("image/jpeg",PHOTO_Q),w:c.width,h:c.height};
+}
+
+/* ---- המדידות שצמודות לתמונה ----
+   לא תמיד יש שקילה בדיוק באותו יום. לוקחים את הקרובה ביותר בתוך ארבעה
+   ימים, ואומרים כמה רחוקה היא — כדי שלא ייראה כאילו נמדד באותו רגע. */
+function photoMetrics(date){
+  const d=dayNum(date); let best=null,bd=1e9;
+  official().forEach(e=>{ const k=Math.abs(dayNum(e.date)-d); if(k<bd){ bd=k; best=e } });
+  if(!best||bd>4) return null;
+  return {gap:bd,date:best.date,weight:best.weight,lean:best.lean,bf:best.bf};
+}
+
+/* ---- מה המספרים אומרים בין שתי תמונות ----
+   העצות כאן אינן חדשות: הן נשענות על אותה מטרה ועל אותם ספים שכל שאר
+   האפליקציה משתמשת בהם, כדי ששני מסכים לא יגידו שני דברים סותרים. */
+function photoStory(a,b){
+  if(!a||!b) return null;
+  const g=curGoal();
+  const days=dayNum(b.date)-dayNum(a.date);
+  const mv=(k,x,y)=>(x!=null&&y!=null)?(y-x):null;
+  const dW=mv("weight",a.weight,b.weight), dL=mv("lean",a.lean,b.lean), dB=mv("bf",a.bf,b.bf);
+  const big=(k,d)=>d!=null&&Math.abs(d)>=(SIG[k]||1);
+  const leanUp=big("lean",dL)&&dL>0, leanDn=big("lean",dL)&&dL<0;
+  const bfUp=big("bf",dB)&&dB>0,     bfDn=big("bf",dB)&&dB<0;
+
+  let tone="info", title="", lines=[], cheer=null;
+
+  if(dL==null&&dB==null){
+    return {tone:"info",days,title:"אין מספיק מדידות בין שתי התמונות",
+      lines:["התמונות כאן, אבל אין לצידן שקילות שאפשר להשוות. שקילה אחת "+
+             "ליד כל תמונה הופכת את הגלריה מאלבום לכלי מדידה."],cheer:null};
+  }
+  if(leanUp&&bfDn){
+    tone="good"; title="עלית בשריר וירדת בשומן באותו זמן";
+    lines.push("זה הדבר הקשה ביותר להשיג, ולא במקרה — הגוף בדרך כלל עושה "+
+      "אחד מהשניים ולא את שניהם. מה שאתה עושה עכשיו עובד; אל תשנה אותו.");
+    cheer="תסתכל שוב על שתי התמונות. זה לא במקרה.";
+  } else if(g.dir==="up"){
+    if(leanUp&&!bfUp){ tone="good"; title="העלייה הולכת לשריר";
+      lines.push("המסה ללא שומן עלתה ואחוז השומן לא. זה בדיוק מה שאמורה "+
+        "לעשות עלייה במסה, וזה סימן שהקצב שלך נכון.");
+      cheer="ככה נראית עלייה איכותית."; }
+    else if(bfUp&&!leanUp){ tone="warn"; title="העלייה הולכת בעיקר לשומן";
+      lines.push("אחוז השומן עלה בלי שהמסה ללא שומן עלתה איתו. בדרך כלל "+
+        "זה אומר שהעודף הקלורי גדול מדי — קצב הבנייה מוגבל ביולוגית, "+
+        "והתוספת מעבר לו נאגרת.");
+      lines.push("מה לעשות: להוריד כ־10% מהקלוריות ולתת שבועיים־שלושה. "+
+        "היקף המותן הוא הסימן שאפשר לסמוך עליו — יציב בזמן שהמשקל עולה "+
+        "פירושו שהעלייה איכותית."); }
+    else { title="עוד לא זזו מספיק כדי להסיק";
+      lines.push("השינוי במסה ללא שומן ובאחוז השומן קטן מרעש המדידה. "+
+        "בעלייה במסה זה נורמלי לגמרי — הקצב הנכון הוא איטי בכוונה."); }
+  } else if(g.dir==="down"){
+    if(bfDn&&!leanDn){ tone="good"; title="השומן יורד והשריר נשאר";
+      lines.push("זו התוצאה שרוצים מגירעון: יורדים במשקל, והמסה ללא שומן "+
+        "לא משלמת על זה. זה מה שמפריד בין ירידה טובה לירידה שמחזירה אותך אחורה.");
+      cheer="שמרת על מה שבנית. זה החלק שרוב האנשים מפספסים."; }
+    else if(leanDn){ tone="warn"; title="גם המסה ללא שומן יורדת";
+      lines.push("ירידה במשקל תמיד לוקחת קצת מסה ללא שומן, אבל כשהיא "+
+        "מובהקת שווה להאט.");
+      const T=nutriTargets();
+      lines.push("שני הדברים שמגנים על השריר בגירעון: חלבון גבוה"+
+        (T&&T.ready?" (אצלך "+T.protein[0]+"–"+T.protein[1]+' גרם ביום)':"")+
+        ", ולהמשיך להרים כבד — לא להחליף אימוני כוח באירובי."); }
+    else { title="עוד לא זזו מספיק כדי להסיק";
+      lines.push("התזוזה קטנה מרעש המדידה. בטווח של פחות מחודש זה שכיח, "+
+        "במיוחד באחוז שומן שמגיע מהמשקל החכם."); }
+  } else {
+    title=(leanUp?"המסה ללא שומן עלתה":bfDn?"אחוז השומן ירד":"בלי שינוי מובהק");
+    lines.push("המטרה שלך היא שמירה, ולכן יציבות היא הצלחה ולא קיפאון.");
+  }
+
+  if(days>0&&days<21)
+    lines.push("שים לב: בין שתי התמונות עברו "+days+" ימים בלבד. "+
+      "שינוי אמיתי בהרכב הגוף נראה בעין אחרי חודשיים ומעלה, לא אחרי שבועיים.");
+  return {tone,days,title,lines,cheer,dW,dL,dB};
+}
+
+/* ============================================================================
    סקלות ייחוס — "איפה אני עומד"
    ----------------------------------------------------------------------------
    הבקשה הייתה שלכל מדד תהיה סקלה: מתחת לנורמה, טווח תקין, מעל הנורמה, ואיפה
@@ -4339,6 +4504,152 @@ function circTrustCard(){
   h+='<p class="tiny" style="opacity:.75">הכי אמין: בוקר, אחרי שירותים, לפני אוכל ושתייה, '+
      'הסרט מקביל לרצפה והנשימה רגילה.</p>';
   return h+'</div>';
+}
+
+/* קליטת תמונה: מקטינים, שומרים במחסן הנפרד, ורק אם *זה* הצליח רושמים
+   אותה ברשימה. הסדר הזה חשוב — רישום בלי תמונה מאחוריו נראה כמו תקלה. */
+function addPhoto(file){
+  if(!file||!/^image\//.test(file.type||"")) return toast("זה לא קובץ תמונה");
+  const fm=$("#phForm");
+  const date=(fm&&fm.elements.date.value)||today();
+  const note=((fm&&fm.elements.note.value)||"").trim().slice(0,60);
+  toast("מקטין ושומר…");
+  loadImage(file).then(im=>{
+    const s=photoScale(im);
+    const rec={id:uid(),date,note:note||null,w:s.w,h:s.h,
+               kb:Math.round(s.url.length/1024)};
+    /* התמונה נשמרת קודם, והרשומה נרשמת רק אם זה הצליח. הסדר ההפוך היה
+       מייצר רשומה בלי תמונה מאחוריה — נראה למשתמש כמו תקלה מסתורית. */
+    if(!photoPut(rec.id,s.url)){
+      return ask("האחסון התמלא — התמונה לא נשמרה.\n\n"+
+        "השקילות והנתונים שלך בטוחים ולא נגעתי בהם.\n\n"+
+        "כדי לפנות מקום: מחק תמונה ישנה אחת מהגלריה. כל תמונה תופסת "+
+        "בערך "+Math.round(s.url.length/1024)+"KB.",()=>{},{ok:"הבנתי",no:"סגור"});
+    }
+    PHOTO_URLS[rec.id]=s.url;
+    photos.push(rec);
+    if(!persist()){
+      /* השמירה של הרשימה נכשלה — מנקים את התמונה שזה עתה נשמרה,
+         אחרת היא תישאר באחסון בלי שאיש יידע עליה. */
+      photoDrop(rec.id); delete PHOTO_URLS[rec.id];
+      photos=photos.filter(x=>x.id!==rec.id);
+      return ask("האחסון התמלא ולא הצלחתי לשמור את התמונה.\n\n"+
+        "הנתונים שלך לא נפגעו.",()=>{},{ok:"הבנתי",no:"סגור"});
+    }
+    render();
+    toast("נשמרה תמונה מ־"+fmtDate(date));
+  }).catch(err=>{
+    ask("לא הצלחתי לקרוא את התמונה.\n\nהשגיאה: "+
+      ((err&&err.message)||"לא ידועה"),()=>{},{ok:"הבנתי",no:"סגור"});
+  });
+}
+
+/* שורת המדדים שמתחת לתמונה: משקל, מסה ללא שומן ואחוז שומן. */
+function photoStats(m){
+  if(!m) return '<div class="pstats none">אין שקילה בסביבת התאריך הזה</div>';
+  const cell=(lab,val,un)=>'<div class="pst"><b class="num">'+
+    (val==null?"—":n1(val))+'</b><span>'+esc(lab)+(val==null?"":" "+esc(un))+'</span></div>';
+  return '<div class="pstats">'+cell("משקל",m.weight,'ק"ג')+
+    cell("מסה ללא שומן",m.lean,'ק"ג')+cell("אחוז שומן",m.bf,"%")+'</div>'+
+    (m.gap>0?'<p class="tiny" style="margin:6px 0 0">מהשקילה של '+fmtDate(m.date)+
+      ', '+(m.gap===1?"יום":m.gap+" ימים")+' מהתמונה.</p>':"");
+}
+
+function viewPhotos(){
+  photosLoad();
+  let h='<div class="lgtitle">תמונות</div>';
+  h+='<p class="sub">לראות את השינוי בעיניים, לא רק במספרים. התמונות נשארות '+
+     'במכשיר שלך בלבד ולא נשלחות לשום מקום.</p>';
+
+  /* ---- העלאה ---- */
+  h+='<div class="card"><h2>הוסף תמונה</h2>';
+  h+='<div class="drop" id="phDrop" role="button" tabindex="0">'+
+     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '+
+     'stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="3"/>'+
+     '<circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>'+
+     '<span>בחר תמונה או צלם עכשיו</span></div>';
+  h+='<input type="file" id="phFile" accept="image/*" style="display:none">';
+  h+='<form id="phForm"><div class="fields">'+
+     '<div class="f"><label>תאריך</label><input type="date" name="date" value="'+today()+'"></div>'+
+     '<div class="f"><label>הערה (לא חובה)</label><input type="text" name="note" '+
+     'placeholder="למשל: בוקר, אחרי שירותים" maxlength="60"></div></div></form>';
+  h+='<p class="tiny">כדי שההשוואה תהיה הוגנת: אותה תאורה, אותו מרחק, אותה שעה '+
+     'ואותה תנוחה. הבדל בתאורה משנה את המראה יותר מחודש של אימונים.</p>';
+  h+='</div>';
+
+  if(!photos.length){
+    h+='<div class="card"><div class="empty">עוד אין תמונות.<br>'+
+       '<span class="tiny">התמונה הראשונה היא נקודת הבסיס. גם אם לא מתחשק — '+
+       'דווקא אותה תרצה לראות בעוד חצי שנה.</span></div></div>';
+    return h;
+  }
+
+  const srt=photos.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const first=srt[0], last=srt[srt.length-1];
+
+  /* ---- ההשוואה: הראשונה מול האחרונה ---- */
+  if(srt.length>1){
+    const mA=photoMetrics(first.date), mB=photoMetrics(last.date);
+    h+='<div class="card"><h2>מאיפה לאן</h2>';
+    h+='<div class="pcmp">';
+    [[first,mA,"הראשונה"],[last,mB,"האחרונה"]].forEach(([p,m,lab])=>{
+      h+='<div class="pcmpi"><div class="plab">'+esc(lab)+' · <span class="num">'+
+         fmtDate(p.date)+'</span></div>'+
+         (PHOTO_URLS[p.id]?'<img src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+'">'
+                          :'<div class="pload">התמונה לא נמצאה באחסון</div>')+
+         photoStats(m)+'</div>';
+    });
+    h+='</div>';
+
+    const st=photoStory(mA,mB);
+    if(st){
+      const b=st.tone==="good"?"b-ok":st.tone==="warn"?"b-warn":"b-mute";
+      h+='<div class="pcard" style="margin-top:14px"><div class="ptop">'+
+         '<span class="pnm">מה המספרים אומרים</span>'+
+         '<span class="badge '+b+'">'+esc(st.title)+'</span></div>';
+      st.lines.forEach(l=>{ h+='<p class="pline">'+esc(l)+'</p>' });
+      if(st.cheer) h+='<p class="pcheer">'+esc(st.cheer)+'</p>';
+      h+='<p class="tiny" style="opacity:.75">חשוב שתדע: האפליקציה לא מסתכלת '+
+         'על התמונה עצמה — אין בה מודל שיודע לקרוא גוף מצילום. מה שכתוב כאן '+
+         'מבוסס על השקילות שליד שתי התמונות. התמונה היא לעיניים שלך.</p>';
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+
+  /* ---- כל התמונות, החדשה למעלה ---- */
+  h+='<div class="card"><h2>כל התמונות <span class="num">('+photos.length+')</span></h2>';
+  srt.slice().reverse().forEach(p=>{
+    const m=photoMetrics(p.date);
+    h+='<div class="pitem"><div class="ptopr"><b class="num">'+fmtDate(p.date)+'</b>'+
+       (p.note?'<span class="pnote">'+esc(p.note)+'</span>':'')+
+       '<button class="btn danger mini" data-delph="'+p.id+'">מחק</button></div>'+
+       (PHOTO_URLS[p.id]?'<img src="'+PHOTO_URLS[p.id]+'" alt="תמונה מ־'+esc(fmtDate(p.date))+'">'
+                        :'<div class="pload">התמונה לא נמצאה באחסון</div>')+
+       photoStats(m)+'</div>';
+  });
+  h+='</div>';
+
+  /* ---- כמה מקום נשאר ----
+     תמונות הן הדבר היחיד באפליקציה שיכול למלא את האחסון, ולכן הוא צריך
+     לראות את זה מראש ולא לגלות ביום שבו תמונה לא נשמרת. */
+  const used=photoBytes(), pct=Math.min(100,used/PHOTO_BUDGET*100);
+  const avg=photos.length?used/photos.length:150*1024;
+  const room=Math.max(0,Math.floor((PHOTO_BUDGET-used)/avg));
+  h+='<div class="card"><h2>מקום ותאימות</h2>';
+  h+='<div class="scbar" style="margin-bottom:0">'+
+     '<i class="'+(pct>85?"sc-high":pct>60?"sc-mid":"sc-ok")+'" style="width:'+n1(pct)+'%"></i>'+
+     '<i class="sc-nul" style="width:'+n1(100-pct)+'%"></i></div>';
+  h+='<div class="scends"><span class="num">'+Math.round(used/1024)+' KB בשימוש</span>'+
+     '<span>מקום לעוד <span class="num">'+room+'</span> תמונות בערך</span></div>';
+  h+='<p class="tiny" style="margin-top:11px">כל תמונה מוקטנת ל־'+PHOTO_MAX+
+     ' פיקסל לפני השמירה — מספיק כדי לראות שינוי אמיתי, קטן מספיק כדי '+
+     'לשמור עשרות. כשהמקום ייגמר האפליקציה תגיד לך במפורש ולא תמחק כלום לבד.</p>';
+  h+='<p class="tiny"><b>שים לב:</b> הגיבוי הרגיל <b>לא כולל</b> את התמונות — '+
+     'קובץ גיבוי עם תמונות היה כבד מכדי לשלוח בוואטסאפ. התמונות נשארות '+
+     'בדפדפן הזה בלבד. אם תמחק את נתוני הדפדפן, הן יימחקו איתם.</p>';
+  h+='</div>';
+  return h;
 }
 
 function viewTrend(){
@@ -7180,8 +7491,12 @@ const FOOD_DB=[
  {n:"חומוס מוכן",kcal:170,p:8,c:14,f:9,u:{"מנה":100}},
  {n:"טחינה גולמית",kcal:595,p:17,c:21,f:53,u:{"כף":15}},
  {n:"חמאת בוטנים",kcal:590,p:25,c:20,f:50,u:{"כף":16}},
- {n:"שקדים",pri:3,kcal:580,p:21,c:22,f:50,u:{"חופן":30}},
- {n:"אגוזי מלך",kcal:654,p:15,c:14,f:65,u:{"חופן":30}},
+ /* משקל של אגוז בודד. אלה ערכים מקורבים — אגוז אחד אינו קבוע במשקלו —
+    אבל הם הופכים "10 שקדים" מ־300 גרם (עשרה חופנים!) ל־12 גרם. */
+ {n:"שקדים",pri:3,kcal:580,p:21,c:22,f:50,u:{"חופן":30,"יחידה":1.2}},
+ {n:"אגוזי מלך",kcal:654,p:15,c:14,f:65,u:{"חופן":30,"יחידה":4}},
+ {n:"אגוזי פקאן",a:["פקאן","פקאנים"],pri:3,kcal:691,p:9.2,c:14,f:72,u:{"חופן":30,"יחידה":1.5}},
+ {n:"זיתים",a:["זית"],pri:3,kcal:115,p:0.8,c:6,f:11,u:{"חופן":30,"יחידה":4}},
  {n:"טונה בשמן, מסונן",kcal:190,p:26,c:0,f:9,u:{"קופסה":140}},
  {n:"דג סלמון",kcal:208,p:20,c:0,f:13,u:{"מנה":150}},
  {n:"מים",kcal:0,p:0,c:0,f:0,u:{"כוס":250}},
@@ -7270,9 +7585,9 @@ const FOOD_DB=[
  {n:"רימון",kcal:83,p:1.7,c:19,f:1.2,u:{"בינוני":280}},
  {n:"קיווי",kcal:61,p:1.1,c:15,f:0.5,u:{"יחידה":75}},
  /* --- אגוזים וממרחים --- */
- {n:"אגוזי קשיו",a:["קשיו"],kcal:553,p:18,c:30,f:44,u:{"חופן":30}},
- {n:"פיסטוקים",a:["פיסטוק"],kcal:560,p:20,c:28,f:45,u:{"חופן":30}},
- {n:"בוטנים",kcal:567,p:26,c:16,f:49,u:{"חופן":30}},
+ {n:"אגוזי קשיו",a:["קשיו"],kcal:553,p:18,c:30,f:44,u:{"חופן":30,"יחידה":1.6}},
+ {n:"פיסטוקים",a:["פיסטוק"],kcal:560,p:20,c:28,f:45,u:{"חופן":30,"יחידה":0.7}},
+ {n:"בוטנים",kcal:567,p:26,c:16,f:49,u:{"חופן":30,"יחידה":1}},
  {n:"גרעיני חמנייה",a:["גרעינים"],kcal:584,p:21,c:20,f:51,u:{"חופן":30}},
  {n:"שקדים טחונים",a:["קמח שקדים"],kcal:600,p:21,c:20,f:53,u:{"כף":10}},
  {n:"ממרח שוקולד",a:["נוטלה"],kcal:539,p:6,c:57,f:31,u:{"כף":20}},
@@ -7723,6 +8038,11 @@ const UNIT_ALIAS={"כף":"כף","כפות":"כף","כפית":"כפית","כפי�
  "יחידה":"יחידה","יחידות":"יחידה","חתיכה":"יחידה","חתיכות":"יחידה",
  "מנה":"מנה","מנות":"מנה","מנת":"מנה","חופן":"חופן","חופנים":"חופן",
  "כדור":"כדור","כדורים":"כדור","קופסה":"קופסה","קופסת":"קופסה",
+ /* צורות הרבים חסרו, ולכן "2 קופסאות טונה" לא זיהה יחידה בכלל ונפל
+    להתאמה מקורבת שבחרה טונה בשמן במקום במים — פי שניים בקלוריות. */
+ "קופסאות":"קופסה","בקבוקים":"בקבוק","פחיות":"פחית","שקיות":"שקית",
+ "סקופים":"סקופ","משולשים":"משולש","חטיפים":"חטיף","פיתות":"פיתה",
+ "לחמניות":"לחמנייה","לחמניה":"לחמנייה",
  "גביע":"גביע","גביעים":"גביע","בקבוק":"בקבוק","פחית":"פחית","שקית":"שקית",
  "חטיף":"חטיף","ביצה":"ביצה","ביצים":"ביצה","פיתה":"פיתה","לחמנייה":"לחמנייה",
  "סקופ":"סקופ","קובייה":"קובייה","קוביות":"קובייה","משולש":"משולש",
@@ -7731,6 +8051,12 @@ const UNIT_G={"כף":15,"כפית":5,"כוס":200,"פרוסה":30,"יחידה":1
  "כדור":60,"קופסה":150,"גביע":150,"בקבוק":330,"פחית":330,"שקית":30,"חטיף":50,
  "ביצה":55,"פיתה":70,"לחמנייה":80,"סקופ":30,"קובייה":10,"משולש":110,
  "כנף":40,"שוק":110,"עוגייה":15};
+/* יחידות מדידה שאי אפשר לספור בהן פריטים.
+   ההבחנה עדינה ולכן שווה לכתוב אותה: גביע, קופסה, מנה ובקבוק הם *מכלים*,
+   ולספור אותם הגיוני לגמרי — "2 קופסאות טונה". חופן, כוס וסקופ הם *מידות*,
+   ו"10 שקדים" אינם עשרה חופנים. בניסיון ראשון סיווגתי גם מכלים כאן, וזה
+   שבר את "חזה עוף" ו"טונה" שהסתמכו על מנה וקופסה כברירת מחדל. */
+const BULK_UNITS={"חופן":1,"כוס":1};
 const GRAM_WORDS=/^(גרם|גר|ג|גרמים)$/;
 const KILO_WORDS=/^(קילו|קילוגרם|ק"ג|קג)$/;
 
@@ -7794,7 +8120,11 @@ function matchFood(q){
   foods.forEach(o=>{
     const hit=words.filter(w=>hitsIn(o.nf,w));
     const ratio=hit.length/words.length;
-    if(ratio>=0.5&&hit.some(w=>w.length>=3)&&ratio>score){ score=ratio; best=o.f }
+    if(ratio<0.5||!hit.some(w=>w.length>=3)) return;
+    /* גם כאן מאכל בסיסי מנצח. בלי זה הזוכה הוא פשוט הראשון במסד שהתאים,
+       וכך "טונה" החזירה טונה בשמן רק מפני שהיא רשומה קודם. */
+    const pri=o.f.pri||0, bp=(best&&best.pri)||0;
+    if(ratio>score||(ratio===score&&pri>bp)){ score=ratio; best=o.f }
   });
   return best;
 }
@@ -7803,10 +8133,16 @@ function gramsFor(food,unit,qty){
   if(unit==="קילו") return qty*1000;
   if(food&&food.u&&food.u[unit]) return qty*food.u[unit];
   if(UNIT_G[unit]) return qty*UNIT_G[unit];
-  /* בלי יחידה: אם למאכל יש יחידה טבעית אחת, זו הכוונה */
+  /* ---- בלי יחידה שנכתבה במפורש ----
+     כאן היה באג שקט וגרוע: הקוד לקח את היחידה הראשונה שיש למאכל, ולכן
+     "10 שקדים" נקרא כעשרה *חופנים* — 300 גרם ו־1,740 קלוריות במקום 12
+     גרם. מספר שנראה סביר על המסך ומקלקל את כל היום.
+     עכשיו: יחידה בודדת קודמת תמיד, יחידת צובר לעולם לא מוכפלת בספירה. */
   if(food&&food.u){
-    const k=Object.keys(food.u);
-    if(k.length) return qty*food.u[k[0]];
+    if(food.u["יחידה"]!=null) return qty*food.u["יחידה"];
+    const single=Object.keys(food.u).filter(x=>!BULK_UNITS[x]);
+    if(single.length) return qty*food.u[single[0]];
+    return null;   /* רק יחידות צובר — עדיף לשאול מאשר לנחש פי 25 */
   }
   return qty*100;
 }
@@ -7831,7 +8167,12 @@ function parseFoodLine(raw){
   if(qty==null) qty=1;
   const food=matchFood(txt);
   if(!food) return {raw:txt,ok:false,qty,unit};
-  const grams=Math.round(gramsFor(food,unit,qty));
+  const gRaw=gramsFor(food,unit,qty);
+  /* מצאנו את המאכל אבל לא את הכמות. עדיף לומר את זה מאשר להמציא מספר
+     שנראה סביר — מספר שגוי כאן מקלקל את כל היום בשקט. */
+  if(gRaw==null) return {raw:txt,ok:false,qty,unit,food:food.n,needUnit:true,
+    hint:'לא ידעתי כמה זה. נסה "חופן '+food.n+'" או "30 גרם '+food.n+'".'};
+  const grams=Math.round(gRaw);
   return {raw:txt,ok:true,food:food.n,qty,unit:unit||null,grams:Math.max(1,grams)};
 }
 /* מפריד פריטים: פסיק, נקודה־פסיק, שורה חדשה, או " ו" כמילת חיבור */
@@ -7842,8 +8183,14 @@ function parseFoodText(text){
     .map(parseFoodLine).filter(Boolean);
 }
 
-/* מאכלים שהמשתמש הוסיף בעצמו, מהקלדה או מצילום תווית */
-function allFoods(){ return FOOD_DB.concat(customFoods) }
+/* מאכלים שהמשתמש הוסיף בעצמו, מהקלדה או מצילום תווית.
+   ----------------------------------------------------------------------------
+   כאן היה באג שקט: הפונקציה החזירה רק FOOD_DB, ולכן מסד משרד הבריאות
+   (מאות מוצרים מהמדף) היה טעון בקובץ אבל בלתי נגיש — לא בחיפוש החופשי,
+   לא ברשימה הנפתחת, ולא ב־foodByName. FOOD_ALL כבר איחד את השניים, אבל
+   רק מקום אחד בקוד השתמש בו. התסמין שהגיע מבחוץ: "4 פקאנים" לא נמצא,
+   למרות ש"אגוזי פקאן" יושב במסד. */
+function allFoods(){ return FOOD_ALL.concat(customFoods) }
 function foodByName(n){ return allFoods().find(f=>f.n===n)||null }
 
 /* ----------------------------------------------------------------------------
@@ -8895,8 +9242,14 @@ function viewFood(){
     h+='<hr class="s">';
     ps.forEach((x,i)=>{
       if(!x.ok){
-        /* מאכל שלא נמצא הוא לא מבוי סתום — אפשר להוסיף אותו כאן ועכשיו,
-           ומאותו רגע הוא קיים במאגר האישי לתמיד. */
+        /* שני מצבים שונים לגמרי, ולכן שתי הודעות שונות: מאכל שלא נמצא
+           אפשר להוסיף כאן ועכשיו; מאכל שנמצא אבל בלי כמות ברורה צריך
+           רק ניסוח אחר, ולהציע עליו "הוסף" זה לשלוח אותו לכיוון הלא נכון. */
+        if(x.needUnit){
+          h+='<div class="row" style="padding:9px 0;border-color:var(--sep)"><div class="k">'+
+             '<b>'+esc(x.raw)+'</b><div class="tiny">'+esc(x.hint||"")+'</div></div></div>';
+          return;
+        }
         h+='<div class="row" style="padding:9px 0;border-color:var(--sep)"><div class="k">'+
            '<b>'+esc(x.raw)+'</b><div class="tiny">לא נמצא במאגר. הוסף אותו פעם אחת והוא יישמר.</div></div>'+
            '<div class="v"><button class="btn sec mini" data-addmiss="'+esc(x.raw)+'">הוסף</button></div></div>';
@@ -9594,6 +9947,30 @@ function bind(){
     circ.push(rec); persist(); render();
     toast("נשמרה מדידת "+(todOf(rec.tod)||{lab:""}).lab);
   };
+
+  /* ---- גלריית התמונות ---- */
+  const phDrop=$("#phDrop"), phFile=$("#phFile");
+  if(phDrop&&phFile){
+    phDrop.onclick=()=>phFile.click();
+    phDrop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); phFile.click() } };
+    phFile.onchange=()=>{ if(phFile.files&&phFile.files[0]) addPhoto(phFile.files[0]) };
+    ["dragenter","dragover"].forEach(t=>phDrop.addEventListener(t,e=>{e.preventDefault();phDrop.classList.add("over")}));
+    ["dragleave","drop"].forEach(t=>phDrop.addEventListener(t,e=>{e.preventDefault();phDrop.classList.remove("over")}));
+    phDrop.addEventListener("drop",e=>{
+      const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+      if(f) addPhoto(f);
+    });
+  }
+  document.querySelectorAll("[data-delph]").forEach(b=>b.onclick=()=>{
+    const p=photos.filter(x=>x.id===b.dataset.delph)[0];
+    if(!p) return;
+    ask("למחוק את התמונה מ־"+fmtDate(p.date)+"? אי אפשר לשחזר אותה.",()=>{
+      photoDrop(p.id);
+      delete PHOTO_URLS[p.id];
+      photos=photos.filter(x=>x.id!==p.id);
+      persist(); render(); toast("התמונה נמחקה");
+    },{ok:"מחק",danger:true});
+  });
 
   /* ---- העלאת תוכנית מקובץ ---- */
   const planDrop=$("#planDrop"), planFile=$("#planFile");
