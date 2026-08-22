@@ -154,12 +154,12 @@ body{
 .card{ border-radius:var(--r-card); padding:18px 17px; margin:0 0 13px }
 /* כותרת מקטע: קטנה, מרווחת ושקטה — היא תווית ולא הצהרה.
    הקו שנמתח אחריה נותן מבנה בלי להוסיף עוד מסגרת. */
-.card h2{font-size:11.5px;font-weight:600;letter-spacing:1.5px;color:var(--label2);
+.card h2{font-size:13px;font-weight:600;letter-spacing:1.2px;color:var(--label2);
   margin:0 0 14px;display:flex;align-items:center;gap:10px}
 .card h2::after{content:'';flex:1;height:1px;background:var(--sep)}
 .card h3{font-size:15px;font-weight:600;color:var(--label2);margin:18px 0 8px;text-transform:none}
 .card p{margin:0 0 10px}
-.tiny{font-size:13px;color:var(--label2);line-height:1.4}
+/* נמדד: 61% מהטקסט במסך המגמות היה מתחת ל-14px. עברית סובלת מהקטנה   יותר מלטינית - אין אורך עולה ויורד שעוזר לזהות מילה. */.tiny{font-size:14.5px;color:var(--label2);line-height:1.6}
 
 /* ---------- inset grouped list ---------- */
 .list{border-radius:var(--r-card);overflow:hidden;margin:0 0 14px}
@@ -174,7 +174,7 @@ body{
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .f{display:flex;flex-direction:column;gap:6px}
 .f.wide{grid-column:1/-1}
-label{font-size:13px;color:var(--label2);font-weight:500;padding-inline-start:2px}
+label{font-size:14.5px;color:var(--label2);font-weight:500;padding-inline-start:2px}
 input,select,textarea{
   font-family:inherit;font-size:17px;color:var(--label);
   background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);
@@ -251,7 +251,7 @@ input[type=date]{direction:ltr;text-align:start}
 .tabbar svg{width:30px;height:30px;display:block}
 
 /* ---------- badges ---------- */
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:4px 11px;border-radius:980px;
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:600;padding:5px 12px;border-radius:980px;
   /* היה nowrap — תווית ארוכה גלשה מחוץ למסך ב-320px. עכשיו היא נשברת. */
   white-space:normal;max-width:100%;text-align:center;line-height:1.35}
 .b-ok{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--good-txt)}
@@ -272,16 +272,16 @@ input[type=date]{direction:ltr;text-align:start}
 
 /* ---------- analysis block ---------- */
 .step{border-inline-start:3px solid var(--fill2);padding-inline-start:13px;margin:0 0 16px}
-.step .st{font-size:12px;font-weight:700;color:var(--label2);letter-spacing:.3px;margin-bottom:5px}
+.step .st{font-size:13px;font-weight:700;color:var(--label2);letter-spacing:.3px;margin-bottom:6px}
 .step.ok{border-color:var(--green)}
 .step.warn{border-color:var(--orange)}
 .step.crit{border-color:var(--red)}
 .step.info{border-color:var(--blue)}
-.calc{background:var(--card2);border:1px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:14px;font-variant-numeric:tabular-nums;margin:8px 0;direction:ltr;text-align:start}
+.calc{background:var(--card2);border:1px solid var(--brd);border-radius:10px;padding:11px 13px;font-size:15px;font-variant-numeric:tabular-nums;margin:8px 0;direction:ltr;text-align:start}
 
 /* ---------- chart ---------- */
 .chart{width:100%;height:230px;display:block;overflow:visible}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--label2);margin-top:8px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--label2);margin-top:10px}
 .legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-inline-end:5px}
 /* ---------- גרף אינטראקטיבי: בועת פרטים ופקדי זום ---------- */
 .chartwrap{position:relative}
@@ -317,14 +317,14 @@ input[type=date]{direction:ltr;text-align:start}
 .cz:hover:not([disabled]){border-color:var(--accent-txt)}
 .cz[disabled]{opacity:.4;cursor:not-allowed}
 .cz:focus-visible{outline:2px solid var(--accent-txt);outline-offset:2px}
-.czlab{font-size:13px;color:var(--label2);margin-inline-start:2px}
+.czlab{font-size:14px;color:var(--label2);margin-inline-start:2px}
 
 /* ---------- exercise ---------- */
 .ex{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:12px 14px;margin-bottom:9px}
 .ex .top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .ex .nm{font-weight:600;flex:1;min-width:0}
 .mus{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
-.mus span{font-size:11px;padding:2px 8px;border-radius:980px;background:var(--fill);color:var(--label2)}
+.mus span{font-size:13.5px;padding:3px 10px;border-radius:980px;background:var(--fill);color:var(--label2)}
 .mus span.p{background:color-mix(in srgb,var(--blue) 15%,transparent);color:var(--accent-txt);font-weight:600}
 .swap{background:color-mix(in srgb,var(--purple) 10%,transparent);border-radius:var(--r-inner);padding:11px 13px;margin-top:9px}
 /* ---------- מסך תוכנית ---------- */
@@ -396,11 +396,11 @@ details.param .pbody p:last-child{margin:0}
 
 /* ---------- דוח תקופה ---------- */
 .headline{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:14px 15px}
-.headline p{font-size:15px;line-height:1.55}
+.headline p{font-size:16.5px;line-height:1.7}
 .pcard{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:12px 14px;margin-top:9px}
 .ptop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
-.pnm{font-weight:650;font-size:16px;flex:1;min-width:90px}
-.pline{margin:0 0 6px;font-size:15px;line-height:1.5}
+.pnm{font-weight:650;font-size:17px;flex:1;min-width:90px}
+.pline{margin:0 0 8px;font-size:16px;line-height:1.65}
 
 /* ---------- מגמה שבועית ---------- */
 .wklist{display:flex;flex-direction:column;gap:11px;margin-top:10px}
@@ -417,11 +417,11 @@ details.param .pbody p:last-child{margin:0}
   font-size:12.5px;color:var(--label2);
 }
 .wkrow.thin{opacity:.72}
-.wkdt{flex:1 1 auto;min-width:88px;font-size:14px;color:var(--label2)}
+.wkdt{flex:1 1 auto;min-width:88px;font-size:15px;color:var(--label2)}
 .wkav{font-weight:650;font-size:16px;min-width:58px;text-align:end}
 .wkd{font-size:14px;font-weight:600;min-width:62px;text-align:end}
 .wkd.pos{color:var(--good-txt)} .wkd.neg{color:var(--bad-txt)} .wkd.flat{color:var(--label2)}
-.wknote{font-size:12.5px;color:var(--label2);margin:3px 13px 0}
+.wknote{font-size:13.5px;color:var(--label2);margin:4px 13px 0;line-height:1.6}
 
 /* ---------- קטלוג המיומנויות ---------- */
 .lvhead{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:650;
@@ -730,6 +730,26 @@ a.yt,a.ytmore{min-height:44px}
 .gpro{font-size:12.5px;font-weight:500;color:var(--accent-txt);
   background:var(--fill);border-radius:6px;padding:2px 8px;white-space:nowrap}
 .gdesc{margin:0;font-size:13.5px;color:var(--label2);line-height:1.65}
+/* ---------- כרטיס מדד שנפתח בלחיצה ---------- */
+.pcard{cursor:pointer;transition:border-color .15s,background .15s}
+.pcard:hover{border-color:var(--accent)}
+.pcard:focus-visible{outline:2px solid var(--accent-txt);outline-offset:2px}
+.pmore{
+  flex:0 0 auto;font-size:13px;font-weight:600;color:var(--accent-txt);
+  background:var(--fill);border-radius:7px;padding:5px 11px;white-space:nowrap;
+}
+/* פתוח: אותו תוכן בדיוק, בגודל שאפשר לקרוא מרחוק */
+.pcard.open{
+  background:var(--card);border-color:var(--accent);
+  padding:20px 19px;margin-top:12px;margin-bottom:12px;
+}
+.pcard.open .pnm{font-size:22px;letter-spacing:-.3px}
+.pcard.open .badge{font-size:15px;padding:6px 14px}
+.pcard.open .pline{font-size:19px;line-height:1.75;margin-bottom:12px}
+.pcard.open .tiny{font-size:17px;line-height:1.75}
+.pcard.open .num{font-size:1.06em}
+.pcard.open .ptop{margin-bottom:12px}
+.pcard.open .pmore{font-size:14px;padding:6px 13px}
 .empty{text-align:center;color:var(--label2);padding:34px 16px;font-size:15px}
 .toast{
   position:fixed;bottom:calc(94px + env(safe-area-inset-bottom));inset-inline:0;margin:0 auto;
@@ -3282,6 +3302,61 @@ function storageProbe(){
     }).catch(function(){ ask(out.join("\n"),function(){},{ok:"סגור",no:"סגור"}) });
   else ask(out.join("\n"),function(){},{ok:"סגור",no:"סגור"});
 }
+/* ---- פתיחת כרטיס בלחיצה ----
+   אפשר ללחוץ על מדד ולראות אותו בגדול. במקום לייצר
+   מסך שני עם אותו תוכן, אותו כרטיס פשוט גדל — פחות קוד ואפס סיכון
+   שהשניים ייפרדו.
+   המפתח הוא שם המדד ולא מספר סידורי: אם מחליפים תקופה והכרטיסים
+   מסתדרים אחרת, מה שפתחת נשאר מה שפתחת.
+   הפתיחה לא מציירת מחדש את המסך — היא מחליפה מחלקה. render() המלא
+   גם גולל לראש הדף, וקפיצה בכל לחיצה הופכת את זה למעצבן. */
+function cardPass(root){
+  const R=root||document.getElementById("app");
+  if(!R) return;
+  R.querySelectorAll(".pcard").forEach(c=>{
+    const nm=c.querySelector(".pnm");
+    if(!nm) return;
+    const key=(nm.textContent||"").trim();
+    if(!key) return;
+    c.setAttribute("data-pcard",key);
+    c.setAttribute("role","button");
+    c.setAttribute("tabindex","0");
+    const open=(ui.openCard===key);
+    c.classList.toggle("open",open);
+    c.setAttribute("aria-expanded",open?"true":"false");
+    if(!c.querySelector(".pmore")){
+      const s=document.createElement("span");
+      s.className="pmore";
+      s.setAttribute("aria-hidden","true");
+      s.textContent=open?"הקטן":"הגדל";
+      (c.querySelector(".ptop")||c).appendChild(s);
+    }else{
+      c.querySelector(".pmore").textContent=open?"הקטן":"הגדל";
+    }
+  });
+}
+function bindCards(){
+  document.querySelectorAll("[data-pcard]").forEach(c=>{
+    const toggle=()=>{
+      const key=c.dataset.pcard;
+      ui.openCard=(ui.openCard===key)?null:key;
+      const open=(ui.openCard===key);
+      c.classList.toggle("open",open);
+      c.setAttribute("aria-expanded",open?"true":"false");
+      const m=c.querySelector(".pmore"); if(m) m.textContent=open?"הקטן":"הגדל";
+      /* רק אחד פתוח בכל רגע — שניים פתוחים זה קיר טקסט */
+      if(open) document.querySelectorAll("[data-pcard]").forEach(o=>{
+        if(o!==c){ o.classList.remove("open"); o.setAttribute("aria-expanded","false");
+          const om=o.querySelector(".pmore"); if(om) om.textContent="הגדל" }
+      });
+      persist();
+    };
+    c.onclick=e=>{ if(e.target.closest("a,button")) return; toggle() };
+    c.onkeydown=e=>{
+      if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle() }
+    };
+  });
+}
 function render(){
   const bar=document.querySelector(".tabbar");
   if(!me){
@@ -3289,7 +3364,7 @@ function render(){
     document.body.classList.add("noauth");
     app.innerHTML=viewAuth();
     window.scrollTo(0,0);
-    try{ linkLabels(); a11yPass() }catch(e){}
+    try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
     bindAuth();
     return;
   }
@@ -3299,7 +3374,7 @@ function render(){
     document.body.classList.add("noauth");
     app.innerHTML=viewSetup();
     window.scrollTo(0,0);
-    try{ linkLabels(); a11yPass() }catch(e){}
+    try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
     bindSetup();
     return;
   }
@@ -3339,9 +3414,10 @@ function render(){
     : "";
   app.innerHTML='<div class="wrap">'+warn+body+'</div>'+askCard();
   window.scrollTo(0,0);
-  try{ linkLabels(); a11yPass() }catch(e){}
+  try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
   /* גם החיווט עצמו מוגן — שגיאה בכפתור אחד לא תשתק את סרגל הלשוניות */
   try{ bind() }catch(e){ window.__bindErr=e }
+  try{ bindCards() }catch(e){}
   try{ bindAsk() }catch(e){}
   const sc2=document.getElementById("storeChk");
   if(sc2) sc2.onclick=storageProbe;
@@ -4086,7 +4162,7 @@ function chart(key,days){
   for(let i=0;i<=3;i++){
     const gv=lo+(hi-lo)*i/3, gy=Y(gv);
     g+='<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+gy.toFixed(1)+'" stroke="var(--sep)" stroke-width="1"/>';
-    g+='<text x="'+(PL-7)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--label2)">'+n1(gv)+'</text>';
+    g+='<text x="'+(PL-7)+'" y="'+(gy+4).toFixed(1)+'" text-anchor="end" font-size="12.5" fill="var(--label2)">'+n1(gv)+'</text>';
   }
   /* קו הסימון נמתח לפני הנקודות כדי שלא יסתיר אותן */
 /* ריחוף גובר על בחירה מקובעת: העכבר הוא מה שהעין עוקבת אחריו כרגע. */
@@ -4118,8 +4194,8 @@ function chart(key,days){
     const sx=X(dayNum(selRow.date)), sy=Y(selRow[key]);
     g+='<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="6.5" fill="var(--accent)" stroke="var(--bar)" stroke-width="2"/>';
   }
-  g+='<text x="'+PL+'" y="'+(H-6)+'" font-size="11" fill="var(--label2)">'+fmtDate(shown[0].date)+'</text>';
-  g+='<text x="'+(W-PR)+'" y="'+(H-6)+'" font-size="11" fill="var(--label2)" text-anchor="end">'+fmtDate(shown[shown.length-1].date)+'</text>';
+  g+='<text x="'+PL+'" y="'+(H-6)+'" font-size="12.5" fill="var(--label2)">'+fmtDate(shown[0].date)+'</text>';
+  g+='<text x="'+(W-PR)+'" y="'+(H-6)+'" font-size="12.5" fill="var(--label2)" text-anchor="end">'+fmtDate(shown[shown.length-1].date)+'</text>';
   /* שכבת מגע על כל שטח הגרף — נוגעים איפשהו ונבחרת המדידה הקרובה.
      לרדוף אחרי עיגול של שלושה פיקסלים באצבע זה לא ממשק. */
   g+='<rect id="chartHit" x="'+PL+'" y="0" width="'+(W-PL-PR)+'" height="'+H+
