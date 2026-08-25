@@ -6137,7 +6137,7 @@ function skillDetail(s){
   }
   (s.yt||[]).forEach(([ch,q])=>{
     const c=YT_CH[ch];
-    h+='<a class="ytrow" href="'+ytLink(ch,q)+'" target="_blank" rel="noopener noreferrer">'+
+    h+='<a class="ytrow" href="'+ytChannel(ch,q)+'" target="_blank" rel="noopener noreferrer">'+
        '<div class="ytk"><b>'+esc(c.n)+'</b><span class="tiny">חיפוש: '+esc(q)+' · '+esc(c.why)+'</span></div>'+
        '<span class="badge b-mute">'+esc(c.subs)+' עוקבים</span></a>';
   });
@@ -6427,7 +6427,12 @@ const YT_CH={
   eliya:{n:"Eliya Bonen", h:"EliyaBonen", subs:"91.4K",
          why:"קליסטניקס בעברית, מאמן פעיל."}
 };
-function ytLink(ch,q){ return "https://www.youtube.com/@"+YT_CH[ch].h+"/search?query="+encodeURIComponent(q) }
+/* השם היה ytLink — בדיוק כמו הפונקציה שמייצרת קישור הדגמה לתרגיל.
+   שתי הצהרות עם אותו שם אינן שגיאה ב-JS: המאוחרת פשוט דורסת את
+   המוקדמת בשקט. התוצאה הייתה שמסך התרגיל בתוכניות קרס ברגע שנבחר
+   תרגיל, כי הוא העביר לכאן אובייקט של תרגיל במקום מזהה ערוץ.
+   שם ייחודי הוא התיקון; זהו גם הבאג היחיד שהקטלוג מזהיר ממנו במפורש. */
+function ytChannel(ch,q){ return "https://www.youtube.com/@"+YT_CH[ch].h+"/search?query="+encodeURIComponent(q) }
 
 /* סרטונים ספציפיים. **כל אחד נפתח ואומת ביוטיוב ב-17/08/2026** — המזהה,
    הכותרת, הערוץ ומספר הצפיות נלקחו מהדף עצמו ולא מהזיכרון. מספר הצפיות
