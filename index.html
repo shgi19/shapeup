@@ -457,6 +457,10 @@ details.param .pbody p:last-child{margin:0}
 .dsrc{font-size:11.5px;color:var(--label2);background:var(--fill);
   border-radius:999px;padding:2px 9px;white-space:nowrap}
 .phEdit{margin-bottom:10px}
+/* רמז מתחת לשדה: איפה בדיוק מודדים. טעות במקום המדידה גדולה מכל
+   דיוק שהנוסחה נותנת, ולכן זה יושב ליד השדה ולא בעמוד עזרה. */
+.fhint{display:block;font-size:13.5px;color:var(--label2);
+  margin-top:5px;line-height:1.5}
 
 /* ---------- השוואת שתי תקופות במסך מלא ---------- */
 .phclick{cursor:zoom-in;transition:opacity .15s}
@@ -3094,6 +3098,7 @@ const ICONS={
   plan:'<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="16" height="20" rx="3"/><path d="M10 10h8M10 14h8M10 18h5"/></svg>',
   data:'<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="14" cy="8" rx="8" ry="3.2"/><path d="M6 8v12c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2V8"/><path d="M6 14c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2"/></svg>'
 };
+ICONS.truth='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h20"/><path d="M8 20V9M14 20V5M20 20v-7"/><path d="M3 13.5h22" stroke-dasharray="2.5 2.5" opacity=".55"/></svg>';
 ICONS.photos='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="21" height="16" rx="3.5"/><circle cx="14" cy="15" r="4.2"/><path d="M10 7l1.6-2.4h4.8L18 7"/></svg>';
 ICONS.work='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h2M22 14h2"/><rect x="6" y="10" width="3.5" height="8" rx="1.2"/><rect x="18.5" y="10" width="3.5" height="8" rx="1.2"/><path d="M9.5 14h9"/></svg>';
 ICONS.food='<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v9a3 3 0 003 3v8"/><path d="M8 4v6M11 4v6"/><path d="M19.5 4c-1.6 1.6-2.5 4-2.5 6.5S18 15 19.5 15V24"/></svg>';
@@ -3105,6 +3110,7 @@ const TABS=[
   {id:"add",  label:"הוספה"},
   {id:"dash", label:"ניתוח"},
   {id:"trend",label:"מגמות"},
+  {id:"truth", label:"ממוצע"},
   {id:"photos",label:"תמונות"},
   {id:"steps",label:"צעדים"},
   {id:"learn",label:"למידה"},
@@ -3495,7 +3501,7 @@ function render(){
   if(bar) bar.style.display="";
   document.body.classList.remove("noauth");
   renderTabs();
-  const views={add:viewAdd,dash:viewDash,trend:viewTrend,photos:viewPhotos,steps:viewSteps,learn:viewLearn,
+  const views={add:viewAdd,dash:viewDash,trend:viewTrend,truth:viewTrue,photos:viewPhotos,steps:viewSteps,learn:viewLearn,
                food:viewFood,work:viewWork,plan:viewPlan,data:viewData};
   /* רשת ביטחון: אם מסך אחד נופל, בלי זה app.innerHTML לא מתעדכן — המסך הישן
      נשאר תקוע — ו-bind() לא רץ, כך ששום כפתור לא לחיץ, כולל סרגל הלשוניות.
@@ -4123,6 +4129,158 @@ function weeklyCard(key){
      ' מסומן כ־≈ כי הוא בתוך רעש המדידה ולא מייצג שינוי אמיתי.</p>';
   h+='</div>';
   return h;
+}
+
+/* ============================================================================
+   התמונה האמיתית — ממוצעים ורמת דיוק
+   ----------------------------------------------------------------------------
+   הבקשה: לחשב אחוז שומן גם מההיקפים, למצע אותו עם זה של המשקל החכם,
+   ולהראות משקל ואחוז שומן ממוצעים.
+
+   שלוש אמירות שחייבות להיות כתובות כאן, כי הן מגבילות את מה שהמסך הזה
+   מותר להבטיח:
+
+   1. **מיצוע שתי שיטות שונות לא הופך אותן לנכונות יותר.** הוא מקטין רעש
+      אקראי — זה נכון ומועיל — אבל הטיה שיטתית של שיטה נשארת בדיוק כמו
+      שהיא. לכן המסך מציג גם את **הפער** בין שתי השיטות: הפער הוא המדד
+      הכן לכמה לסמוך על המספר, והוא לא מוסתר מאחורי ממוצע יפה.
+
+   2. **מה שבאמת מדויק יותר הוא מיצוע מדידות חוזרות של אותה שיטה.**
+      שגיאת הממוצע קטנה כשורש מספר המדידות. זו הסיבה שהמסך הזה קיים
+      בכלל, וזו האמירה שהוא בונה עליה.
+
+   3. **כמה שקילות בשבוע — לא מספר מהספרות.** האפליקציה מודדת את הרעש
+      של המשתמש עצמו מהנתונים שלו, ומחשבת ממנו כמה שקילות *הוא* צריך כדי
+      לזהות את הקצב שהוא מכוון אליו. מספר כללי היה נשמע סמכותי ולא היה
+      אומר עליו כלום.
+   ============================================================================ */
+
+/* ---- אחוז שומן מהיקפים: RFM ----
+   Relative Fat Mass, מאת Woolcott & Bergman, 2018.
+   גברים:  64 − 20 × (גובה / היקף טבור)
+   נשים:   76 − 20 × (גובה / היקף טבור)
+
+   הבחירה בנוסחה הזו היא החלטה מודעת, ולא רק "היא קלה יותר":
+
+   ההימור הראשון שלי היה נוסחת צי ארה"ב (Hodgdon & Beckett 1984), והיא
+   אכן מבוססת. אבל היא דורשת גם היקף צוואר, ואצל נשים גם ירכיים — וזה
+   הפך את טופס ההיקפים לתשעה שדות בכל מדידה. זה יותר מדי,
+   והוא צדק: **מדידה שלא עושים שווה פחות מנוסחה קצת פחות מדויקת שכן
+   עושים.** דיוק תיאורטי שגורם לאנשים להפסיק למדוד הוא דיוק שלילי.
+
+   RFM צריכה רק שני מספרים שכבר קיימים — היקף הטבור והגובה — ולכן היא
+   נמדדת בפועל. היא פותחה ואומתה מול DEXA על מדגם גדול מ-NHANES,
+   ודווח שהיא מעריכה אחוז שומן טוב יותר מ-BMI. כמו כל רגרסיה היא
+   הערכה עם שגיאה של כמה נקודות אחוז, ולא מדידה.
+
+   הערה שחשוב שתישאר: RFM נותנת בדרך כלל מספרים **גבוהים** יותר
+   מנוסחת הצי לאותו אדם. זה לא באג בשום צד — שיטות שונות מכוילות
+   לאוכלוסיות שונות. זו בדיוק הסיבה שהמסך מציג את הפער מול המשקל
+   החכם במקום להסתיר אותו מאחורי ממוצע. */
+
+/* שדות ההיקפים במקום אחד, כדי שהטופס וההצגה לא ייפרדו בשקט */
+/* שבע מדידות, כמו שהיה. הוספתי בשלב מסוים צוואר וירכיים כדי לאפשר
+   את נוסחת הצי, והתוצאה הייתה תשעה שדות בכל מדידה — יותר מדי לבקש
+   ממישהו כל שבוע. מדידה שלא עושים שווה פחות מנוסחה קצת פחות מדויקת
+   שכן עושים, ולכן חזרנו לשבע ועברנו לנוסחה שצריכה רק טבור וגובה. */
+const CIRC_FIELDS=[
+  ["navel","טבור"],["nipple","חזה"],
+  ["shoulders","כתפיים"],["thigh","ירך"],["calf","שוק"],
+  ["armFlex","יד בכיווץ"],["forearmFlex","אמה בכיווץ"]
+];
+const CIRC_SHORT=[
+  ["navel","טבור"],["nipple","חזה"],
+  ["shoulders","כתפיים"],["thigh","ירך"],["calf","שוק"],
+  ["armFlex","יד"],["forearmFlex","אמה"]
+];
+const CIRC_KEYS=CIRC_FIELDS.map(f=>f[0]);
+/* איפה בדיוק מודדים. טעות במקום המדידה גדולה מכל דיוק שהנוסחה נותנת,
+   ולכן הרמז יושב ליד השדה ולא בעמוד עזרה שאיש לא פותח. */
+const CIRC_HOW={
+  navel:"בגובה הטבור, הסרט מקביל לרצפה, נשימה רגילה. זו המדידה שממנה מחושב אחוז השומן.",
+  /* בלי המונח האנטומי: מה שחשוב הוא שהמדידה תהיה חוזרת על עצמה,
+     לא שהיא תהיה מדויקת אנטומית. "הנקודה הרחבה" ברור וחוזר. */
+  nipple:"בנקודה הרחבה ביותר של החזה, הידיים רפויות."
+};
+
+function circBF(c){
+  /* **הגובה האמיתי של המשתמש בלבד**, לא heightCm().
+     ל-heightCm יש ברירת מחדל של 170 ס"מ, וזה נכון למסכים שרק מציגים
+     הערכה גסה. כאן זה היה אסון שקט: מי שלא מילא גובה היה מקבל אחוז
+     שומן שחושב מהגובה של מישהו אחר, מוצג כעובדה. בלי גובה — אין מספר. */
+  const h=(me&&me.height)||null, sex=sexOf();
+  if(!h||h<120||h>230) return null;
+  if(!c||c.navel==null) return null;
+  /* גבול סבירות על המדידה עצמה ולא רק על התוצאה: מותן 400 ס"מ מחזיר
+     55% — מספר שנראה תקין לגמרי ומקורו בטעות הקלדה. */
+  if(c.navel<40||c.navel>200) return null;
+  const v=(sex==="f"?76:64)-20*(h/c.navel);
+  return (v>2&&v<70)?v:null;
+}
+/* מה חסר כדי לחשב — כדי שהמסך יגיד מה למדוד ולא רק "אין מספיק נתונים" */
+function circMissing(c){
+  const out=[];
+  if(!c||c.navel==null) out.push("היקף טבור");
+  if(!(me&&me.height)) out.push("גובה בפרופיל");
+  return out;
+}
+
+/* ---- כמה מדויק הממוצע שלך, מהנתונים שלך ----
+   הרעש היומי נמדד כסטיית המדידות מהממוצע של אותו שבוע — כך תנודה
+   יומית אינה מתבלבלת עם המגמה האמיתית. שגיאת הממוצע היא הרעש חלקי
+   שורש מספר המדידות, וזה מה שקובע כמה שקילות באמת צריך. */
+function noiseOf(key,minWeeks){
+  const all=official();
+  const bad=markOutliers(all,"bf");
+  const rows=all.filter(r=>r[key]!=null&&!bad[r.id]);
+  const by={};
+  rows.forEach(r=>{ const k=weekKey(r.date); (by[k]=by[k]||[]).push(r[key]) });
+  const weeks=Object.keys(by).filter(k=>by[k].length>=2);
+  if(weeks.length<(minWeeks||2)) return null;
+  let ss=0,n=0;
+  weeks.forEach(k=>{
+    const a=by[k], m=a.reduce((x,y)=>x+y,0)/a.length;
+    a.forEach(v=>{ ss+=(v-m)*(v-m) });
+    n+=a.length-1;                       /* דרגות חופש */
+  });
+  if(n<1) return null;
+  const sd=Math.sqrt(ss/n);
+  /* כמה שקילות בשבוע בפועל, בשבועות שבהם בכלל נשקל */
+  const allWeeks=Object.keys(by);
+  const per=allWeeks.reduce((s,k)=>s+by[k].length,0)/allWeeks.length;
+  return {sd,per,weeks:allWeeks.length,nAll:rows.length};
+}
+/* כמה מדידות צריך כדי ששגיאת הממוצע תהיה קטנה מהשינוי שרוצים לזהות */
+function needFor(sd,target){
+  if(!sd||!target||target<=0) return null;
+  /* שגיאת הממוצע = sd/√n. הדרישה: חצי מהשינוי, כדי ששני ממוצעים
+     עוקבים לא יבלעו זה את זה בתוך הרעש שלהם. */
+  const n=Math.ceil(Math.pow(sd/(target/2),2));
+  return Math.max(1,Math.min(14,n));
+}
+
+/* ---- הרכבת התמונה ---- */
+function truePicture(){
+  const wk=weeklySeries("weight",2), bfw=weeklySeries("bf",2);
+  const w=wk[0]||null, b=bfw[0]||null;
+  const lastC=circ.length
+    ? circ.slice().sort((a,b2)=>a.date<b2.date?-1:1).slice(-1)[0] : null;
+  const cBF=lastC?circBF(lastC):null;
+  const nW=noiseOf("weight"), nB=noiseOf("bf");
+  /* היעד: הקצב השבועי שהמטרה מגדירה, בק"ג.
+     בערך מוחלט בכוונה — ביעד ירידה הקצב שלילי, ומה שקובע כמה מדידות
+     צריך הוא **גודל** השינוי שרוצים לזהות ולא הכיוון שלו. בלי הערך
+     המוחלט החישוב נפל בשקט בכל מטרת ירידה, וזה מצבם של רוב המשתמשים. */
+  const g=curGoal();
+  const tgtPct=Math.abs((g.rate[0]+g.rate[1])/2);
+  const tgtKg=w?Math.abs(w.avg*tgtPct/100):null;
+  return {
+    week:w, bfWeek:b, circ:lastC, circBF:cBF,
+    noiseW:nW, noiseB:nB, goal:g, tgtKg,
+    needW:nW&&tgtKg?needFor(nW.sd,tgtKg):null,
+    /* הממוצע שביקש: שתי השיטות במשקל שווה, והפער נשמר לתצוגה */
+    both:(b&&cBF!=null)?{avg:(b.avg+cBF)/2, gap:Math.abs(b.avg-cBF)}:null
+  };
 }
 
 /* ============================================================================
@@ -4818,6 +4976,138 @@ function photoStats(m){
       ', '+(m.gap===1?"יום":m.gap+" ימים")+' מהתמונה.</p>':"");
 }
 
+function viewTrue(){
+  const T=truePicture();
+  let h='<div class="lgtitle">התמונה האמיתית</div>';
+  h+='<p class="sub">ממוצעים במקום מדידות בודדות, ואמירה כנה על כמה '+
+     'אפשר לסמוך עליהם.</p>';
+
+  if(!T.week){
+    h+='<div class="card"><div class="empty">אין עדיין מספיק שקילות.<br>'+
+       '<span class="tiny">המסך הזה בנוי על ממוצעים, וממוצע צריך יותר '+
+       'ממדידה אחת. תשקול כמה ימים ותחזור.</span></div></div>';
+    return h;
+  }
+
+  /* ---- שתי המספרים הגדולים ---- */
+  h+='<div class="card"><h2>השבוע הזה</h2>';
+  h+='<div class="pstats">';
+  h+='<div class="pst"><b class="num">'+n1(T.week.avg)+'</b><span>משקל ממוצע ק"ג</span></div>';
+  h+='<div class="pst"><b class="num">'+
+     (T.both?n1(T.both.avg):(T.bfWeek?n1(T.bfWeek.avg):"—"))+
+     '</b><span>אחוז שומן ממוצע</span></div>';
+  h+='</div>';
+  h+='<p class="tiny" style="margin-top:10px">מבוסס על <b class="num">'+T.week.n+
+     '</b> שקילות בשבוע הזה'+
+     (T.bfWeek?', ו-<b class="num">'+T.bfWeek.n+'</b> קריאות אחוז שומן':'')+'.</p>';
+  h+='</div>';
+
+  /* ---- אחוז השומן: שתי השיטות זו מול זו ---- */
+  h+='<div class="card"><h2>אחוז שומן — שתי דרכים למדוד</h2>';
+  const miss=circMissing(T.circ);
+  h+='<div class="pcard"><div class="ptop"><span class="pnm">המשקל החכם</span>'+
+     '<span class="badge b-mute">ממוצע שבועי</span></div>'+
+     '<p class="pline">'+(T.bfWeek
+       ? 'ממוצע <b class="num">'+n1(T.bfWeek.avg)+'</b>% מתוך <span class="num">'+
+         T.bfWeek.n+'</span> קריאות השבוע.'
+       : 'אין קריאות אחוז שומן השבוע.')+'</p>'+
+     '<p class="tiny">המשקל מעביר זרם חשמלי חלש ומסיק הרכב גוף מההתנגדות. '+
+     'מים, מלח ואוכל משנים את ההתנגדות, ולכן קריאה בודדת מתנדנדת — '+
+     'והממוצע הוא מה שאפשר לקרוא.</p></div>';
+
+  h+='<div class="pcard"><div class="ptop"><span class="pnm">מההיקפים</span>'+
+     '<span class="badge '+(T.circBF!=null?"b-mute":"b-warn")+'">'+
+     (T.circBF!=null?"נוסחת צי ארה\"ב":"חסרות מדידות")+'</span></div>';
+  if(T.circBF!=null){
+    h+='<p class="pline">לפי המדידה מ-'+fmtDate(T.circ.date)+': '+
+       '<b class="num">'+n1(T.circBF)+'</b>%.</p>'+
+       '<p class="tiny">מחושב משני מספרים בלבד — <b>היקף הטבור והגובה</b> — '+
+       'לפי נוסחת <b>RFM (Woolcott &amp; Bergman, 2018)</b>, שאומתה מול DEXA '+
+       'על מדגם גדול ונמצאה מדויקת יותר מ־BMI. היתרון שלה כאן: היא לא מושפעת '+
+       'ממים ומאוכל, וצריכה מדידה אחת בלבד.</p>'+
+       '<p class="tiny" style="opacity:.78">בחרתי אותה על פני נוסחאות שדורשות '+
+       'גם היקף צוואר וירכיים, כי <b>מדידה שלא עושים שווה פחות מנוסחה קצת '+
+       'פחות מדויקת שכן עושים</b>. כמו כל רגרסיה — זו הערכה, לא מדידה.</p>';
+  }else{
+    h+='<p class="pline">חסר לי '+esc(miss.join(" ו"))+'.</p>'+
+       '<p class="tiny">כל מה שצריך זו מדידת <b>היקף טבור</b> אחת. הוסף אותה '+
+       'במסך המגמות, בטופס ההיקפים — יש שם הסבר איפה בדיוק למדוד.</p>';
+  }
+  h+='</div>';
+
+  /* ---- הפער: החלק הכן ---- */
+  if(T.both){
+    const gap=T.both.gap;
+    const v=gap<2?["מסכימות","b-ok"]:gap<4?["פער בינוני","b-warn"]:["פער גדול","b-crit"];
+    h+='<div class="pcard"><div class="ptop"><span class="pnm">כמה הן מסכימות</span>'+
+       '<span class="badge '+v[1]+'">'+esc(v[0])+'</span></div>'+
+       '<p class="pline">הפרש של <b class="num">'+n1(gap)+'</b> נקודות אחוז '+
+       'בין שתי השיטות. הממוצע ביניהן הוא <b class="num">'+n1(T.both.avg)+'</b>%.</p>'+
+       '<p class="tiny"><b>וזו הנקודה החשובה במסך הזה:</b> מיצוע שתי שיטות שונות '+
+       'לא הופך אותן לנכונות יותר. הוא מקטין רעש אקראי, אבל אם לשיטה יש הטיה '+
+       'קבועה — היא נשארת גם אחרי המיצוע. <b>הפער עצמו הוא המדד הכן</b>: כשהוא '+
+       'קטן אפשר לסמוך על המספר, וכשהוא גדול המספר האמיתי נמצא איפשהו בין '+
+       'השתיים ואף אחד לא יודע איפה בדיוק.</p>'+
+       '<p class="tiny" style="opacity:.75">מה שכן אמין בשתיהן: <b>הכיוון</b>. '+
+       'אם שתיהן יורדות — ירדת. זה נכון גם כשהמספר המוחלט לא מדויק.</p></div>';
+  }
+  h+='</div>';
+
+  /* ---- כמה שקילות אתה צריך, מהנתונים שלך ---- */
+  h+='<div class="card"><h2>כמה שקילות בשבוע אתה צריך</h2>';
+  if(!T.noiseW){
+    h+='<p class="tiny">כדי לחשב את זה אני צריך לפחות שני שבועות שבכל אחד '+
+       'מהם שקלת יותר מפעם אחת. אז אמדוד את התנודה שלך עצמך ואגיד לך '+
+       '<b>כמה שקילות אתה צריך</b> — לא מספר כללי מהספרות.</p>';
+  }else{
+    const nw=T.noiseW, need=T.needW;
+    const semNow=nw.sd/Math.sqrt(Math.max(1,T.week.n));
+    h+='<div class="pcard"><div class="ptop"><span class="pnm">התנודה שלך</span>'+
+       '<span class="badge b-mute">מ-'+nw.nAll+' שקילות</span></div>'+
+       '<p class="pline">המשקל שלך זז בממוצע <b class="num">'+n1(nw.sd)+
+       '</b> ק"ג בין יום ליום, בתוך אותו שבוע. זה לא שומן — זה מים, מלח, '+
+       'אוכל וגליקוגן.</p>'+
+       '<p class="tiny">נמדד כפיזור המדידות סביב ממוצע השבוע שלהן, על פני '+
+       heWeeks(nw.weeks)+' עם יותר משקילה אחת.</p></div>';
+
+    if(need){
+      const ok=T.week.n>=need;
+      h+='<div class="pcard"><div class="ptop"><span class="pnm">כמה צריך</span>'+
+         '<span class="badge '+(ok?"b-ok":"b-warn")+'">'+
+         (ok?"אתה בסדר":"צריך יותר")+'</span></div>'+
+         '<p class="pline"><b class="num">'+need+'</b> שקילות בשבוע.</p>'+
+         '<p class="tiny">המטרה שלך היא ״'+esc(T.goal.lab)+'״, וקצב היעד שלה '+
+         'הוא בערך <b class="num">'+n1(T.tgtKg)+'</b> ק"ג בשבוע. כדי לזהות שינוי '+
+         'בגודל הזה, שגיאת הממוצע חייבת להיות קטנה ממנו בהרבה. שגיאת הממוצע '+
+         'קטנה כשורש מספר המדידות — ולכן <span class="num">'+need+'</span> '+
+         'שקילות מספיקות, ופחות מזה משאיר את השינוי בתוך הרעש.</p>'+
+         '<p class="tiny">השבוע שקלת <b class="num">'+T.week.n+'</b> פעמים. '+
+         'הממוצע שלך מדויק כרגע עד <b class="num">±'+n1(semNow)+'</b> ק"ג'+
+         (ok?'' : ' — יותר מהשינוי שאתה מחפש, ולכן קשה להסיק ממנו')+'.</p>'+
+         '</div>';
+    }
+    if(T.noiseB)
+      h+='<div class="pcard"><div class="ptop"><span class="pnm">אחוז השומן זז יותר</span>'+
+         '<span class="badge b-mute">±'+n1(T.noiseB.sd)+'%</span></div>'+
+         '<p class="pline">קריאת אחוז השומן שלך זזה <b class="num">'+n1(T.noiseB.sd)+
+         '</b> נקודות אחוז בין יום ליום.</p>'+
+         '<p class="tiny">זו הסיבה שאסור להסיק שינוי בשומן משקילה בודדת. '+
+         'בממוצע שבועי הרעש הזה מתכווץ, ורק אז המספר אומר משהו.</p></div>';
+  }
+  h+='</div>';
+
+  /* ---- מה המסך הזה לא יכול ---- */
+  h+='<div class="card"><h2>מה המסך הזה לא יודע</h2>';
+  h+='<p class="tiny">שתי השיטות כאן הן <b>הערכות</b>, לא מדידות. '+
+     'המדידה האמיתית של הרכב גוף היא DEXA, וגם היא לא מושלמת. '+
+     'שתיהן יכולות לסטות בכמה נקודות אחוז מהאמת — כל אחת בכיוון משלה.</p>';
+  h+='<p class="tiny"><b>מה שכן אפשר לסמוך עליו:</b> ממוצע שבועי של אותה שיטה, '+
+     'ובעיקר <b>הכיוון לאורך זמן</b>. אם המספר יורד שבוע אחרי שבוע — ירדת, '+
+     'גם אם הערך המוחלט לא מדויק. זה מה שהמסך הזה בנוי לתת.</p>';
+  h+='</div>';
+  return h;
+}
+
 function viewPhotos(){
   photosLoad();
   let h='<div class="lgtitle">תמונות</div>';
@@ -5016,8 +5306,11 @@ function viewTrend(){
   h+='<div class="f"><label for="cTod">מתי מדדת</label><select id="cTod" name="tod">'+
      TOD.map(t=>'<option value="'+t.id+'"'+(t.id==="morning"?" selected":"")+'>'+esc(t.lab)+' — '+esc(t.full)+'</option>').join("")+
      '</select></div>';
-  [["navel","טבור"],["nipple","חזה"],["shoulders","כתפיים"],["thigh","ירך"],["calf","שוק"],["armFlex","יד בכיווץ"],["forearmFlex","אמה בכיווץ"]]
-    .forEach(([k,l])=>{ h+='<div class="f"><label>'+l+' (ס"מ)</label><input type="number" step="0.1" inputmode="decimal" name="'+k+'"></div>' });
+  CIRC_FIELDS.forEach(([k,l])=>{
+    h+='<div class="f"><label>'+l+' (ס"מ)</label>'+
+       '<input type="number" step="0.1" inputmode="decimal" name="'+k+'">'+
+       (CIRC_HOW[k]?'<span class="fhint">'+esc(CIRC_HOW[k])+'</span>':'')+'</div>';
+  });
   h+='</div><p class="tiny" style="margin:2px 0 12px">השעה נשמרת כדי שההשוואה תהיה '+
      'בוקר מול בוקר. היקף הבטן משתנה במהלך היום מאוכל ומנוזלים, ובלי לדעת מתי מדדת '+
      'אי אפשר לדעת אם השתנה הגוף או רק השעון.</p>';
@@ -5053,7 +5346,7 @@ function viewTrend(){
       h+='<div class="ex"><div class="top"><b class="nm num">'+fmtDate(c.date)+'</b>'+
          todChip(c.tod)+
          '<button class="btn danger mini" data-delc="'+c.id+'">מחק</button></div><div class="mus">';
-      [["navel","טבור"],["nipple","חזה"],["shoulders","כתפיים"],["thigh","ירך"],["calf","שוק"],["armFlex","יד"],["forearmFlex","אמה"]]
+      CIRC_SHORT
         .forEach(([k,l])=>{
           if(c[k]==null) return;
           /* הפרש מוצג רק מול מדידה מאותה שעה ביום. אחרת הוא מודד את השעון. */
@@ -10249,7 +10542,7 @@ function bind(){
     const td=String(f.get("tod")||"");
     rec.tod=todOf(td)?td:"morning";
     let any=false;
-    ["navel","nipple","shoulders","thigh","calf","armFlex","forearmFlex"].forEach(k=>{
+    CIRC_KEYS.forEach(k=>{
       const v=f.get(k); if(v!==""&&v!=null){ rec[k]=parseFloat(v); any=true }
     });
     if(!any) return toast("לא הוזן אף היקף");
