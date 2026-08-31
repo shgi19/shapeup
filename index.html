@@ -4251,12 +4251,30 @@ function noiseOf(key,minWeeks){
   return {sd,per,weeks:allWeeks.length,nAll:rows.length};
 }
 /* כמה מדידות צריך כדי ששגיאת הממוצע תהיה קטנה מהשינוי שרוצים לזהות */
-function needFor(sd,target){
+/* ---- כמה שבועות עד שאפשר לדעת ----
+   הגרסה הראשונה שלי כאן הייתה שגויה, והיא דרשה 14 שקילות בשבוע. הטעות
+   לא הייתה בחשבון אלא **בשאלה**: שאלתי כמה מדידות צריך כדי לקרוא שבוע
+   בודד, ועם תנודה יומית אמיתית התשובה לזה היא מספר שאי אפשר לעשות.
+
+   וזו בדיוק המסקנה שהוחמצה: **שבוע בודד לא ניתן לקריאה, כמה שלא
+   תשקול.** ההפרש בין שני ממוצעים שבועיים נושא את הרעש של שניהם —
+   sd·√(2/n) — וברוב המקרים הוא גדול מהשינוי השבועי עצמו.
+
+   מה שכן עובד: לצבור שבועות. השינוי גדל ליניארית עם הזמן והרעש לא,
+   ולכן אחרי מספיק שבועות המגמה יוצאת מהרעש. זה מה שמחושב כאן. */
+function weeksToKnow(sd,n,target){
+  if(!sd||!n||!target||target<=0) return null;
+  const seDiff=sd*Math.sqrt(2/n);      /* רעש ההפרש בין שני ממוצעים */
+  return Math.max(1,Math.min(26,Math.ceil(2*seDiff/target)));
+}
+/* המלצה מעשית לכמה שקילות בשבוע. התקרה היא 7 — אי אפשר לשקול יותר
+   מפעם ביום, וכל מספר מעל זה הוא סימן שהנוסחה שגויה ולא שהמשתמש
+   צריך להתאמץ יותר. הקריטריון: המספר הקטן ביותר שנותן תשובה תוך
+   שלושה שבועות, שזה אופק סביר להחלטה על שינוי בתזונה. */
+function suggestPerWeek(sd,target){
   if(!sd||!target||target<=0) return null;
-  /* שגיאת הממוצע = sd/√n. הדרישה: חצי מהשינוי, כדי ששני ממוצעים
-     עוקבים לא יבלעו זה את זה בתוך הרעש שלהם. */
-  const n=Math.ceil(Math.pow(sd/(target/2),2));
-  return Math.max(1,Math.min(14,n));
+  for(let n=1;n<=7;n++) if(weeksToKnow(sd,n,target)<=3) return n;
+  return 7;
 }
 
 /* ---- הרכבת התמונה ---- */
@@ -4277,7 +4295,10 @@ function truePicture(){
   return {
     week:w, bfWeek:b, circ:lastC, circBF:cBF,
     noiseW:nW, noiseB:nB, goal:g, tgtKg,
-    needW:nW&&tgtKg?needFor(nW.sd,tgtKg):null,
+    needW:nW&&tgtKg?suggestPerWeek(nW.sd,tgtKg):null,
+    /* מה כל בחירה קונה: טבלה של שקילות בשבוע מול שבועות עד לתשובה */
+    table:nW&&tgtKg?[2,3,5,7].map(n=>({n,w:weeksToKnow(nW.sd,n,tgtKg)})):null,
+    weeksNow:(nW&&tgtKg&&w)?weeksToKnow(nW.sd,Math.max(1,w.n),tgtKg):null,
     /* הממוצע שביקש: שתי השיטות במשקל שווה, והפער נשמר לתצוגה */
     both:(b&&cBF!=null)?{avg:(b.avg+cBF)/2, gap:Math.abs(b.avg-cBF)}:null
   };
@@ -5072,19 +5093,44 @@ function viewTrue(){
 
     if(need){
       const ok=T.week.n>=need;
-      h+='<div class="pcard"><div class="ptop"><span class="pnm">כמה צריך</span>'+
+      h+='<div class="pcard"><div class="ptop"><span class="pnm">ההמלצה</span>'+
          '<span class="badge '+(ok?"b-ok":"b-warn")+'">'+
-         (ok?"אתה בסדר":"צריך יותר")+'</span></div>'+
-         '<p class="pline"><b class="num">'+need+'</b> שקילות בשבוע.</p>'+
-         '<p class="tiny">המטרה שלך היא ״'+esc(T.goal.lab)+'״, וקצב היעד שלה '+
-         'הוא בערך <b class="num">'+n1(T.tgtKg)+'</b> ק"ג בשבוע. כדי לזהות שינוי '+
-         'בגודל הזה, שגיאת הממוצע חייבת להיות קטנה ממנו בהרבה. שגיאת הממוצע '+
-         'קטנה כשורש מספר המדידות — ולכן <span class="num">'+need+'</span> '+
-         'שקילות מספיקות, ופחות מזה משאיר את השינוי בתוך הרעש.</p>'+
-         '<p class="tiny">השבוע שקלת <b class="num">'+T.week.n+'</b> פעמים. '+
-         'הממוצע שלך מדויק כרגע עד <b class="num">±'+n1(semNow)+'</b> ק"ג'+
-         (ok?'' : ' — יותר מהשינוי שאתה מחפש, ולכן קשה להסיק ממנו')+'.</p>'+
-         '</div>';
+         (ok?"אתה בסדר":"שווה להוסיף")+'</span></div>'+
+         '<p class="pline"><b class="num">'+need+'</b> שקילות בשבוע'+
+         (need>=7?' — כלומר כל בוקר':'')+'.</p>'+
+         '<p class="tiny">המטרה שלך היא ״'+esc(T.goal.lab)+'״, וקצב היעד שלה הוא '+
+         'בערך <b class="num">'+n1(T.tgtKg)+'</b> ק"ג בשבוע. עם '+
+         '<span class="num">'+need+'</span> שקילות תדע אם אתה בקצב '+
+         '<b>תוך כשלושה שבועות</b> — אופק סביר להחליט אם לשנות משהו.</p>'+
+         '<p class="tiny">השבוע שקלת <b class="num">'+T.week.n+'</b> פעמים, '+
+         'והממוצע שלך מדויק עד <b class="num">±'+n1(semNow)+'</b> ק"ג.</p></div>';
+    }
+
+    /* ---- האמירה החשובה: שבוע בודד לא ניתן לקריאה ---- */
+    if(T.weeksNow){
+      h+='<div class="pcard"><div class="ptop"><span class="pnm">כמה שבועות עד שתדע</span>'+
+         '<span class="badge b-mute">'+heWeeks(T.weeksNow)+'</span></div>'+
+         '<p class="pline">בקצב השקילה הנוכחי שלך, השינוי יוצא מהרעש אחרי '+
+         '<b class="num">'+T.weeksNow+'</b> שבועות.</p>'+
+         '<p class="tiny"><b>וזו הנקודה החשובה כאן:</b> שבוע בודד כמעט אף פעם '+
+         'לא ניתן לקריאה, <b>כמה שלא תשקול</b>. ההפרש בין שני ממוצעים שבועיים '+
+         'נושא את הרעש של שניהם, והוא בדרך כלל גדול מהשינוי השבועי עצמו. '+
+         'מה שכן עובד: לצבור שבועות. השינוי גדל עם הזמן, הרעש לא — ואחרי '+
+         'מספיק שבועות המגמה יוצאת ממנו.</p>';
+      if(T.table){
+        h+='<p class="tiny" style="margin-top:8px"><b>מה כל בחירה קונה לך:</b></p>'+
+           '<div class="wklist">';
+        T.table.forEach(r=>{
+          h+='<div class="wkitem"><div class="wkrow">'+
+             '<span class="wkdt num">'+r.n+' שקילות בשבוע</span>'+
+             '<span class="wkav">'+esc(heWeeks(r.w))+'</span>'+
+             '<span class="wkd flat"></span></div></div>';
+        });
+        h+='</div><p class="tiny" style="opacity:.75">שים לב לקצב השיפור: '+
+           'המעבר משתיים לשלוש עוזר הרבה, ומחמש לשבע כמעט לא. '+
+           'הרעש קטן כשורש מספר המדידות, ולכן יש גבול לכמה שקילות קונות.</p>';
+      }
+      h+='</div>';
     }
     if(T.noiseB)
       h+='<div class="pcard"><div class="ptop"><span class="pnm">אחוז השומן זז יותר</span>'+
