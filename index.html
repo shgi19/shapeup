@@ -1093,11 +1093,19 @@ body.noauth::after{display:none}
   border-right:2.5px solid var(--accent-txt);border-bottom:2.5px solid var(--accent-txt);
   transform:rotate(225deg);transition:transform .2s ease;
 }
+.card.sec > .lvhead{cursor:pointer;min-height:44px;margin:0;-webkit-user-select:none;user-select:none;font-size:15px;font-weight:800;color:var(--label)}
+.card.sec > .lvhead::after{
+  content:'';flex:none;height:9px;width:9px;margin-inline-start:auto;
+  border-right:2.5px solid var(--accent-txt);border-bottom:2.5px solid var(--accent-txt);
+  transform:rotate(225deg);transition:transform .2s ease;
+}
+.card.sec-closed > .lvhead::after{transform:rotate(45deg)}
+.card.sec:not(.sec-closed) > .lvhead{margin-bottom:10px}
 .card.sec-closed > h2{margin-bottom:0}
 .card.sec-closed > h2::after{transform:rotate(45deg)}
 .card.sec-closed{padding-block:8px}
-.card.sec-closed > :not(h2){display:none!important}
-.card.sec:not(.sec-closed) > :not(h2){animation:rise .24s cubic-bezier(.2,.8,.2,1) both}
+.card.sec-closed > :not(h2):not(.lvhead){display:none!important}
+.card.sec:not(.sec-closed) > :not(h2):not(.lvhead){animation:rise .24s cubic-bezier(.2,.8,.2,1) both}
 .step.sec > .st{cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;margin-bottom:0;-webkit-user-select:none;user-select:none}
 .step.sec > .st::after{
   content:'';flex:none;height:8px;width:8px;margin-inline-start:auto;
@@ -3901,7 +3909,7 @@ document.addEventListener("keydown",e=>{
    הפתיחה לא מציירת מחדש את המסך, ולכן מה שכבר הוקלד לא נמחק.
    ---------------------------------------------------------------------------- */
 /* מה פתוח מראש בכל מסך. בלי רשומה: הכרטיס הראשון. */
-const SEC_DEFAULT={food:["היעד היומי","פשוט תכתוב מה אכלת"]};
+const SEC_DEFAULT={food:["היעד היומי","פשוט תכתוב מה אכלת"],plan:["התרגילים"]};
 const STEP_DEFAULT=/^(1|5) ·/;
 const SEC_SEEN={};
 function secKey(el){ return String(el.textContent||"").replace(/[\d\/.:—–\-]+/g,"").replace(/\s+/g," ").trim() }
@@ -3923,15 +3931,20 @@ function sectionPass(){
   const root=document.querySelector("#app .wrap");
   if(!root) return;
   const tab=ui.tab;
-  const seen=SEC_SEEN[tab];
+  /* לפי המסך המדויק ולא לפי הלשונית: פתיחת תוכנית מהרשימה היא מסך חדש, לא "חלק שהופיע" */
+  const vk=viewKey();
+  const seen=SEC_SEEN[vk];
   const now={};
-  const cards=Array.from(root.children).filter(c=>c.classList&&c.classList.contains("card")&&!c.classList.contains("storewarn")&&c.querySelector(":scope > h2"));
+  const secHead=c=>c.querySelector(":scope > h2, :scope > .lvhead");
+  const cards=Array.from(root.children).filter(c=>c.classList&&c.classList.contains("card")&&!c.classList.contains("storewarn")&&secHead(c));
   /* כרטיס אחד במסך: אין מה לקפל */
   if(cards.length>1) cards.forEach((c,i)=>{
-    const h=c.querySelector(":scope > h2"), key=secKey(h);
+    const h=secHead(c), key=secKey(h);
     now[key]=1;
+    /* אם אף כרטיס במסך לא ברשימה (תוכניות בלי תוכנית פתוחה), הראשון פתוח */
     const def=SEC_DEFAULT[tab];
-    let initial=def?def.some(d=>key.indexOf(d)===0):i===0;
+    const hasDef=def&&cards.some(x=>def.some(d=>secKey(secHead(x)).indexOf(d)===0));
+    let initial=hasDef?def.some(d=>key.indexOf(d)===0):i===0;
     /* חלק שרק עכשיו הופיע, למשל תשובה לשאלה, הוא מה שהמשתמש מחכה לו */
     /* נרשם כפתוח, אחרת הציור הבא סוגר אותו: כך נעלמו שאלות "בנה לי תוכנית" אחרי תשובה אחת */
     if(seen&&!seen[key]){ initial=true; secState("c:"+tab)[key]=true }
@@ -3940,7 +3953,7 @@ function sectionPass(){
       h.setAttribute("aria-expanded",open?"true":"false");
     },initial,"c:"+tab,key);
   });
-  SEC_SEEN[tab]=Object.assign(seen||{},now);
+  SEC_SEEN[vk]=Object.assign(seen||{},now);
 
   /* שלבי הניתוח: אותו דבר, עם המספרים ומה לעשות פתוחים */
   root.querySelectorAll(".step").forEach(c=>{
@@ -3968,6 +3981,16 @@ function sectionPass(){
   });
 }
 /* פותח את החלק שאלמנט נמצא בתוכו, כשצריך להראות אותו */
+const PLAIN_MUSCLE={"המסטרינג":"אחורי ירך","ארבע ראשי":"קדמי ירך","רומבואידים":"בין השכמות","בייספס":"יד קדמית","טרייספס":"יד אחורית","בטן אלכסונים":"צידי הבטן","גב רחב":"גב"};
+function plainMusclePass(root){
+  const keys=Object.keys(PLAIN_MUSCLE);
+  root.querySelectorAll(".mus span,.wkdt").forEach(el=>{
+    if(el.children.length) return;
+    let t=el.textContent, c=t;
+    keys.forEach(k=>{ c=c.split(k).join(PLAIN_MUSCLE[k]) });
+    if(c!==t) el.textContent=c;
+  });
+}
 function secReveal(el){
   const c=el&&el.closest?el.closest(".card.sec"):null;
   if(!c) return;
@@ -4344,7 +4367,7 @@ function renderNow(){
   try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
   /* גם החיווט עצמו מוגן — שגיאה בכפתור אחד לא תשתק את סרגל הלשוניות */
   try{ bind() }catch(e){ window.__bindErr=e }
-  try{ sectionPass() }catch(e){}
+  try{ sectionPass(); plainMusclePass(document.getElementById("app")) }catch(e){}
   try{ bindCards() }catch(e){}
   try{ bindAsk() }catch(e){}
   try{ bindCmp() }catch(e){}
@@ -6944,15 +6967,14 @@ function planDetail(p){
   });
   const volArr=Object.entries(vol).sort((a,b)=>b[1]-a[1]);
   if(volArr.length){
-    h+='<div class="card"><h2>נפח לפי שריר ראשוני</h2><div class="mus">';
+    h+='<div class="card"><h2>כמה סטים כל שריר מקבל</h2><div class="mus">';
     volArr.forEach(([m,v])=>{ h+='<span class="'+(v>=9?"p":"")+'">'+esc(m)+' · '+v+' סטים</span>' });
-    h+='</div><p class="tiny" style="margin-top:8px">הטווח שרוב הראיות תומכות בו הוא 10–20 סטים לקבוצת שריר '+
-       '<b>בשבוע</b>, לא לאימון בודד. אם התוכנית חוזרת פעמיים בשבוע — הכפל.</p></div>';
+    h+='</div><p class="tiny" style="margin-top:8px">מומלץ בערך 10–20 סטים לכל שריר <b>בשבוע</b>, לא באימון אחד. עושה את האימון הזה פעמיים בשבוע? תכפיל.</p></div>';
   }
 
   /* התרגילים */
   h+='<div class="card"><h2>התרגילים</h2>';
-  h+='<p class="tiny" style="margin-bottom:12px">לחץ על תרגיל כדי לראות חלופות.</p>';
+  h+='<p class="tiny" style="margin-bottom:12px">לחיצה על תרגיל מראה תרגילים שאפשר להחליף בהם.</p>';
   items.forEach((it,i)=>{
     const swapped=(p.swaps||{})[i];
     const linked=(p.links||{})[i];
@@ -6993,7 +7015,7 @@ function planDetail(p){
       if(!baseX){
         /* תוכנית של מישהו אחר יכולה להשתמש בשמות שלא במסד. במקום מבוי סתום,
            אפשר לקשר את השורה לתרגיל מוכר — ומשם החלופות עובדות רגיל. */
-        h+='<p class="tiny">התרגיל לא זוהה. בחר את התרגיל המקביל מהרשימה, ומשם יוצעו חלופות לפי שרירי המטרה שלו.</p>';
+        h+='<p class="tiny">לא זיהיתי את התרגיל. בחר תרגיל דומה מהרשימה, ונציע לך תרגילים להחלפה.</p>';
         h+='<div class="lgin"><select data-linkex="'+i+'"><option value="">— בחר תרגיל —</option>'+
            EX_DB.slice().sort((a,b)=>a.n<b.n?-1:1).map(x=>'<option value="'+esc(x.n)+'">'+esc(x.n)+'</option>').join("")+
            '</select></div>';
@@ -7001,7 +7023,7 @@ function planDetail(p){
         const sub=substitutes(baseX.n,names.filter(n=>n!==baseX.n));
         const opt=(o,label,cls)=>{
           if(!o) return '<div class="alt '+cls+'"><b>'+label+'</b>'+
-            '<div class="tiny">אין חלופה שמכסה את שרירי המטרה. תרגיל שמאמן משהו אחר לא יוצג כאן.</div></div>';
+            '<div class="tiny">אין תרגיל אחר שמאמן את אותם שרירים.</div></div>';
           const d=o.x.diff-baseX.diff, c=o.cov;
           const pct=Math.round(c.ratio*100);
           let h2='<div class="alt '+cls+'"><b>'+label+':</b> '+esc(o.x.n)+
@@ -7009,7 +7031,7 @@ function planDetail(p){
             (c.ratio>=1?' <span class="badge b-ok">כיסוי מלא</span>'
                        :' <span class="badge b-warn">כיסוי '+pct+'%</span>');
           /* מה בדיוק מכוסה — כדי שלא תצטרך להאמין למנוע על סמך מילה */
-          h2+='<div class="cov"><span class="tiny">שרירי המטרה של '+esc(baseX.n)+':</span><div class="mus">';
+          h2+='<div class="cov"><span class="tiny">השרירים ש'+esc(baseX.n)+' מאמן:</span><div class="mus">';
           baseX.p.forEach(m=>{
             const st=c.full.indexOf(m)>=0?"p":(c.part.indexOf(m)>=0?"":"miss");
             h2+='<span class="'+st+'">'+esc(m)+
@@ -7041,8 +7063,7 @@ function planDetail(p){
      '<div class="f wide"><label>התרגילים</label><textarea name="body">'+esc(p.body||"")+'</textarea></div></div>'+
      '<div class="btnrow"><button class="btn" type="submit">שמור שינויים</button>'+
      '<button class="btn danger" type="button" data-delp="'+p.id+'">מחק תוכנית</button></div></form>';
-  h+='<p class="tiny" style="margin-top:10px">קישורי ההדגמה פותחים חיפוש ביוטיוב לפי שם התרגיל באנגלית — '+
-     'לא סרטון שנבחר מראש, כדי שלא תגיע לסרטון שגוי.</p>';
+  h+='<p class="tiny" style="margin-top:10px">כפתור הסרטון פותח ביוטיוב סרטון של התרגיל. לתרגיל בלי סרטון מתאים הוא פותח חיפוש.</p>';
   h+='</div>';
   return h;
 }
@@ -7318,7 +7339,7 @@ function viewLearn(){
   const pool=SKILLS.filter(s=>kind==="all"||s.kind===kind);
 
   let h='<div class="lgtitle">למידה</div>';
-  h+='<p class="sub">'+SKILLS.length+' מיומנויות בחמש רמות קושי. בחר אחת וקבל את הדרך אליה.</p>';
+  h+='<p class="sub">'+SKILLS.length+' תרגילים מתקדמים ללמוד, בחמש רמות קושי. בחר אחד ותקבל את הדרך אליו.</p>';
 
   h+='<div class="card">';
   h+='<div class="seg" id="skKind">'+
@@ -7326,8 +7347,7 @@ function viewLearn(){
        .filter(k=>k[0]==="all"||SKILLS.some(s=>s.kind===k[0]))
        .map(k=>'<button data-skkind="'+k[0]+'" aria-selected="'+(kind===k[0])+'">'+k[1]+'</button>').join("")+
      '</div>';
-  h+='<p class="tiny" style="margin:12px 0 0">כל מיומנות כאן נשענת על סולם התקדמות שנגזר ממסד התרגילים. '+
-     '<b>שום שלב לא הומצא</b> — מיומנות בלי סולם אמיתי פשוט לא מופיעה.</p>';
+  h+='<p class="tiny" style="margin:12px 0 0">לכל אחד יש שלבים מהקל לקשה, כל שלב מכין את הבא.</p>';
   h+='</div>';
 
   for(let lv=1;lv<=5;lv++){
@@ -7360,12 +7380,12 @@ function skillDetail(s){
 
   h+='<div class="card"><div class="headline"><span class="badge b-info">'+esc(SKILL_LVL[s.lvl])+'</span>'+
      '<p style="margin:9px 0 0">'+esc(s.why)+'</p></div>';
-  h+='<p class="tiny" style="margin-top:12px"><b>מה שחשוב לדעת:</b> '+esc(s.tip)+'</p>';
+  h+='<p class="tiny" style="margin-top:12px"><b>חשוב לדעת:</b> '+esc(s.tip)+'</p>';
   h+='</div>';
 
   /* השרירים */
   h+='<div class="card"><h2>אילו שרירים לחזק</h2>';
-  h+='<p class="tiny" style="margin-bottom:10px">נגזר מהשרירים הראשוניים והמשניים של כל שלבי הסולם, לפי סדר החשיבות.</p>';
+  h+='<p class="tiny" style="margin-bottom:10px">לפי סדר החשיבות.</p>';
   h+='<div class="chips">'+musc.slice(0,8).map((m,i)=>
      '<span class="chip'+(i<3?" hot":"")+'">'+esc(m)+'</span>').join("")+'</div>';
   h+='<p class="tiny" style="margin-top:10px">שלושת הראשונים הם מה שבאמת יקבע אם תצליח.</p></div>';
@@ -7383,16 +7403,14 @@ function skillDetail(s){
        '<span class="ldiff num">'+(x.diff||1)+'</span></div>';
   });
   h+='</div>';
-  h+='<p class="tiny" style="margin-top:10px">המספר בצד הוא דרגת הקושי במסד — אותה סקאלה כמו בכל שאר האפליקציה.</p>';
+  h+='<p class="tiny" style="margin-top:10px">המספר בצד הוא רמת הקושי, מ־1 עד 5.</p>';
   h+='</div>';
 
   /* סרטונים */
   const vids=(SKILL_VIDS[s.id]||[]).map(k=>YT_VIDS[k]).filter(Boolean);
   h+='<div class="card"><h2>איפה ללמוד</h2>';
   if(vids.length){
-    h+='<p class="tiny" style="margin-bottom:12px">סרטונים ספציפיים מהערוצים המובילים בתחום. '+
-       '<b>כל אחד נפתח ואומת</b> — הכותרת, הערוץ ומספר הצפיות נלקחו מהדף עצמו. '+
-       'מספר הצפיות הוא מדד האמינות: סרטון שמיליונים ראו עבר יותר עיניים מכל המלצה שאני יכול לתת.</p>';
+    h+='<p class="tiny" style="margin-bottom:12px">סרטונים מהערוצים המובילים בתחום. כל אחד נבדק ביוטיוב.</p>';
     vids.forEach(v=>{
       const c=YT_CH[v.ch];
       h+='<a class="ytrow" href="'+vidLink(v.id)+'" target="_blank" rel="noopener noreferrer">'+
@@ -7429,8 +7447,8 @@ function skillDetail(s){
     h+='<div class="btnrow">';
     plans.forEach(p=>{ h+='<button class="btn sec" data-skadd="'+p.id+'">'+esc(p.title||"תוכנית")+'</button>' });
     h+='</div>';
-    h+='<p class="tiny" style="margin-top:10px">שלבים סטטיים נוספים כהחזקה של 10–30 שניות; שאר התרגילים ב־3 סטים. '+
-       '<b>מיומנות מתאמנים כשטריים</b> — הם ייכנסו בראש התוכנית, לא בסוף.</p>';
+    h+='<p class="tiny" style="margin-top:10px">תרגילי החזקה נוספים כהחזקה של 10–30 שניות; שאר התרגילים ב־3 סטים. '+
+       'לומדים תרגיל קשה כשעוד לא עייפים, ולכן הם ייכנסו בתחילת התוכנית.</p>';
   }
   h+='</div>';
   return h;
@@ -8081,7 +8099,7 @@ function viewPlan(){
   /* ---- 1. העלאת תוכנית מקובץ ---- */
   const pi=window.__planImp;
   h+='<div class="card"><h2>העלאה מקובץ</h2>';
-  h+='<p class="tiny">צילום של התוכנית, PDF, Excel או טקסט. מה שייקרא ייכנס לתיבה למטה — כלום לא נשמר בלי שתאשר.</p>';
+  h+='<p class="tiny">צילום של התוכנית, PDF, Excel או טקסט. מה שייקרא ייכנס לתיבה למטה, וכלום לא נשמר בלי שתאשר.</p>';
   if(pi&&pi.busy){
     h+='<div class="drop busy"><div class="spin"></div><div><b>'+esc(pi.msg)+'</b>'+
        '<div class="tiny">'+esc(pi.name||"")+'</div></div></div>';
@@ -8117,7 +8135,7 @@ function viewPlan(){
   const openB=!!ui.openBuild;
   h+='<button class="sect'+(openB?" on":"")+'" id="secBuild" aria-expanded="'+openB+'">'+
      '<span class="secn"><b>בנה לי תוכנית</b>'+
-     '<span>ארבע שאלות, ומהן נגזרת תוכנית מלאה</span></span>'+
+     '<span>כמה שאלות קצרות, ותקבל תוכנית מלאה</span></span>'+
      '<span class="secx" aria-hidden="true">'+(openB?"−":"+")+'</span></button>';
   if(openB) h+=buildCard();
 
@@ -8168,8 +8186,8 @@ function viewPlanOld(){
       h+='<h3>נפח לפי שריר ראשוני (סטים)</h3><div class="mus">';
       volArr.forEach(([m,v])=>{ h+='<span class="'+(v>=9?"p":"")+'">'+esc(m)+' · '+v+'</span>' });
       h+='</div>';
-      h+='<p class="tiny" style="margin-top:7px">הטווח שרוב הראיות תומכות בו הוא 10–20 סטים לקבוצת שריר <b>בשבוע</b> — לא לאימון בודד. '+
-         'זה ספירה של האימון הזה בלבד; אם הוא חוזר פעמיים בשבוע, הכפל.</p>';
+      h+='<p class="tiny" style="margin-top:7px">מומלץ בערך 10–20 סטים לכל שריר <b>בשבוע</b>, לא באימון אחד. הספירה היא של האימון הזה בלבד. '+
+         'עושה אותו פעמיים בשבוע? תכפיל.</p>';
     }
 
     h+='<h3>התרגילים והחלופות</h3>';
@@ -9284,7 +9302,11 @@ const FOOD_DB=[
 /* מיזוג: המאכלים הידניים קודם (יש להם יחידות מידה וכינויים), ואחריהם
    מאגר משרד הבריאות — בלי לדרוס שם שכבר קיים. `pri` שומר על סדר
    העדיפות בחיפוש, כדי ש"אורז" ימשיך להחזיר אורז ולא "אורז עם ירקות". */
+/* 31/10/2026: מאכלים נפוצים שחסרו. הערכים הועתקו כמו שהם ממאגר משרד הבריאות (data.gov.il),
+   בשם קצר שאנשים באמת כותבים. היחידה היא גודל מנה מקובל, לא נתון מהמאגר. */
+const FOOD_EXTRA=[{"n":"סלט קיסר","kcal":117,"p":3.7,"c":5.7,"f":8.5,"u":{"מנה":250},"pri":3},{"n":"סלט יווני","kcal":106,"p":3.6,"c":2.9,"f":8.8,"u":{"מנה":250},"pri":3},{"n":"מיץ תפוזים","kcal":45,"p":0.7,"c":10.2,"f":0.2,"u":{"כוס":240},"pri":3},{"n":"מים","kcal":0,"p":0,"c":0,"f":0,"u":{"כוס":240},"pri":3},{"n":"סודה","kcal":0,"p":0,"c":0,"f":0,"u":{"כוס":240},"pri":3},{"n":"יין","kcal":83,"p":0.1,"c":2.7,"f":0,"u":{"כוס":150},"pri":3},{"n":"לימונדה","kcal":46,"p":0.1,"c":9,"f":0,"u":{"כוס":240},"pri":3},{"n":"תה","kcal":1,"p":0,"c":0.3,"f":0,"u":{"כוס":240},"pri":3},{"n":"אייס קפה","kcal":84,"p":2.4,"c":15,"f":1.6,"u":{"כוס":240},"pri":3},{"n":"מוזלי","kcal":386,"p":8.5,"c":67.8,"f":12.2,"u":{"כוס":90},"pri":3},{"n":"סופגנייה","kcal":376,"p":8.1,"c":48,"f":16.3,"u":{"יחידה":80},"pri":3},{"n":"תות שדה","kcal":32,"p":0.7,"c":5.7,"f":0.3,"u":{"כוס":150},"pri":3},{"n":"שרימפס","kcal":209,"p":14.9,"c":10.2,"f":11.4,"u":{"מנה":150},"pri":3},{"n":"קלמרי","kcal":227,"p":16.6,"c":12.1,"f":11.7,"u":{"מנה":150},"pri":3},{"n":"תירס","kcal":95,"p":3.4,"c":18.5,"f":1.5,"u":{"קלח":120,"כוס":150},"pri":3},{"n":"שום","kcal":149,"p":6.4,"c":31,"f":0.5,"u":{"שן":5},"pri":3},{"n":"תרד","kcal":23,"p":2.9,"c":1.4,"f":0.4,"u":{"מנה":100},"pri":3},{"n":"שמנת","kcal":159,"p":2.7,"c":3.3,"f":15,"u":{"כף":15},"pri":3},{"n":"בקלאווה","kcal":426,"p":8.7,"c":48.3,"f":22,"u":{"יחידה":40},"pri":3},{"n":"סלט פירות","kcal":80,"p":0.8,"c":18.3,"f":0.2,"u":{"כוס":150},"pri":3},{"n":"דוריטוס","kcal":518,"p":8.5,"c":67,"f":24,"u":{"שקית":70},"pri":3},{"n":"אפרופו","kcal":538,"p":4.5,"c":62.5,"f":30,"u":{"שקית":70},"pri":3},{"n":"גרעינים","kcal":463,"p":19.8,"c":9.8,"f":38.5,"u":{"חופן":30},"pri":3},{"n":"אוכמניות","kcal":57,"p":0.7,"c":12.1,"f":0.3,"u":{"כוס":150},"pri":3},{"n":"ארטיק","kcal":83,"p":0,"c":20.6,"f":0,"u":{"יחידה":70},"pri":3}];
 const FOOD_ALL=FOOD_DB.concat(
+  FOOD_EXTRA.filter(m=>!FOOD_DB.some(x=>fnorm(x.n)===fnorm(m.n))),
   FOOD_MOH.filter(m=>!FOOD_DB.some(x=>fnorm(x.n)===fnorm(m.n)))
 );
 
@@ -9671,13 +9693,39 @@ const COMMON_FOOD={
   "ציפס":{n:"צ'יפס מטוגן",u:"מנה"}, "עדשימ":{n:"עדשים מבושלות",u:"מנה"},
   "אגוזימ":{n:"אגוזי מלך",u:"חופן"}, "עופ":{n:"עוף בגריל",u:"מנה"}, "עופ בתנור":{n:"עוף בגריל",u:"מנה"},
   "קפה":{n:"קפה שחור",u:"כוס"}, "שווארמה עופ":{n:"שווארמה הודו",u:"מנה במגש"},
-  "שייק חלבונ":{n:"אבקת חלבון"}, "חלבונ מי גבינה":{n:"אבקת חלבון"}
+  "שייק חלבונ":{n:"אבקת חלבון"}, "חלבונ מי גבינה":{n:"אבקת חלבון"},
+  "נקניקיות":{n:"נקניקיות עוף",u:"נקניקייה"}, "נקניקיה":{n:"נקניקיות עוף",u:"נקניקייה"},
+  "חזה הודו":{n:"הודו פרוס"}, "שוק עופ":{n:"שוקיים עוף",u:"שוק"}, "אורז מלא":{n:"אורז מלא, מטוגן בשמן קנולה"},
+  "קפה הפוכ":{n:"קפה, מוכן קפוצ'ינו"}, "נוטלה":{n:"ממרח שוקולד"}, "תות":{n:"תות שדה",u:"כוס"}, "תותימ":{n:"תות שדה",u:"כוס"}
 };
+/* מילים שבאות לפני שם המאכל במאגר: "גבינת פטה" היא פטה, "דג אמנון" הוא אמנון */
+const NAME_HEADS={"גבינת":1,"גבינה":1,"דג":1,"אגוזי":1,"עוגת":1,"סלט":1,"נקניק":1,"משקה":1,"שוקולד":1,"בשר":1,"סטיק":1};
+/* מילים שבלי ההמשך אינן מאכל: "סלט קיסר" הוא לא סלט טונה */
+const GENERIC_Q={"סלט":1,"מרק":1,"עוגה":1,"עוגת":1,"גבינה":1,"גבינת":1,"פסטה":1,"מיצ":1,"שמנ":1,"לחמ":1,"קפה":1,"חלב":1,"יוגורט":1,"דג":1};
+/* האם המאכל שנמצא באמת מה שנכתב, או רק מכיל את המילה: "מרגרינה" היא לא "כדורי שוקולד, עם מרגרינה" */
+function foodFits(food,q){
+  if(commonFood(q)) return true;
+  /* "ביצה" ו"לחמנייה" הן גם שמות של יחידות, ולכן בודקים גם עם המילים האלה וגם בלעדיהן */
+  return [splitWords(q,false),splitWords(q,true)].some(ws=>ws.length&&foodFitsWords(food,ws));
+}
+function foodFitsWords(food,ws){
+  const raw=fnorm(food.n).replace(/^ffq\s*/,"");
+  const nw=raw.split(" ").filter(Boolean);
+  const al=fnorm(Object.keys(food.u||{}).concat(food.a||[]).join(" ")).split(" ").filter(Boolean);
+  /* תחילת מילה, ולפחות רוב המילה: "קרפ" הוא לא "קרפיון" ו"פרו" הוא לא "פרוסה" */
+  const starts=(w,arr)=>variants(w).some(v=>arr.some(x=>x.indexOf(v)===0&&v.length>=x.length*0.7));
+  const lk=looseKey(ws[0]);
+  const first=starts(ws[0],[nw[0]])||(lk.length>=3&&looseKey(nw[0])===lk&&Math.abs(nw[0].length-ws[0].length)<=1);
+  const viaHead=NAME_HEADS[nw[0]]&&starts(ws[0],nw);
+  const listed=(/^ffq/i.test(food.n)||food.n.indexOf("/")>=0)&&starts(ws[0],nw);
+  if(!first&&!viaHead&&!listed&&!starts(ws[0],al)) return false;
+  if(GENERIC_Q[ws[0]]&&ws.length>1&&!ws.slice(1).some(w=>starts(w,nw))) return false;
+  return true;
+}
 /* כתיב: שווארמה, שוורמה, שוארמה ושאורמה הם אותה מילה. מורידים את האותיות שמתחלפות. */
 function looseKey(w){ return fnorm(w).replace(/[ויא]/g,"") }
 function commonFood(q){
-  const key=splitWords(q,false).join(" ");
-  const c=COMMON_FOOD[key];
+  const c=COMMON_FOOD[splitWords(q,true).join(" ")]||COMMON_FOOD[splitWords(q,false).join(" ")];
   return c&&foodByName(c.n)?c:null;
 }
 /* דירוג לכל המאגר. אותו דירוג מחזיר גם אפשרויות חלופיות למשתמש.
@@ -9693,8 +9741,8 @@ function rankFoods(q,limit){
     words.forEach((w,i)=>{
       let g=0;
       if(variants(w).some(v=>ws.indexOf(v)>=0)) g=3;
-      else if(w.length>=3&&variants(w).some(v=>nf.indexOf(v)>=0)) g=2;
-      else if(loose[i].length>=3&&lk.indexOf(loose[i])>=0) g=2.5;
+      else if(w.length>=3&&variants(w).some(v=>ws.some(x=>x.indexOf(v)===0))) g=2;
+      else if(loose[i].length>=3&&ws.some((x,k)=>lk[k]===loose[i]&&Math.abs(x.length-w.length)<=1)) g=2.5;
       if(g&&i===0) first=true;
       sc+=g;
     });
@@ -9718,8 +9766,9 @@ function matchFood(q){
     if(!words.length) continue;
     let best=null,bestScore=-1,bestLen=1e9;
     foods.forEach(o=>{
-      const hay=o.nf+" "+o.extra;
-      if(!words.every(w=>variants(w).some(v=>hay.indexOf(v)>=0))) return;
+      /* תחילת מילה בלבד: "קרפ" הוא לא "מסקרפונה", ו"ציפס" הוא לא "תפוציפס" */
+      const hay=(o.nf+" "+o.extra).split(" ");
+      if(!words.every(w=>variants(w).some(v=>hay.some(x=>x.indexOf(v)===0)))) return;
       /* התאמה למילה שלמה עדיפה על התאמה כתת־מחרוזת — אחרת "לחם"
          נתפס בתוך "לחמנייה" רק מפני שהשם קצר יותר. */
       let sc=0;
@@ -9727,6 +9776,7 @@ function matchFood(q){
       /* שובר שוויון: מאכל בסיסי מנצח גרסה מורכבת. בלי זה "אורז" מחזיר
          "אורז עם ירקות" רק מפני שהשם קצר במקרה. */
       const pri=o.f.pri||0, bp=(best&&best.pri)||0;
+      if(o.words[0]&&words[0]&&variants(words[0]).some(v=>o.words[0]===v)) sc+=1;   /* המילה הראשונה בשם היא המאכל */
       if(sc>bestScore || (sc===bestScore&&pri>bp) ||
          (sc===bestScore&&pri===bp&&o.nf.length<bestLen)){
         best=o.f; bestScore=sc; bestLen=o.nf.length;
@@ -9767,6 +9817,7 @@ function gramsFor(food,unit,qty){
     if(food.u["יחידה"]!=null) return qty*food.u["יחידה"];
     const single=Object.keys(food.u).filter(x=>!BULK_UNITS[x]);
     if(single.length) return qty*food.u[single[0]];
+    if(food.u["כוס"]) return qty*food.u["כוס"];   /* "2 חלב" הן שתי כוסות */
     return null;   /* רק יחידות צובר — עדיף לשאול מאשר לנחש פי 25 */
   }
   return qty*100;
@@ -9789,11 +9840,15 @@ function parseFoodLine(raw){
       else if(KILO_WORDS.test(w)) unit="קילו";
     }
   });
+  const hadQty=qty!=null;
   if(qty==null) qty=1;
   const food=matchFood(txt);
-  if(!food) return {raw:txt,ok:false,qty,unit};
+  if(!food||!foodFits(food,txt))
+    return {raw:txt,ok:false,qty,unit,alts:rankFoods(txt,5).map(f=>f.n)};
   const com=commonFood(txt);
   if(!unit&&com&&com.u) unit=com.u;
+  /* בלי מספר ובלי יחידה: "חלב" הוא כוס ו"בוטנים" הם חופן, לא בוטן אחד */
+  if(!unit&&!hadQty&&food.u){ if(food.u["חופן"]) unit="חופן"; else if(food.u["כוס"]) unit="כוס" }
   const gRaw=gramsFor(food,unit,qty);
   /* מצאנו את המאכל אבל לא את הכמות. עדיף לומר את זה מאשר להמציא מספר
      שנראה סביר — מספר שגוי כאן מקלקל את כל היום בשקט. */
@@ -10526,8 +10581,7 @@ function viewWork(){
   }else{
     h+='<div class="btnrow">';
     plans.forEach(p=>{ h+='<button class="btn" data-startw="'+p.id+'">'+esc(p.title||"תוכנית")+'</button>' });
-    h+='</div><p class="tiny" style="margin-top:10px">בחר את התוכנית שביצעת. התרגילים ייטענו עם הפרוטוקול שכתוב בה, '+
-       'ואתה רק רושם מה עשית בפועל.</p>';
+    h+='</div><p class="tiny" style="margin-top:10px">בחר את התוכנית שעשית. התרגילים ייטענו לבד, ואתה רק רושם מה עשית.</p>';
   }
   h+='</div>';
 
@@ -10544,8 +10598,8 @@ function viewWork(){
            '<div class="k">'+esc(m)+'</div><div class="v"><span class="num">'+n1(v)+'</span> סטים '+
            '<span class="badge '+b+'">'+(hi?"מעל הטווח":lo?"מתחת לטווח":"בטווח")+'</span></div></div>';
       });
-      h+='<p class="tiny" style="margin-top:10px">הטווח שרוב הראיות תומכות בו הוא <b>10–20 סטים לקבוצת שריר בשבוע</b> '+
-         '(Schoenfeld ואחרים). מתחת לזה יש מקום להוסיף; הרבה מעל — עולה מחיר ההתאוששות בלי תוספת ברורה.</p></div>';
+      h+='<p class="tiny" style="margin-top:10px">מומלץ בערך <b>10–20 סטים לכל שריר בשבוע</b> (Schoenfeld ואחרים). פחות מזה: יש מקום להוסיף. '+
+         'הרבה יותר: הגוף מתעייף בלי תועלת ברורה.</p></div>';
     }
   }
 
@@ -10950,7 +11004,11 @@ function viewFood(){
           return;
         }
         h+='<div class="row" style="padding:9px 0;border-color:var(--sep)"><div class="k">'+
-           '<b>'+esc(x.raw)+'</b><div class="tiny">לא נמצא במאגר, אז אין לי מספר אמין. לחיצה על «הוסף» תחפש אותו במאגר של משרד הבריאות, ואז הוא יישמר.</div></div>'+
+           '<b>'+esc(x.raw)+'</b><div class="tiny">לא נמצא במאגר, אז אין לי מספר אמין. לחיצה על «הוסף» תחפש אותו במאגר של משרד הבריאות, ואז הוא יישמר.</div>'+
+           (x.alts&&x.alts.length?'<label class="tiny" style="display:block;margin-top:6px">אולי התכוונת ל: <select class="palt" data-palt="'+i+'" aria-label="בחר מאכל דומה">'+
+             '<option value="">בחר</option>'+x.alts.map(n=>{const a=foodByName(n);
+               return '<option value="'+esc(n)+'">'+esc(n.replace(/^FFQ-/,""))+(a?' · '+a.kcal+' קלוריות ל־100 גרם':'')+'</option>'}).join("")+
+             '</select></label>':'')+'</div>'+
            '<div class="v"><button class="btn sec mini" data-addmiss="'+esc(x.raw)+'">הוסף</button></div></div>';
         return;
       }
@@ -11786,13 +11844,11 @@ function bind(){
     const x=window.__parsed&&window.__parsed[+el.dataset.palt];
     const fd=foodByName(el.value);
     if(!x||!fd) return;
-    x.alts=[x.food].concat((x.alts||[]).filter(n=>n!==fd.n));
-    x.food=fd.n; x.guess=false;
+    x.alts=(x.food?[x.food]:[]).concat((x.alts||[]).filter(n=>n!==fd.n));
+    x.food=fd.n; x.guess=false; x.ok=true;
     /* כמות שנכתבה בגרמים נשארת. בלי כמות מפורשת: לפי היחידה של המאכל החדש. */
-    if(x.unit!=="גרם"&&x.unit!=="קילו"){
-      const g=gramsFor(fd,fd.u&&fd.u[x.unit]?x.unit:null,x.qty);
-      if(g) x.grams=Math.max(1,Math.round(g));
-    }
+    const g=(x.unit==="גרם"||x.unit==="קילו")?gramsFor(fd,x.unit,x.qty):gramsFor(fd,fd.u&&fd.u[x.unit]?x.unit:null,x.qty);
+    x.grams=Math.max(1,Math.round(g||100));
     render();
   });
   document.querySelectorAll("[data-pg]").forEach(el=>el.onchange=()=>{
