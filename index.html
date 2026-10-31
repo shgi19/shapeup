@@ -1064,7 +1064,64 @@ body::after{
 }
 body.noauth::after{display:none}
 
+/* ---------- סרגל תחתון: חמישה כפתורים, בלי גלילה ---------- */
+.tabbar .inner{overflow:visible}
+.tabbar button{flex:1 1 0;min-width:0}
+#tabMore svg{color:inherit}
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
+#moreMenu{position:fixed;inset:0;z-index:120}
+.moreback{position:absolute;inset:0;background:rgba(0,0,0,.5);animation:fadein .2s both}
+.moresheet{
+  position:absolute;inset-inline:0;bottom:0;margin-inline:auto;width:min(660px,100%);
+  background:var(--card);border:1px solid var(--brd);border-radius:24px 24px 0 0;
+  padding:18px 14px calc(14px + env(safe-area-inset-bottom));
+  animation:sheetup .26s cubic-bezier(.2,.8,.2,1) both;
+}
+.moregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.moregrid button{
+  font:inherit;font-size:14.5px;font-weight:700;color:var(--label);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:88px;
+  background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);
+}
+.moregrid button svg{width:30px;height:30px;color:var(--accent-txt)}
+.moregrid button[aria-current=page]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent-txt);border-color:var(--accent)}
+
+/* ---------- חלקים שנפתחים בלחיצה ---------- */
+.card.sec > h2{cursor:pointer;min-height:44px;margin-bottom:10px;-webkit-user-select:none;user-select:none}
+.card.sec > h2::after{
+  content:'';flex:none;height:9px;width:9px;margin-inline-start:auto;background:none;
+  border-right:2.5px solid var(--accent-txt);border-bottom:2.5px solid var(--accent-txt);
+  transform:rotate(225deg);transition:transform .2s ease;
+}
+.card.sec-closed > h2{margin-bottom:0}
+.card.sec-closed > h2::after{transform:rotate(45deg)}
+.card.sec-closed{padding-block:8px}
+.card.sec-closed > :not(h2){display:none!important}
+.card.sec:not(.sec-closed) > :not(h2){animation:rise .24s cubic-bezier(.2,.8,.2,1) both}
+.step.sec > .st{cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;margin-bottom:0;-webkit-user-select:none;user-select:none}
+.step.sec > .st::after{
+  content:'';flex:none;height:8px;width:8px;margin-inline-start:auto;
+  border-right:2.5px solid var(--label2);border-bottom:2.5px solid var(--label2);
+  transform:rotate(225deg);transition:transform .2s ease;
+}
+.step.sec-closed > .st::after{transform:rotate(45deg)}
+.step.sec-closed > :not(.st){display:none!important}
+.sechead{cursor:pointer;display:flex;align-items:center;min-height:44px;-webkit-user-select:none;user-select:none}
+.sechead::after{
+  content:'';flex:none;height:9px;width:9px;margin-inline-start:auto;
+  border-right:2.5px solid var(--accent-txt);border-bottom:2.5px solid var(--accent-txt);
+  transform:rotate(45deg);transition:transform .2s ease;
+}
+.sechead[aria-expanded=true]::after{transform:rotate(225deg)}
+.sec-hide{display:none!important}
+/* כרטיס מדד סגור: הכותרת והשורה הראשית בלבד */
+.pcard.pfold:not(.open) > :not(.ptop):not(.pline){display:none}
+.pcard.pfold:not(.open) .pline{margin-bottom:0}
+.pcard.pfold{cursor:pointer}
+.pcard.pfold.open > :not(.ptop){animation:rise .24s cubic-bezier(.2,.8,.2,1) both}
+
 @media (prefers-reduced-motion:reduce){
+  .moreback,.moresheet,.card.sec:not(.sec-closed) > :not(h2),.pcard.pfold.open > :not(.ptop){animation:none!important}
   .btn{transition:none} .btn:active{transform:none}
   .flive .fbody,.enter .fneedle,.brand .fneedle,body::after{animation:none!important}
   .spin{animation:flamewait 1.8s ease-in-out infinite}
@@ -3557,6 +3614,7 @@ function readFileText(file){
 function showImportResult(){
   const el=document.getElementById("impRestore")||document.querySelector("#impCard .badge")||document.getElementById("impCard");
   if(!el||!el.scrollIntoView) return;
+  secReveal(el);
   el.scrollIntoView({block:"center"});
 }
 async function readImportFile(file){
@@ -3780,18 +3838,127 @@ function viewAuth(){
   return h;
 }
 
+/* אחת עשרה לשוניות לא נכנסות ברוחב של טלפון, וגלילה הצידה היא חיפוש בעיוורון.
+   בסרגל נשארות ארבע שמשתמשים בהן כל יום, והשאר בתפריט שנפתח על המסך. */
+const BAR_TABS=["add","dash","food","work"];
+const ICON_MORE='<svg viewBox="0 0 28 28" fill="currentColor" aria-hidden="true"><circle cx="7" cy="14" r="2.3"/><circle cx="14" cy="14" r="2.3"/><circle cx="21" cy="14" r="2.3"/></svg>';
+let moreOpen=false;
 function renderTabs(){
-  $("#tabs").innerHTML=TABS.map(t=>
+  const inMore=BAR_TABS.indexOf(ui.tab)<0;
+  $("#tabs").innerHTML=TABS.filter(t=>BAR_TABS.indexOf(t.id)>=0).map(t=>
     '<button data-tab="'+t.id+'" aria-selected="'+(ui.tab===t.id)+'">'+ICONS[t.id]+'<span>'+t.label+'</span></button>'
-  ).join("");
-  /* תשע לשוניות לא נכנסות ברוחב של טלפון בגודל שאפשר ללחוץ עליו.
-     במקום להקטין את כולן עד שהן בלתי קריאות — הסרגל נגלל, והלשונית
-     הפעילה נגררת אל תוך התצוגה כדי שתמיד יהיה ברור איפה אתה. */
-  const bar=$("#tabs"), cur=bar&&bar.querySelector('[aria-selected="true"]');
-  if(bar&&cur&&bar.scrollWidth>bar.clientWidth+2){
-    const mid=cur.offsetLeft+cur.offsetWidth/2-bar.clientWidth/2;
-    bar.scrollLeft=Math.max(0,Math.min(bar.scrollWidth-bar.clientWidth,mid));
-  }
+  ).join("")+
+  '<button id="tabMore" aria-haspopup="dialog" aria-expanded="'+moreOpen+'" aria-selected="'+inMore+'">'+ICON_MORE+
+  '<span>'+esc(inMore?(TABS.filter(t=>t.id===ui.tab)[0]||{label:"עוד"}).label:"עוד")+'</span></button>';
+  renderMore();
+}
+function renderMore(){
+  let el=document.getElementById("moreMenu");
+  if(!moreOpen){ if(el) el.remove(); return }
+  if(!el){ el=document.createElement("div"); el.id="moreMenu"; document.body.appendChild(el) }
+  el.innerHTML='<div class="moreback" id="moreBack"></div>'+
+    '<div class="moresheet" role="dialog" aria-modal="true" aria-label="עוד מסכים">'+
+    '<div class="moregrid">'+TABS.filter(t=>BAR_TABS.indexOf(t.id)<0).map(t=>
+      '<button data-moretab="'+t.id+'" aria-current="'+(ui.tab===t.id?"page":"false")+'">'+ICONS[t.id]+'<span>'+t.label+'</span></button>'
+    ).join("")+'</div>'+
+    '<button class="btn sec" id="moreClose">סגור</button></div>';
+  el.querySelectorAll("[data-moretab]").forEach(b=>b.onclick=()=>{
+    moreOpen=false; ui.tab=b.dataset.moretab; persist(); render();
+  });
+  const close=()=>{ moreOpen=false; renderTabs(); bindTabs() };
+  document.getElementById("moreBack").onclick=close;
+  document.getElementById("moreClose").onclick=close;
+}
+function bindTabs(){
+  document.querySelectorAll("#tabs button[data-tab]").forEach(b=>b.onclick=()=>{ moreOpen=false; ui.tab=b.dataset.tab; persist(); render() });
+  const m=document.getElementById("tabMore");
+  if(m) m.onclick=()=>{ moreOpen=!moreOpen; renderTabs(); bindTabs() };
+}
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&moreOpen){ moreOpen=false; renderTabs(); bindTabs() }
+});
+
+/* ----------------------------------------------------------------------------
+   חלקים שנפתחים במקום לגלול.
+   מסך המגמות היה באורך של 11 מסכי טלפון. כל כרטיס עם כותרת הופך לשורה שנפתחת
+   בלחיצה. הכול נשאר בדף, רק מוסתר, ולכן טפסים וכפתורים ממשיכים לעבוד כרגיל.
+   הפתיחה לא מציירת מחדש את המסך, ולכן מה שכבר הוקלד לא נמחק.
+   ---------------------------------------------------------------------------- */
+/* מה פתוח מראש בכל מסך. בלי רשומה: הכרטיס הראשון. */
+const SEC_DEFAULT={food:["היעד היומי","פשוט תכתוב מה אכלת"]};
+const STEP_DEFAULT=/^(1|5) ·/;
+const SEC_SEEN={};
+function secKey(el){ return String(el.textContent||"").replace(/[\d\/.:—–\-]+/g,"").replace(/\s+/g," ").trim() }
+function secState(group){
+  if(!ui.secState||typeof ui.secState!=="object") ui.secState={};
+  return ui.secState[group]||(ui.secState[group]={});
+}
+function secWire(head,paint,initial,group,key){
+  const st=secState(group);
+  const isOpen=()=>st[key]!==undefined?!!st[key]:initial;
+  head.setAttribute("role","button");
+  head.setAttribute("tabindex","0");
+  paint(isOpen());
+  const toggle=()=>{ st[key]=!isOpen(); paint(st[key]); persist() };
+  head.onclick=e=>{ if(e.target.closest("a,button,input,select,label")) return; toggle() };
+  head.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle() } };
+}
+function sectionPass(){
+  const root=document.querySelector("#app .wrap");
+  if(!root) return;
+  const tab=ui.tab;
+  const seen=SEC_SEEN[tab];
+  const now={};
+  const cards=Array.from(root.children).filter(c=>c.classList&&c.classList.contains("card")&&!c.classList.contains("storewarn")&&c.querySelector(":scope > h2"));
+  /* כרטיס אחד במסך: אין מה לקפל */
+  if(cards.length>1) cards.forEach((c,i)=>{
+    const h=c.querySelector(":scope > h2"), key=secKey(h);
+    now[key]=1;
+    const def=SEC_DEFAULT[tab];
+    let initial=def?def.some(d=>key.indexOf(d)===0):i===0;
+    /* חלק שרק עכשיו הופיע, למשל תשובה לשאלה, הוא מה שהמשתמש מחכה לו */
+    if(seen&&!seen[key]) initial=true;
+    secWire(h,open=>{
+      c.classList.add("sec"); c.classList.toggle("sec-closed",!open);
+      h.setAttribute("aria-expanded",open?"true":"false");
+    },initial,"c:"+tab,key);
+  });
+  SEC_SEEN[tab]=Object.assign(seen||{},now);
+
+  /* שלבי הניתוח: אותו דבר, עם המספרים ומה לעשות פתוחים */
+  root.querySelectorAll(".step").forEach(c=>{
+    const h=c.querySelector(":scope > .st");
+    if(!h) return;
+    const label=String(h.textContent||"").trim();
+    secWire(h,open=>{
+      c.classList.add("sec"); c.classList.toggle("sec-closed",!open);
+      h.setAttribute("aria-expanded",open?"true":"false");
+    },STEP_DEFAULT.test(label),"steps",label);
+  });
+
+  /* רשימה ארוכה עם כותרת: סגורה עד שפותחים */
+  Array.from(root.children).forEach(h=>{
+    if(h.tagName!=="H3"&&!h.classList.contains("h3")) return;
+    const list=h.nextElementSibling;
+    if(!list||!list.classList.contains("list")||list.children.length<6) return;
+    const after=list.nextElementSibling&&list.nextElementSibling.classList.contains("tiny")?list.nextElementSibling:null;
+    secWire(h,open=>{
+      h.classList.add("sechead");
+      h.setAttribute("aria-expanded",open?"true":"false");
+      list.classList.toggle("sec-hide",!open);
+      if(after) after.classList.toggle("sec-hide",!open);
+    },false,"l:"+tab,secKey(h));
+  });
+}
+/* פותח את החלק שאלמנט נמצא בתוכו, כשצריך להראות אותו */
+function secReveal(el){
+  const c=el&&el.closest?el.closest(".card.sec"):null;
+  if(!c) return;
+  const h=c.querySelector(":scope > h2");
+  if(!h) return;
+  secState("c:"+ui.tab)[secKey(h)]=true;
+  c.classList.remove("sec-closed");
+  h.setAttribute("aria-expanded","true");
 }
 
 /* ---- נגישות: קשירת תוויות לשדות ----
@@ -3990,6 +4157,8 @@ function cardPass(root){
     const key=(nm.textContent||"").trim();
     if(!key) return;
     c.setAttribute("data-pcard",key);
+    /* כרטיס עם כפתורים נשאר פתוח: כפתור מוסתר הוא כפתור שלא קיים */
+    if(!c.querySelector("button,input,select,textarea,a")) c.classList.add("pfold");
     c.setAttribute("role","button");
     c.setAttribute("tabindex","0");
     const open=(ui.openCard===key);
@@ -3999,10 +4168,10 @@ function cardPass(root){
       const s=document.createElement("span");
       s.className="pmore";
       s.setAttribute("aria-hidden","true");
-      s.textContent=open?"הקטן":"הגדל";
+      s.textContent=open?"סגור":"פתח";
       (c.querySelector(".ptop")||c).appendChild(s);
     }else{
-      c.querySelector(".pmore").textContent=open?"הקטן":"הגדל";
+      c.querySelector(".pmore").textContent=open?"סגור":"פתח";
     }
   });
 }
@@ -4014,11 +4183,11 @@ function bindCards(){
       const open=(ui.openCard===key);
       c.classList.toggle("open",open);
       c.setAttribute("aria-expanded",open?"true":"false");
-      const m=c.querySelector(".pmore"); if(m) m.textContent=open?"הקטן":"הגדל";
+      const m=c.querySelector(".pmore"); if(m) m.textContent=open?"סגור":"פתח";
       /* רק אחד פתוח בכל רגע — שניים פתוחים זה קיר טקסט */
       if(open) document.querySelectorAll("[data-pcard]").forEach(o=>{
         if(o!==c){ o.classList.remove("open"); o.setAttribute("aria-expanded","false");
-          const om=o.querySelector(".pmore"); if(om) om.textContent="הגדל" }
+          const om=o.querySelector(".pmore"); if(om) om.textContent="פתח" }
       });
       persist();
     };
@@ -4142,6 +4311,7 @@ function render(){
   try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
   /* גם החיווט עצמו מוגן — שגיאה בכפתור אחד לא תשתק את סרגל הלשוניות */
   try{ bind() }catch(e){ window.__bindErr=e }
+  try{ sectionPass() }catch(e){}
   try{ bindCards() }catch(e){}
   try{ bindAsk() }catch(e){}
   try{ bindCmp() }catch(e){}
@@ -11204,7 +11374,7 @@ function bind(){
   const lo=$("#logout");
   if(lo) lo.onclick=()=>ask("להתנתק? הנתונים יישארו שמורים במכשיר.",logout,{ok:"התנתק"});;
 
-  document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{ ui.tab=b.dataset.tab; persist(); render() });
+  bindTabs();
   document.querySelectorAll("#segMetric button").forEach(b=>b.onclick=()=>{ ui.metric=b.dataset.metric; persist(); render() });
   document.querySelectorAll("#segRange button").forEach(b=>b.onclick=()=>{ ui.range=b.dataset.range; persist(); render() });
 
@@ -11977,7 +12147,7 @@ function bind(){
     catch(e){ $("#io").select(); toast("בחר והעתק ידנית") }
   };
   const impPick=$("#impPick");
-  if(impPick) impPick.onclick=()=>{ const f=$("#impFile"); if(f) f.click(); else toast("קובץ אחר עדיין נקרא") };
+  if(impPick) impPick.onclick=()=>{ const f=$("#impFile"); if(f){ secReveal(f); f.click() } else toast("קובץ אחר עדיין נקרא") };
   const pasteClip=$("#pasteClip");
   if(pasteClip) pasteClip.onclick=async()=>{
     try{
