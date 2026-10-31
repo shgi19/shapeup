@@ -970,7 +970,53 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .drop{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 .drop svg{color:var(--accent-txt)}
 .headline{border-inline-start:4px solid var(--accent)}
-@media (prefers-reduced-motion:reduce){ .btn{transition:none} .btn:active{transform:none} }
+
+/* ---------- תנועה ----------
+   רק transform ו־opacity, כדי שתהיה חלקה גם בטלפון. כל מה שתחת .enter רץ פעם אחת
+   כשעוברים מסך (motionPass). הפסים ברקע הם הדבר היחיד שזז כל הזמן. */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{opacity:0;transform:scale(.8)}70%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes swipe{from{transform:skewX(-22deg) scaleX(0)}to{transform:skewX(-22deg) scaleX(1)}}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes hop{0%{transform:none}40%{transform:translateY(-5px) scale(1.12)}100%{transform:none}}
+@keyframes sheen{from{transform:translateX(120%) skewX(-22deg)}to{transform:translateX(-160%) skewX(-22deg)}}
+/* מחזור הפסים לרוחב: 33 פיקסל חלקי סינוס של 115 מעלות. כך התנועה נסגרת בלי קפיצה. */
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(36.41px)}}
+
+body::before{inset:0 -40px auto -40px;animation:drift 9s linear infinite;will-change:transform}
+
+.enter>*{animation:rise .46s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*40ms)}
+.enter .lgtitle::after{transform-origin:100% 50%;animation:swipe .5s .12s cubic-bezier(.2,.8,.2,1) both}
+.enter .rngbar i{transform-origin:100% 50%;animation:grow .85s .25s cubic-bezier(.2,.8,.2,1) both}
+.enter .scbar{transform-origin:100% 50%;animation:grow .7s .2s cubic-bezier(.2,.8,.2,1) both}
+.enter .cline{stroke-dasharray:1;animation:draw 1.15s .18s ease-out both}
+.enter .chart circle{animation:fadein .5s .75s both}
+.enter .badge{animation:pop .36s .32s both}
+.tabbar.hop button[aria-selected=true] svg{animation:hop .42s cubic-bezier(.2,.8,.2,1)}
+
+/* ברק אחד שעובר על הכפתור הראשי כשנכנסים למסך */
+.btn:not(.sec):not(.danger){position:relative;overflow:hidden}
+.enter .btn:not(.sec):not(.danger)::after{
+  content:'';position:absolute;inset:0;width:45%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.42),transparent);
+  animation:sheen .8s .75s ease-in-out both;
+}
+
+/* דברים שנפתחים בלחיצה */
+details.param[open] .pbody,.pcard.open .improve{animation:rise .28s cubic-bezier(.2,.8,.2,1) both}
+.toast{transition:opacity .22s,transform .32s cubic-bezier(.2,1.5,.4,1)}
+.drop:active{transform:scale(.985)}
+.drop{transition:transform .15s ease,background .15s ease}
+
+@media (prefers-reduced-motion:reduce){
+  .btn{transition:none} .btn:active{transform:none}
+  body::before{animation:none}
+  .enter>*,.enter .lgtitle::after,.enter .rngbar i,.enter .scbar,.enter .cline,.enter .chart circle,.enter .badge,
+  .tabbar.hop button[aria-selected=true] svg,.enter .btn::after,details.param[open] .pbody,.pcard.open .improve{animation:none!important}
+  .enter .cline{stroke-dasharray:none}
+}
 </style>
 </head>
 <body>
@@ -1731,7 +1777,7 @@ function backupApplyNow(d){
   if(Array.isArray(d.meals))       meals       =take(d.meals);
   if(Array.isArray(d.customFoods)) customFoods =take(d.customFoods);
   window.__lastAnalysis=null; window.__imp=null; ui.anId=null;
-  persist();
+  if(!persist()) return "הגיבוי נטען, אבל אין מספיק מקום במכשיר והוא לא נשמר במלואו";
   return "שוחזר: "+backupSummary(d);
 }
 function backupApply(d,done){
@@ -3440,7 +3486,28 @@ function tryBackupText(text){
   try{ d=JSON.parse(t) }catch(e){ return null }
   return looksLikeBackup(d)?d:null;
 }
+/* file.text() חסר בדפדפנים ישנים, אז יש גם דרך ישנה */
+function readFileText(file){
+  if(file.text) return file.text();
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>res(String(fr.result||""));
+    fr.onerror=()=>rej(new Error("לא הצלחתי לקרוא את הקובץ. נסה לשמור אותו שוב ולבחור אותו מחדש."));
+    fr.readAsText(file);
+  });
+}
+/* render() מקפיץ לראש המסך, וכפתור «שחזר» הופיע הרבה מתחת למסך של הטלפון.
+   בחרת קובץ, ונראה שלא קרה כלום. עכשיו התוצאה קופצת אל מול העיניים. */
+function showImportResult(){
+  const el=document.getElementById("impRestore")||document.querySelector("#impCard .badge")||document.getElementById("impCard");
+  if(!el||!el.scrollIntoView) return;
+  el.scrollIntoView({block:"center"});
+}
 async function readImportFile(file){
+  await readImportInner(file);
+  showImportResult();
+}
+async function readImportInner(file){
   window.__imp={busy:true,msg:"קורא את הקובץ…",name:file.name};
   render();
   try{
@@ -3448,7 +3515,7 @@ async function readImportFile(file){
     const isBinary=(ext==="xlsx"||ext==="xls");
     /* קודם כל: האם זה בכלל גיבוי? השם לא קובע, התוכן קובע. */
     if(!isBinary){
-      const text=await file.text();
+      const text=await readFileText(file);
       const bk=tryBackupText(text);
       if(bk){
         window.__imp={busy:false,kind:"json",name:file.name,json:bk};
@@ -3905,6 +3972,51 @@ function bindCards(){
     };
   });
 }
+/* ----------------------------------------------------------------------------
+   תנועה.
+   render() מצייר את כל המסך מחדש בכל לחיצה, ולכן אנימציה שרצה בכל ציור הייתה
+   מרצדת עם כל הקלדה ובחירה. היא רצה רק כשעוברים למסך אחר.
+   מי שביקש במכשיר שלו פחות תנועה לא מקבל אותה בכלל.
+   הטקסט הסופי כבר בדף לפני שהספירה מתחילה: אם הספירה לא רצה, המספר פשוט נכון.
+   ---------------------------------------------------------------------------- */
+let motionTab=null, motionT=null;
+function wantsMotion(){
+  return !(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+function countUp(el,ms){
+  const raw=(el.textContent||"").trim();
+  if(!/^[-+−]?\d[\d,]*(\.\d+)?$/.test(raw)) return false;
+  const sign=/^[-+−]/.test(raw)?raw[0]:"";
+  const body=raw.replace(/^[-+−]/,"");
+  const end=parseFloat(body.replace(/,/g,""));
+  if(!isFinite(end)||end===0) return false;
+  const dec=(body.split(".")[1]||"").length;
+  let t0=null;
+  const step=now=>{
+    if(!el.isConnected) return;
+    if(t0==null) t0=now;
+    const p=Math.min(1,(now-t0)/ms);
+    if(p>=1){ el.textContent=raw; return }
+    el.textContent=sign+(end*(1-Math.pow(1-p,3))).toFixed(dec);
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  return true;
+}
+function motionPass(){
+  if(ui.tab===motionTab) return;
+  motionTab=ui.tab;
+  if(!wantsMotion()) return;
+  const root=document.querySelector("#app .wrap");
+  if(!root) return;
+  Array.from(root.children).forEach((c,i)=>c.style.setProperty("--i",Math.min(i,5)));
+  root.classList.add("enter");
+  const tb=document.querySelector(".tabbar");
+  if(tb) tb.classList.add("hop");
+  root.querySelectorAll(".tile .n,.pst b").forEach(el=>countUp(el,750));
+  clearTimeout(motionT);
+  motionT=setTimeout(()=>{ root.classList.remove("enter"); if(tb) tb.classList.remove("hop") },1500);
+}
 function render(){
   const bar=document.querySelector(".tabbar");
   if(!me){
@@ -3968,6 +4080,7 @@ function render(){
   try{ bindCards() }catch(e){}
   try{ bindAsk() }catch(e){}
   try{ bindCmp() }catch(e){}
+  try{ motionPass() }catch(e){}
   const sc2=document.getElementById("storeChk");
   if(sc2) sc2.onclick=storageProbe;
   const er=document.getElementById("errReset");
@@ -6000,7 +6113,7 @@ function chart(key,days){
   });
   if(ma.length>1){
     g+='<path d="'+ma.map((p,i)=>(i?"L":"M")+X(p.d).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ")+
-       '" fill="none" stroke="var(--blue)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+       '" class="cline" pathLength="1" fill="none" stroke="var(--blue)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
     const lp=ma[ma.length-1];
     g+='<circle cx="'+X(lp.d).toFixed(1)+'" cy="'+Y(lp.v).toFixed(1)+'" r="4.5" fill="var(--blue)"/>';
   }
@@ -10663,8 +10776,8 @@ function viewData(){
 
   /* ---- ייבוא קובץ ---- */
   const im=window.__imp;
-  h+='<div class="card"><h2>ייבוא נתונים מקובץ</h2>';
-  h+='<p class="tiny">Excel · CSV · XML של Apple Health · קובץ גיבוי JSON. הקובץ נקרא במכשיר שלך ולא נשלח לשום מקום.</p>';
+  h+='<div class="card" id="impCard"><h2>ייבוא נתונים מקובץ</h2>';
+  h+='<p class="tiny">הקובץ נקרא במכשיר שלך ולא נשלח לשום מקום.</p>';
 
   if(im&&im.busy){
     h+='<div class="drop busy"><div class="spin"></div><div><b>'+esc(im.msg)+'</b>'+
@@ -10673,8 +10786,10 @@ function viewData(){
     h+='<div class="drop" id="impDrop" tabindex="0">'+
        '<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+
        '<path d="M6 18v3.5A1.5 1.5 0 007.5 23h13a1.5 1.5 0 001.5-1.5V18"/><path d="M14 4v12M9.5 11.5L14 16l4.5-4.5"/></svg>'+
-       '<div><b>בחר קובץ</b><div class="tiny">גרירה · לחיצה · xlsx, xls, csv, xml, json</div></div></div>';
-    h+='<input type="file" id="impFile" accept=".xlsx,.xls,.csv,.tsv,.txt,.xml,.json" hidden>';
+       '<div><b>בחר קובץ</b><div class="tiny">גיבוי של האפליקציה, Excel, CSV או Apple Health</div></div></div>';
+    /* בלי accept בכוונה: באייפון סינון לפי סיומת מאפיר קובץ שהגיע מוואטסאפ או בלי סיומת,
+       ואז אי אפשר לבחור אותו. סוג הקובץ נבדק ממילא לפי התוכן. */
+    h+='<input type="file" id="impFile" hidden>';
   }
   if(im&&im.error) h+='<p style="margin-top:12px"><span class="badge b-crit">לא הצליח</span> <span class="tiny">'+esc(im.error)+'</span></p>';
 
@@ -10755,11 +10870,11 @@ function viewData(){
   }
 
   if(im&&im.kind==="json"){
-    h+='<hr class="s"><p><span class="badge b-info">קובץ גיבוי</span> <span class="tiny">'+
+    h+='<hr class="s"><p><span class="badge b-ok">הגיבוי נקרא</span> <span class="tiny">'+
        im.json.entries.length+' שקילות בקובץ, מול '+entries.length+' אצלך כרגע.</span></p>';
     h+='<div class="btnrow"><button class="btn danger" id="impRestore">שחזר והחלף הכול</button>'+
        '<button class="btn sec" id="impCancel">בטל</button></div>';
-    h+='<p class="tiny" style="margin-top:8px">שחזור מגיבוי <b>מוחק</b> את מה שקיים ומחליף אותו. גבה קודם אם יש לך נתונים חדשים.</p>';
+    h+='<p class="tiny" style="margin-top:8px">לחיצה על «שחזר» <b>מוחקת</b> את מה שקיים ומחליפה אותו. יש לך נתונים חדשים? קודם שמור גיבוי.</p>';
   }
 
   h+='<hr class="s"><details><summary class="tiny" style="cursor:pointer;color:var(--accent-txt);font-weight:600">איך מוציאים קובץ מ־Apple Health</summary>'+
@@ -10777,11 +10892,14 @@ function viewData(){
      ? '<span class="badge '+(lbDays>14?"b-warn":"b-ok")+'">גיבוי אחרון לפני '+lbDays+' ימים</span>'
      : '<span class="badge b-warn">עוד לא גיבית</span>')+'</p>';
   h+='<div class="btnrow" style="margin-bottom:6px"><button class="btn" id="dl">שמור קובץ גיבוי</button></div>';
-  h+='<p class="tiny">הנתונים חיים בדפדפן של המכשיר הזה בלבד. העתק את הטקסט ושמור אותו במקום בטוח.</p>';
-  h+='<textarea id="io" placeholder="הדבק כאן גיבוי JSON כדי לייבא"></textarea>';
+  h+='<div class="btnrow" style="margin:0 0 10px"><button class="btn sec" id="impPick">ייבא גיבוי מקובץ</button></div>';
+  h+='<p class="tiny">הנתונים נמצאים רק במכשיר הזה. כדאי לשמור גיבוי מדי פעם במקום בטוח.</p>';
+  h+='<details class="xtra"><summary class="tiny" style="cursor:pointer;color:var(--accent-txt);font-weight:600">גיבוי כטקסט: העתקה והדבקה</summary>';
+  h+='<textarea id="io" style="margin-top:10px;font-size:16px" placeholder="הדבק כאן את טקסט הגיבוי"></textarea>';
   h+='<div class="btnrow"><button class="btn sec" id="exp">הצג גיבוי</button>'+
      '<button class="btn sec" id="cp">העתק</button>'+
-     '<button class="btn" id="imp">ייבא</button></div>';
+     '<button class="btn sec" id="pasteClip">הדבק מהלוח</button>'+
+     '<button class="btn" id="imp">ייבא מהטקסט</button></div></details>';
   h+='<p class="tiny" style="margin-top:10px">הפורמט תואם לאפליקציה הקודמת — גיבוי מ«קו המגמה» הראשונה נכנס לכאן ישירות.</p></div>';
 
   /* ---- העברה למכשיר אחר ----
@@ -10791,8 +10909,8 @@ function viewData(){
   h+='<p class="tiny">אין שרת, ולכן הנתונים לא עוברים לבד. כל מכשיר הוא עולם נפרד — '+
      'גם אותו שם משתמש במכשיר אחר מתחיל ריק. ההעברה נעשית פעם אחת, ידנית, בארבעה שלבים:</p>';
   h+='<ol class="steps">'+
-     '<li><b>כאן, במכשיר הזה:</b> «שמור קובץ גיבוי» למעלה. נוצר קובץ אחד.</li>'+
-     '<li><b>שלח את הקובץ למכשיר השני</b> — וואטסאפ לעצמך, מייל, AirDrop או ענן. '+
+     '<li><b>כאן, במכשיר הזה:</b> «שמור קובץ גיבוי» למעלה. בטלפון ייפתח חלון שיתוף.</li>'+
+     '<li><b>שלח את הקובץ למכשיר השני:</b> וואטסאפ לעצמך, מייל, AirDrop או ענן. באייפון כדאי לשמור אותו ב«קבצים». '+
      'אם אין כפתור שמירה (בגרסה שרצה בדפדפן דרך קישור), לחץ «הצג גיבוי» ואז «העתק», '+
      'ושלח את הטקסט.</li>'+
      '<li><b>במכשיר השני:</b> הירשם עם <b>אותו שם משתמש ואותה סיסמה</b> שיש לך כאן. '+
@@ -11754,6 +11872,19 @@ function bind(){
       }
       return;
     }
+    /* באייפון, כשהאפליקציה פתוחה ממסך הבית, הורדה רגילה לא תמיד שומרת כלום, ובכל זאת
+       היה כתוב "נשמר". בטלפון משתמשים בחלון השיתוף: קבצים, וואטסאפ, מייל. */
+    try{
+      const file=new File([text],name,{type:"application/json"});
+      if(navigator.maxTouchPoints>0&&navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:name});
+        ui.lastBackup=Date.now(); persist(); render(); toast("קובץ הגיבוי נשלח");
+        return;
+      }
+    }catch(e){
+      if(e&&e.name==="AbortError"){ toast("בוטל — לא נשמר כלום"); return }
+      /* שיתוף נכשל מסיבה אחרת: ממשיכים להורדה הרגילה */
+    }
     try{
       const blob=new Blob([text],{type:"application/json"});
       const a=document.createElement("a");
@@ -11780,12 +11911,28 @@ function bind(){
     }
     catch(e){ $("#io").select(); toast("בחר והעתק ידנית") }
   };
-  const imp=$("#imp");
-  if(imp) imp.onclick=()=>{
+  const impPick=$("#impPick");
+  if(impPick) impPick.onclick=()=>{ const f=$("#impFile"); if(f) f.click(); else toast("קובץ אחר עדיין נקרא") };
+  const pasteClip=$("#pasteClip");
+  if(pasteClip) pasteClip.onclick=async()=>{
+    try{
+      const t=await navigator.clipboard.readText();
+      if(!String(t||"").trim()) return toast("הלוח ריק. קודם העתק את טקסט הגיבוי");
+      const io=$("#io"); if(io) io.value=t;
+      importFromText();
+    }catch(e){ toast("לא הצלחתי לקרוא מהלוח. לחץ לחיצה ארוכה על התיבה ובחר «הדבק»") }
+  };
+  const importFromText=()=>{
     /* שלוש סיבות שונות לכישלון — ולכן שלוש הודעות שונות. "לא תקין" סתם
        שולח את המשתמש לנחש, ובפועל הסיבה השכיחה היא טקסט שנחתך בשליחה. */
     const raw=String(($("#io")||{}).value||"").trim();
-    if(!raw){ toast("התיבה ריקה — הדבק בה את טקסט הגיבוי"); return }
+    /* תיבה ריקה: מה שרוצים ברוב המקרים בטלפון הוא לבחור קובץ, אז פותחים אותו */
+    if(!raw){
+      const f=$("#impFile");
+      if(f){ f.click(); toast("בחר את קובץ הגיבוי"); }
+      else toast("התיבה ריקה — הדבק בה את טקסט הגיבוי");
+      return;
+    }
     let d=null;
     try{ d=JSON.parse(raw) }
     catch(e){
@@ -11794,10 +11941,12 @@ function bind(){
                : "מה שהודבק אינו גיבוי תקין");
       return;
     }
-    if(!looksLikeBackup(d)){ toast("זה JSON תקין אבל לא גיבוי — חסרה רשימת השקילות"); return }
+    if(!looksLikeBackup(d)){ toast("זה טקסט תקין אבל לא גיבוי — חסרה בו רשימת השקילות"); return }
     const r=backupApply(d);
     if(r.msg) toast(r.msg);
   };
+  const imp=$("#imp");
+  if(imp) imp.onclick=importFromText;
 }
 
 /* הדבקת צילום מסך מהלוח — עובד מכל מקום באפליקציה */
