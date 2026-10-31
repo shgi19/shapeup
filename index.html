@@ -9,8 +9,8 @@
      הדף, ואם הקיצור נוצר בעבר — הוא שומר את השם הישן גם אחרי שינוי שם. -->
 <meta name="apple-mobile-web-app-title" content="ShapeUp">
 <meta name="application-name" content="ShapeUp">
-<meta name="theme-color" content="#F1F2F6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0A0C11" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F4F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#050506" media="(prefers-color-scheme: dark)">
 <!-- הסמל: אש עם מחוג. מוטמע בקובץ ולא נטען מבחוץ, כי האפליקציה
      צריכה לעבוד גם בדאבל-קליק על הקובץ ובלי רשת.
      שניהם ב-base64 בכוונה. בגרסה הראשונה כתבתי את ה-SVG כטקסט גולמי,
@@ -23,116 +23,121 @@
 /* ============================================================================
    ShapeUp — מערכת עיצוב
    ----------------------------------------------------------------------------
-   השפה ספורטיבית: לוח תוצאות של אימון. המספר הוא הגיבור — גדול, עבה ונטוי
-   (רק ספרות; בעברית אין נטוי). כותרות כבדות, כפתורים מלאי אנרגיה וסרגל צף.
+   השפה: יוקרה ספורטיבית. הרבה להוריד: שחור אמיתי, אוויר, ומספר אחד גדול שמוביל
+   כל מסך. בלי ריבועים בתוך ריבועים ובלי קישוט שלא אומר כלום.
 
-   הצבע: דיו כהה עם כתום אש, כמו הלהבה בסמל. הכתום הוא המותג והפעולה;
-   ירוק לטוב, ורוד־אדום לרע, צהוב לשים לב. הם מופרדים בכוונה מהכתום,
-   כדי שמצב לא יתבלבל עם כפתור.
+   הצבע: כתום אחד, כמו הלהבה בסמל, ורק לפעולה הראשית ולמה שמחכה ללחיצה. בחירה
+   בבורר היא לבן על שחור, לא עוד כתום. ירוק לטוב, ורוד־אדום לרע, צהוב לשים לב.
 
    שלושה מצבים לערכת הצבע ולא שניים: `data-theme` על השורש כשהמשתמש בחר
    במפורש, ובלי סימון — הבחירה של המכשיר דרך prefers-color-scheme.
    ============================================================================ */
 :root{
-  /* בהיר: לבן קר ודיו כהה, עם אותו כתום אש. */
-  --bg:#F1F2F6;
-  --glow1:rgba(255,106,26,0.10);
-  --glow2:rgba(255,106,26,0.04);
-  --stripe:rgba(14,17,23,0.028);
+  /* בהיר: לבן נקי ודיו, ואותו כתום אחד בפעולה הראשית בלבד. */
+  --bg:#F4F4F6;
+  --glow1:rgba(255,94,26,0.05);
+  --glow2:rgba(255,94,26,0);
+  --stripe:rgba(0,0,0,0);
   --card:#FFFFFF;
-  --card2:#F6F7FA;
-  --brd:rgba(14,17,23,0.10);
-  --label:#0E1117;
-  --label2:rgba(14,17,23,0.68);
-  --label3:rgba(14,17,23,0.66);
-  --sep:rgba(14,17,23,0.10);
+  --card2:#F4F4F6;
+  --brd:rgba(10,10,12,0.07);
+  --label:#0A0A0B;
+  --label2:rgba(10,10,12,0.64);
+  --label3:rgba(10,10,12,0.62);
+  --sep:rgba(10,10,12,0.08);
   --blue:#C8420C;
   --accent:#C8420C;
-  --green:#12875A;
+  --green:#0E8A5A;
   --btn-bg:#C8420C;       /* לבן על הכתום הזה — מעל 4.5:1. נמדד: #D9480F נותן רק 4.3 */
   --btn-bg2:#AF3606;
   --btn-ink:#FFFFFF;
+  --sel-bg:#0A0A0B;
+  --sel-ink:#FFFFFF;
   --accent-txt:#B93A08;
   --warn-txt:#8A5D00;
   --good-txt:#0B6F48;
   --red:#D81E4A;
   --bad-txt:#B3143A;
-  --orange:#E09A00;
+  --orange:#D99400;
   --purple:#6D4BC4;
   --teal:#0B7A96;
-  --fill:rgba(14,17,23,0.055);
-  --fill2:rgba(14,17,23,0.11);
-  --bar:rgba(255,255,255,0.94);
-  --shadow:0 10px 26px -20px rgba(14,17,23,0.45);
+  --fill:rgba(10,10,12,0.055);
+  --fill2:rgba(10,10,12,0.11);
+  --bar:rgba(255,255,255,0.78);
+  --shadow:0 1px 2px rgba(10,10,12,0.04),0 12px 32px -24px rgba(10,10,12,0.25);
   --blur:0px;
-  --r-card:20px;
-  --r-inner:14px;
+  --r-card:24px;
+  --r-inner:16px;
 }
-/* מצב לילה — זה המראה המרכזי של האפליקציה. מוגדר גם להעדפת המכשיר וגם
+/* מצב לילה — המראה המרכזי של האפליקציה. מוגדר גם להעדפת המכשיר וגם
    לבחירה מפורשת, כדי שלא ייווצר הפרש בין השניים. */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0A0C11;
-    --glow1:rgba(255,106,26,0.17);
-    --glow2:rgba(255,46,92,0.09);
-    --stripe:rgba(255,255,255,0.032);
-    --card:#14171F;
-    --card2:#1B1F29;
-    --brd:rgba(255,255,255,0.09);
-    --label:#F7F7F5;
-    --label2:rgba(247,247,245,0.70);
-    --label3:rgba(247,247,245,0.62);
-    --sep:rgba(255,255,255,0.09);
-    --blue:#FF7A2F;
-    --accent:#FF7A2F;
-    --green:#3DDC97;
-    --btn-bg:#FF8A3D;
-    --btn-bg2:#FF5A1F;
-    --btn-ink:#1A0A00;
-    --accent-txt:#FF9A5C;
-    --warn-txt:#FFCF5C;
-    --good-txt:#5CE6AB;
-    --red:#FF5A7A;
+    --bg:#050506;
+    --glow1:rgba(255,94,26,0.075);
+    --glow2:rgba(255,94,26,0);
+    --stripe:rgba(255,255,255,0);
+    --card:#111113;
+    --card2:#19191C;
+    --brd:rgba(255,255,255,0.07);
+    --label:#FAFAFA;
+    --label2:rgba(250,250,250,0.66);
+    --label3:rgba(250,250,250,0.60);
+    --sep:rgba(255,255,255,0.08);
+    --blue:#FF6B2B;
+    --accent:#FF6B2B;
+    --green:#34D399;
+    --btn-bg:#FF7A33;
+    --btn-bg2:#F4530F;
+    --btn-ink:#140600;
+    --sel-bg:#FAFAFA;
+    --sel-ink:#0A0A0B;
+    --accent-txt:#FF8F57;
+    --warn-txt:#FBBF24;
+    --good-txt:#4ADE9F;
+    --red:#FB5C7C;
     --bad-txt:#FF8DA3;
-    --orange:#FFC53D;
+    --orange:#FBBF24;
     --purple:#B79CFF;
     --teal:#5CD6F0;
-    --fill:rgba(255,255,255,0.065);
-    --fill2:rgba(255,255,255,0.13);
-    --bar:rgba(20,23,31,0.92);
-    --shadow:0 10px 26px -18px rgba(0,0,0,0.9);
+    --fill:rgba(255,255,255,0.07);
+    --fill2:rgba(255,255,255,0.14);
+    --bar:rgba(22,22,25,0.72);
+    --shadow:inset 0 1px 0 rgba(255,255,255,0.05);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0A0C11;
-  --glow1:rgba(255,106,26,0.17);
-  --glow2:rgba(255,46,92,0.09);
-  --stripe:rgba(255,255,255,0.032);
-  --card:#14171F;
-  --card2:#1B1F29;
-  --brd:rgba(255,255,255,0.09);
-  --label:#F7F7F5;
-  --label2:rgba(247,247,245,0.70);
-  --label3:rgba(247,247,245,0.62);
-  --sep:rgba(255,255,255,0.09);
-  --blue:#FF7A2F;
-  --accent:#FF7A2F;
-  --green:#3DDC97;
-  --btn-bg:#FF8A3D;
-  --btn-bg2:#FF5A1F;
-  --btn-ink:#1A0A00;
-  --accent-txt:#FF9A5C;
-  --warn-txt:#FFCF5C;
-  --good-txt:#5CE6AB;
-  --red:#FF5A7A;
+  --bg:#050506;
+  --glow1:rgba(255,94,26,0.075);
+  --glow2:rgba(255,94,26,0);
+  --stripe:rgba(255,255,255,0);
+  --card:#111113;
+  --card2:#19191C;
+  --brd:rgba(255,255,255,0.07);
+  --label:#FAFAFA;
+  --label2:rgba(250,250,250,0.66);
+  --label3:rgba(250,250,250,0.60);
+  --sep:rgba(255,255,255,0.08);
+  --blue:#FF6B2B;
+  --accent:#FF6B2B;
+  --green:#34D399;
+  --btn-bg:#FF7A33;
+  --btn-bg2:#F4530F;
+  --btn-ink:#140600;
+  --sel-bg:#FAFAFA;
+  --sel-ink:#0A0A0B;
+  --accent-txt:#FF8F57;
+  --warn-txt:#FBBF24;
+  --good-txt:#4ADE9F;
+  --red:#FB5C7C;
   --bad-txt:#FF8DA3;
-  --orange:#FFC53D;
+  --orange:#FBBF24;
   --purple:#B79CFF;
   --teal:#5CD6F0;
-  --fill:rgba(255,255,255,0.065);
-  --fill2:rgba(255,255,255,0.13);
-  --bar:rgba(20,23,31,0.92);
-  --shadow:0 10px 26px -18px rgba(0,0,0,0.9);
+  --fill:rgba(255,255,255,0.07);
+  --fill2:rgba(255,255,255,0.14);
+  --bar:rgba(22,22,25,0.72);
+  --shadow:inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1144,6 +1149,167 @@ select.palt{display:inline-block;width:auto;max-width:100%;padding:6px 10px;font
 .pcard.pfold{cursor:pointer}
 .pcard.pfold.open > :not(.ptop){animation:rise .24s cubic-bezier(.2,.8,.2,1) both}
 
+/* ============================================================================
+   יוקרה ספורטיבית. השכבה האחרונה, ולכן היא הקובעת. עיצוב בלבד.
+   ============================================================================ */
+body{
+  background:radial-gradient(900px 520px at 85% -160px,var(--glow1),transparent 70%),var(--bg);
+  background-attachment:fixed;font-size:16.5px;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+body::before{display:none}
+/* הלהבה הגדולה: חיוורת, ויוצאת מהפינה במקום לשבת באמצע הכותרת */
+body::after{
+  top:-46px;inset-inline-end:max(14px,calc(50vw - 345px));width:170px;height:250px;opacity:.04;
+  -webkit-mask-image:var(--flame);mask-image:var(--flame);
+}
+.wrap{padding:0 18px}
+.topbrand{padding-top:16px;margin-bottom:-6px;font-size:14px;font-weight:800;letter-spacing:.1px}
+.topbrand .fmark{width:17px;height:25px}
+.lgtitle{font-size:38px;font-weight:800;letter-spacing:-1.3px;line-height:1.08;padding:22px 0 6px}
+.lgtitle::after{display:none}
+.sub{font-size:15px;margin:0 0 22px}
+
+/* משטחים: בלי קו מסביב, רק הבדל עדין מהרקע */
+.card,.list,.authcard{border:0;box-shadow:var(--shadow);background:var(--card)}
+.card{border-radius:var(--r-card);padding:20px;margin:0 0 10px}
+.list{border-radius:var(--r-card)}
+.row{border-bottom:1px solid var(--sep);min-height:54px}
+.pcard,.sess,.exr,details.param,.skcard,.ytrow,.headline,.calc,.whobox{border:0!important;background:var(--card2)}
+.pcard,.sess,.exr,details.param,.skcard,.ytrow{border-radius:var(--r-inner)}
+.headline{border-radius:var(--r-inner);padding:16px}
+
+/* כותרות: שקטות ובטוחות, בלי קישוט */
+.card h2{font-size:17px;font-weight:700;letter-spacing:-.25px;margin:0 0 16px;gap:0}
+.card h2::before,.improve .imhd::before{display:none}
+.card h2::after{display:none}
+.card h3{font-size:15px;font-weight:700}
+.tiny{font-size:14px;line-height:1.55}
+
+/* החלקים הנפתחים: שורה נקייה עם חץ דק */
+.card.sec > h2{min-height:48px;margin-bottom:6px}
+.card.sec-closed{padding-block:6px}
+.card.sec-closed > h2{margin:0}
+.card.sec > h2::after,.card.sec > .lvhead::after,.sechead::after,.step.sec > .st::after{
+  display:block;content:'';flex:none;height:8px;width:8px;margin-inline-start:auto;background:none;
+  border-right:2px solid var(--label3);border-bottom:2px solid var(--label3);
+}
+.card.sec-closed > .lvhead{margin:0}
+.card.sec > .lvhead{min-height:48px;font-size:17px;font-weight:700;letter-spacing:-.25px}
+.lvn{font-size:13px;font-weight:600;color:var(--label3)}
+
+/* המספר שמוביל: הראשון גדול, השאר שקטים לידו ובלי ריבועים */
+.tiles,.tiles:has(> .tile:nth-child(4):last-child){grid-template-columns:repeat(3,1fr);gap:18px 6px}
+.tile{background:none;border:0;border-radius:0;padding:0;text-align:start}
+.tile .t{font-size:13px;font-weight:600;margin-bottom:4px;color:var(--label2)}
+.tile .n{font-size:26px;font-weight:800;font-style:italic;letter-spacing:-.8px;text-align:start;direction:ltr;unicode-bidi:plaintext}
+.tile .d{font-size:13px;font-weight:700;text-align:start;margin-top:2px;unicode-bidi:plaintext}
+.tile:first-child{grid-column:1/-1;padding-bottom:6px}
+.tile:first-child .t{font-size:14.5px}
+.tile:first-child .n{font-size:68px;font-weight:800;letter-spacing:-3px;line-height:1}
+.tile:first-child .d{font-size:15px;margin-top:6px}
+/* רק מספר אחד מוביל: קבוצת מספרים שנייה באותו חלק חוזרת להיות שקטה */
+.tiles ~ .tiles .tile:first-child{grid-column:auto;padding-bottom:0}
+.tiles ~ .tiles .tile:first-child .t{font-size:13px}
+.tiles ~ .tiles .tile:first-child .n{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:inherit}
+.tiles ~ .tiles .tile:first-child .d{font-size:13px;margin-top:2px}
+.pst{background:none;padding:0;align-items:flex-start}
+.pst b{font-size:40px;letter-spacing:-1.4px}
+.pst span{font-size:13.5px;text-align:start}
+.pstats{gap:14px}
+
+/* הכפתור הראשי הוא המקום היחיד שבו הכתום צועק */
+.btn{border-radius:999px;padding:16px 22px;font-size:16.5px;font-weight:700;letter-spacing:-.1px;
+  box-shadow:0 14px 28px -16px var(--btn-bg2)}
+.btn.sec,.btn.danger{font-weight:600}
+.btn.sec,:root[data-theme="dark"] .btn.sec{color:var(--label)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.sec{color:var(--label)}}
+.btn.mini{padding:9px 16px;font-size:14.5px;min-height:44px}
+
+/* בחירה: לבן על שחור. כך הכתום נשאר לפעולה */
+.seg{background:var(--card2);border:0;border-radius:999px;padding:4px;gap:0}
+.card .seg{background:var(--card2)}
+.seg button{border-radius:999px;font-weight:600;font-size:14px;padding-inline:6px;flex:1 1 auto;min-width:0;white-space:normal;line-height:1.15}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{
+  background:var(--sel-bg);background-image:none;color:var(--sel-ink);font-weight:700;
+}
+.lvl{border:0!important;background:var(--card2);border-radius:var(--r-inner)}
+.lvl.on{background:var(--sel-bg);color:var(--sel-ink)}
+.lvl.on b,.lvl.on span{color:inherit}
+
+/* שדות */
+input,select,textarea{border:0;background:var(--card2);border-radius:14px;padding:15px 16px;font-size:16.5px}
+input:focus,textarea:focus,select:focus{box-shadow:0 0 0 2px var(--accent);border:0}
+label{font-size:14px;font-weight:600}
+.drop{border:0;background:var(--card2);border-radius:var(--r-inner);padding:20px}
+.drop svg{width:26px;height:26px}
+
+/* תגיות: מידע, לא צעקה */
+.badge{font-size:13px;font-weight:600;padding:4px 11px}
+.mus span{background:var(--card2);font-size:13px;font-weight:500;padding:5px 11px}
+.card .pcard .mus span,.sess .mus span{background:var(--fill)}
+
+/* שלבי הניתוח: רשימה נקייה, בלי פס צד */
+.step,.step.ok,.step.warn,.step.crit,.step.info{border:0;border-bottom:1px solid var(--sep);padding:6px 0 12px;margin:0 0 6px}
+.step:last-of-type{border-bottom:0}
+.step .st{font-size:15.5px;font-weight:700;letter-spacing:-.15px}
+.step.sec-closed{padding-bottom:6px}
+.pcard.pfold .pmore{color:var(--label3);font-weight:600}
+
+/* פסים וגרף */
+.rngbar{height:6px;background:var(--fill2)}
+.rnglbl{font-size:13px}
+.chart{height:250px}
+.cline{stroke-width:3}
+.enter .carea{animation:fadein .7s .55s both}
+.legend{font-size:13px}
+a.yt,a.yt.bvid{background:var(--fill);border:0;color:var(--label);font-weight:600}
+a.yt svg{color:var(--accent)}
+.sect{border:0!important;background:var(--card);border-radius:var(--r-card);box-shadow:var(--shadow);padding:18px 20px}
+.sect.on{background:var(--card)}
+.secn b{font-size:17px;font-weight:700;letter-spacing:-.25px}
+.secx{background:var(--fill)}
+.sect.on .secx{background:var(--sel-bg);color:var(--sel-ink)}
+:root[data-theme="dark"] .sect.on .secx{color:var(--sel-ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sect.on .secx{color:var(--sel-ink)}}
+.wizbar i{height:4px;border-radius:2px}
+.wizbar i.on{background:var(--label)}
+.bq .bql{font-size:24px;letter-spacing:-.5px;font-weight:800}
+.skcard{padding:14px}
+.skcard b{font-weight:700}
+
+/* סרגל תחתון: זכוכית, והלשונית הפעילה מסומנת בנקודה */
+.tabbar{
+  background:var(--bar);border:1px solid var(--brd);border-radius:26px;
+  -webkit-backdrop-filter:saturate(180%) blur(26px);backdrop-filter:saturate(180%) blur(26px);
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.6);
+}
+.tabbar button{position:relative;margin:0;padding:11px 2px 9px;font-size:11px;font-weight:500;color:var(--label2);border-radius:0}
+.tabbar button[aria-selected=true]{background:none;color:var(--label);font-weight:700}
+.tabbar button[aria-selected=true] svg{color:var(--accent)}
+.tabbar svg{width:25px;height:25px}
+.moresheet{background:var(--card);border:0;border-radius:28px 28px 0 0}
+.moregrid button{border:0;background:var(--card2);font-weight:600}
+.moregrid button svg{color:var(--label)}
+.moregrid button[aria-current=page]{background:var(--sel-bg);color:var(--sel-ink);border:0}
+.moregrid button[aria-current=page] svg{color:var(--sel-ink)}
+.toast{background:var(--sel-bg);color:var(--sel-ink);font-weight:600;-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* מסך כניסה: מספיק אוויר, והלהבה לבד */
+.authcard{border-radius:28px;padding:30px 24px}
+/* פעם ראשונה במכשיר: ההרשמה היא הפעולה, אז רק היא כתומה */
+.amsg.first{background:var(--card2);color:var(--label2);border-radius:var(--r-inner);padding:16px}
+.amsg.first b{color:var(--label)}
+.amsg.first ~ form .btn{background:var(--fill);background-image:none;color:var(--label)!important;box-shadow:none}
+.authcard h1{font-size:32px;font-weight:800;letter-spacing:-1px}
+.brand{flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:24px;font-size:20px;font-weight:800}
+.brand .fmark{width:42px;height:61px}
+@media (max-width:360px){
+  .tile:first-child .n{font-size:56px}
+  .tile .n,.tiles ~ .tiles .tile:first-child .n{font-size:22px}
+  .lgtitle{font-size:32px}
+}
+
 @media (prefers-reduced-motion:reduce){
   .moreback,.moresheet,.card.sec:not(.sec-closed) > :not(h2),.pcard.pfold.open > :not(.ptop){animation:none!important}
   .btn{transition:none} .btn:active{transform:none}
@@ -1764,7 +1930,7 @@ const K_THEME="shapeup.theme";
 const THEMES=[{id:"light",lab:"בהיר"},{id:"dark",lab:"כהה"},{id:"auto",lab:"לפי המכשיר"}];
 /* המצב הנוכחי מוחזק בזיכרון ולא נקרא מהאחסון בכל פעם: אם האחסון חסום,
    הערכה עדיין מתחלפת והכפתור המסומן ממשיך לשקף את מה שבאמת מוצג. */
-let curTheme=(function(){ try{ return localStorage.getItem(K_THEME)||"auto" }catch(e){ return "auto" } })();
+let curTheme=(function(){ try{ return localStorage.getItem(K_THEME)||"dark" }catch(e){ return "dark" } })();
 function getTheme(){ return curTheme }
 function applyTheme(t){
   const el=document.documentElement;
@@ -1773,7 +1939,7 @@ function applyTheme(t){
   const dark=(t==="dark")||(t==="auto"&&window.matchMedia&&
               window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{
-    if(!m.getAttribute("media")) m.setAttribute("content",dark?"#0A0C11":"#F1F2F6");
+    if(!m.getAttribute("media")) m.setAttribute("content",dark?"#050506":"#F4F4F6");
   });
 }
 function setTheme(t){
@@ -3794,7 +3960,7 @@ function viewAuth(){
     /* פעם ראשונה במכשיר הזה: אין למה להתחבר, ואומרים את זה מראש
        במקום לתת למשתמש לנסות ולקבל "השם לא קיים". */
     if(!users.filter(x=>x&&x.username).length)
-      h+='<p class="amsg ok">עוד אין חשבון במכשיר הזה. '+
+      h+='<p class="amsg first">עוד אין חשבון במכשיר הזה. '+
          '<b>הירשם פעם אחת</b> — ואם יש לך נתונים במכשיר אחר, '+
          'הירשם עם אותו שם משתמש ואותה סיסמה ואז ייבא את הגיבוי.'+
          '<span class="btnrow" style="display:flex"><button class="btn" data-auth="signup">להרשמה</button></span></p>';
@@ -6382,7 +6548,10 @@ function chart(key,days){
 
   let g='<svg class="chart" id="chartSvg" role="img" aria-label="'+esc(chartAlt)+
         '" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" dir="ltr">'+
-        '<title>'+esc(chartAlt)+'</title>';
+        '<title>'+esc(chartAlt)+'</title>'+
+        '<defs><linearGradient id="cfill" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0" style="stop-color:var(--accent);stop-opacity:.26"/>'+
+        '<stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>';
   for(let i=0;i<=3;i++){
     const gv=lo+(hi-lo)*i/3, gy=Y(gv);
     g+='<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+gy.toFixed(1)+'" stroke="var(--sep)" stroke-width="1"/>';
@@ -6400,9 +6569,12 @@ function chart(key,days){
   shown.forEach(r=>{
     const x=X(dayNum(r.date)),y=Y(r[key]);
     if(out[r.id]) g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="none" stroke="var(--red)" stroke-width="2"/>';
-    else g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.6" fill="var(--label2)"/>';
+    else g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.2" fill="var(--label2)" opacity=".55"/>';
   });
   if(ma.length>1){
+    /* שטח מתחת לקו: מראה את הכיוון במבט אחד */
+    g+='<path class="carea" d="'+ma.map((p,i)=>(i?"L":"M")+X(p.d).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ")+
+       ' L'+X(ma[ma.length-1].d).toFixed(1)+' '+(H-PB)+' L'+X(ma[0].d).toFixed(1)+' '+(H-PB)+' Z" fill="url(#cfill)"/>';
     g+='<path d="'+ma.map((p,i)=>(i?"L":"M")+X(p.d).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ")+
        '" class="cline" pathLength="1" fill="none" stroke="var(--blue)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
     const lp=ma[ma.length-1];
@@ -11205,7 +11377,7 @@ function viewData(){
   h+='<div class="card"><h2>מראה</h2>';
   h+='<div class="seg" id="segTheme">'+THEMES.map(x=>
      '<button data-theme="'+x.id+'" aria-selected="'+(th===x.id)+'">'+x.lab+'</button>').join("")+'</div>';
-  h+='<p class="tiny">מצב כהה הוא רקע שחור עם תכלת. «לפי המכשיר» מתחלף לבד לפי ההגדרה של הטלפון או המחשב.</p>';
+  h+='<p class="tiny">מצב כהה הוא המראה המרכזי של האפליקציה. «לפי המכשיר» מתחלף לבד לפי ההגדרה של הטלפון או המחשב.</p>';
   h+='</div>';
 
   h+=profileCard();
