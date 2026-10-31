@@ -9272,9 +9272,57 @@ const LABEL_FIELDS=[
 /* שורות משנה שאסור לקחת מהן: "מתוכן סוכרים", "מתוכן חומצות שומן רוויות" */
 const LABEL_SKIP=/מתוכן|רווי|סוכר|טרנס|כולסטרול|נתרן|מלח|סיב|of which|saturat|sugar|sodium|fibre|fiber/i;
 
+/* תווית עם שתי עמודות: ל־100 גרם וליחידה. האפליקציה שומרת ערך ל־100 גרם ומכפילה
+   בגרמים של היחידה, ולכן ערך מעמודת היחידה מוכפל פעמיים: פחמימות של מוצר 178 גרם
+   יצאו כמעט פי שניים, בלי שום סימן. קודם סדר העמודות לא נבדק, ומה שנלקח היה המספר
+   הראשון בשורה — נכון בתווית אחת ושגוי באחרת.
+   שלוש דרכים, מהבטוחה לפחות: מיקום כותרת ה־100 בתמונה; זוג מספרים שהיחס ביניהם הוא
+   בדיוק גרמי היחידה; אחרת לא מנחשים בשקט אלא מסמנים לבדיקה. */
+const LABEL_UNIT_WORD=/יחיד|מנה|מנת|חטיף|serving|portion|per\s*unit/i;
+function labelNutrientRow(norm){
+  return LABEL_FIELDS.some(f=>f.syn.some(s=>{ const n=tnorm(s); return n&&norm.indexOf(n)>=0 }));
+}
+function labelUnitGrams(rows){
+  for(const R of rows){
+    if(!LABEL_UNIT_WORD.test(R.raw)||labelNutrientRow(R.norm)||LABEL_SKIP.test(R.raw)) continue;
+    const g=(R.raw.replace(/,/g,".").match(/\d{1,4}(?:\.\d{1,2})?/g)||[]).map(parseFloat).find(v=>v>=5&&v<=2000&&v!==100);
+    if(g) return g;
+  }
+  return null;
+}
+function labelPickValue(f,nums,xs,x100,unitG){
+  /* אנרגיה מודפסת גם בקילו־ג'אול: מורידים כל מספר שהוא פי 4.18 ממספר אחר בשורה */
+  let list=nums.map((v,i)=>({v,x:xs?xs[i]:null}));
+  if(f.key==="kcal"&&list.length>1)
+    list=list.filter(a=>!list.some(b=>b.v>0&&Math.abs(a.v/b.v-4.184)<0.12));
+  if(!list.length) return null;
+  if(list.length===1) return {v:list[0].v,sure:true};
+  if(list.every(a=>a.v===list[0].v)) return {v:list[0].v,sure:true};
+  if(x100!=null&&list.every(a=>a.x!=null)){
+    const best=list.slice().sort((a,b)=>Math.abs(a.x-x100)-Math.abs(b.x-x100))[0];
+    return {v:best.v,sure:true};
+  }
+  if(unitG){
+    const k=unitG/100;
+    for(const a of list) for(const b of list){
+      if(a===b) continue;
+      if(Math.abs(b.v-a.v*k)<=Math.max(0.15,a.v*k*0.06)) return {v:a.v,sure:true};
+    }
+  }
+  return {v:f.key==="kcal"?Math.min.apply(null,list.map(a=>a.v)):list[0].v,sure:false};
+}
 function parseLabel(lines){
-  const rows=lines.map(l=>({raw:l,norm:tnorm(l)})).filter(r=>r.norm);
+  const geo=lines.geo||[];
+  const rows=lines.map((l,i)=>({raw:l,norm:tnorm(l),geo:geo[i]||null})).filter(r=>r.norm);
   const per100=rows.some(r=>/100\s*(גרם|גר|ג|g|ml|מ"ל|מל)/.test(r.raw));
+  const unitG=labelUnitGrams(rows);
+  let x100=null;
+  rows.forEach(R=>{
+    if(x100!=null||!R.geo||labelNutrientRow(R.norm)) return;
+    const h=R.geo.find(n=>n.v===100);
+    if(h) x100=h.x;
+  });
+  let twoCols=false;
   const out={};
   LABEL_FIELDS.forEach(f=>{
     for(const s of f.syn){
@@ -9282,16 +9330,20 @@ function parseLabel(lines){
       for(const R of rows){
         if(R.norm.indexOf(ns)<0) continue;
         if(LABEL_SKIP.test(R.raw)) continue;
-        const nums=(R.raw.replace(/,/g,".").match(/\d{1,4}(?:\.\d{1,2})?/g)||[])
-          .map(parseFloat).filter(v=>!isNaN(v)&&v>=f.min&&v<=f.max);
-        if(!nums.length) continue;
-        /* באנרגיה מודפסים גם קילו־ג'אול וגם קלוריות. הקלוריות תמיד הקטן מביניהם. */
-        out[f.key]=+(f.key==="kcal"?Math.min.apply(null,nums):nums[0]).toFixed(f.dec);
+        const useGeo=R.geo&&R.geo.length;
+        const pairs=useGeo?R.geo.filter(n=>!isNaN(n.v)&&n.v>=f.min&&n.v<=f.max)
+          :(R.raw.replace(/,/g,".").match(/\d{1,4}(?:\.\d{1,2})?/g)||[])
+            .map(parseFloat).filter(v=>!isNaN(v)&&v>=f.min&&v<=f.max).map(v=>({v,x:null}));
+        if(!pairs.length) continue;
+        const got=labelPickValue(f,pairs.map(n=>n.v),useGeo?pairs.map(n=>n.x):null,x100,unitG);
+        if(!got) continue;
+        if(!got.sure) twoCols=true;
+        out[f.key]=+got.v.toFixed(f.dec);
         return;
       }
     }
   });
-  return {vals:out,per100,lines};
+  return {vals:out,per100,lines,unitG,twoCols};
 }
 
 async function labelLinesFromImage(canvas){
@@ -9306,12 +9358,20 @@ async function labelLinesFromImage(canvas){
   const aLines=linesOf(A.data).filter(l=>l.bbox);
   const bWords=wordsOf(B.data).filter(w=>w.bbox&&/\d/.test(w.text||""));
   if(!aLines.length) return (A.data.text||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  return aLines.map(l=>{
-    const nums=bWords.filter(w=>{const y=(w.bbox.y0+w.bbox.y1)/2;return y>=l.bbox.y0-3&&y<=l.bbox.y1+3})
-                     .map(w=>String(w.text).trim()).filter(Boolean);
+  /* המיקום נשמר לצד הטקסט: בלעדיו אי אפשר לדעת מאיזו עמודה בא כל מספר */
+  const geo=[];
+  const out=[];
+  aLines.forEach(l=>{
+    const ws=bWords.filter(w=>{const y=(w.bbox.y0+w.bbox.y1)/2;return y>=l.bbox.y0-3&&y<=l.bbox.y1+3});
+    const nums=ws.map(w=>String(w.text).trim()).filter(Boolean);
     const name=(l.text||"").replace(/[‎‏‪-‮⁦-⁩]/g,"").replace(/\d+([.,]\d+)?/g,"").replace(/\s+/g," ").trim();
-    return (name+" "+nums.join(" ")).trim();
-  }).filter(Boolean);
+    const line=(name+" "+nums.join(" ")).trim();
+    if(!line) return;
+    out.push(line);
+    geo.push(ws.map(w=>({v:parseFloat(String(w.text).replace(/,/g,".")),x:(w.bbox.x0+w.bbox.x1)/2})));
+  });
+  out.geo=geo;
+  return out;
 }
 
 /* ----------------------------------------------------------------------------
@@ -9366,9 +9426,10 @@ async function runLabelOCR(file){
     const lines=await labelLinesFromImage(prepOCR(im));
     const p=parseLabel(lines);
     const n=Object.keys(p.vals).length;
-    window.__label={busy:false,vals:p.vals,per100:p.per100,raw:lines,found:n,
-      warn:n?(p.per100?null:"לא נמצא ציון של «ל־100 גרם». ודא שהערכים הם ל־100 גרם ולא למנה."):
-             "לא זוהו ערכים. אפשר להקליד ידנית."};
+    window.__label={busy:false,vals:p.vals,per100:p.per100,raw:lines,found:n,unitG:p.unitG,
+      warn:!n?"לא זוהו ערכים. אפשר להקליד ידנית.":
+           p.twoCols?"בתווית יש כמה עמודות ולא הצלחתי לדעת בוודאות איזו מהן ל־100 גרם. ודא שבטופס מופיעים הערכים של 100 גרם, לא של היחידה.":
+           p.per100?null:"לא נמצא ציון של «ל־100 גרם». ודא שהערכים הם ל־100 גרם ולא למנה."};
   }catch(err){
     window.__label={busy:false,error:err.message==="no-net"
       ? "מנוע הקריאה נטען מהאינטרנט בפעם הראשונה. התחבר פעם אחת, או הקלד ידנית."
@@ -10349,7 +10410,8 @@ function viewFood(){
   h+='<div class="f"><label>יחידה</label><select name="unit" id="unitSel"></select></div>';
   h+='<div class="f wide"><label>ארוחה</label><select name="meal">'+
      ["בוקר","צהריים","ערב","נשנוש"].map(m=>'<option>'+m+'</option>').join("")+'</select></div>';
-  h+='</div><div class="btnrow"><button class="btn" type="submit">הוסף</button>'+
+  h+='</div><p class="tiny num" id="foodCalc" style="margin-top:10px" aria-live="polite"></p>'+
+     '<div class="btnrow"><button class="btn" type="submit">הוסף</button>'+
      '<button class="btn sec" type="button" id="askFood">כדאי לי לאכול?</button></div></form>';
   h+='<p class="tiny" style="margin-top:10px">הערכים הם לכל 100 גרם ומבוססים על ערכי הרכב מזון מקובלים. '+
      'הם קירוב — מותג, חיתוך ושיטת הכנה משנים אותם, ולכן אל תתייחס אליהם כדיוק של מעבדה. '+
@@ -10409,8 +10471,11 @@ function viewFood(){
   h+='<div class="f"><label>חלבון'+tg("p")+'</label><input type="number" step="0.1" inputmode="decimal" name="p" required'+V("p")+'></div>';
   h+='<div class="f"><label>פחמימות'+tg("c")+'</label><input type="number" step="0.1" inputmode="decimal" name="c"'+V("c")+'></div>';
   h+='<div class="f"><label>שומן'+tg("f")+'</label><input type="number" step="0.1" inputmode="decimal" name="f"'+V("f")+'></div>';
-  h+='<div class="f"><label>שם יחידה (לא חובה)</label><input name="un" placeholder="חטיף / פרוסה"></div>';
-  h+='<div class="f"><label>גרם ליחידה</label><input type="number" step="1" inputmode="numeric" name="ug" placeholder="50"></div>';
+  h+='<div class="f"><label>שם יחידה (לא חובה)</label><input name="un" placeholder="יחידה / חטיף / פרוסה"'+
+     (lb&&lb.unitG?' value="יחידה"':'')+'></div>';
+  h+='<div class="f"><label>גרם ליחידה'+(lb&&lb.unitG?' <span class="badge b-info" style="font-size:10px;padding:1px 7px">מהתווית</span>':'')+
+     '</label><input type="number" step="1" inputmode="numeric" name="ug" placeholder="50"'+
+     (lb&&lb.unitG?' value="'+lb.unitG+'"':'')+'></div>';
   h+='</div><div class="btnrow"><button class="btn" type="submit">שמור מאכל</button>'+
      (lb?'<button class="btn sec" type="button" id="lblClear">נקה</button>':'')+'</div></form>';
 
@@ -10419,7 +10484,8 @@ function viewFood(){
     customFoods.forEach(f=>{
       h+='<div class="row" style="padding:9px 0;border-color:var(--sep)">'+
          '<div class="k">'+esc(f.n)+'<div class="tiny">'+f.kcal+' קק"ל · '+f.p+' חלבון · '+
-         (f.c||0)+' פחמימה · '+(f.f||0)+' שומן — ל־100 גרם</div></div>'+
+         (f.c||0)+' פחמימה · '+(f.f||0)+' שומן — ל־100 גרם'+
+         (f.u?Object.keys(f.u).map(k=>' · '+esc(k)+' = '+f.u[k]+' גרם').join(""):' · בלי יחידה')+'</div></div>'+
          '<button class="btn danger mini" data-delfood="'+esc(f.n)+'">מחק</button></div>';
     });
   }
@@ -11156,16 +11222,35 @@ function bind(){
     if(fd&&fd.u) Object.keys(fd.u).forEach(k=>opts.push('<option value="'+esc(k)+'">'+esc(k)+'</option>'));
     unitSel.innerHTML=opts.join("");
     if(fd&&fd.u&&Object.keys(fd.u).length) unitSel.selectedIndex=1;   /* יחידה נוחה כברירת מחדל */
+    defaultQty();
+  }
+  /* "1" עם יחידת גרם הוא גרם אחד, וזה מה שנרשם בלי ששמים לב. כל עוד לא הקלידו כמות,
+     ברירת המחדל מתאימה ליחידה. */
+  function defaultQty(){
+    if(fF&&unitSel&&!fF.elements.qty.dataset.typed) fF.elements.qty.value=unitSel.value==="g"?100:1;
   }
   if(fF){
-    fillUnits();
-    fF.elements.food.onchange=fillUnits;
+    if(window.__foodSel&&foodByName(window.__foodSel)) fF.elements.food.value=window.__foodSel;
+    window.__foodSel=null;
     const grams=()=>{
       const fd=foodByName(fF.elements.food.value);
       const q=parseFloat(fF.elements.qty.value)||0;
       const u=fF.elements.unit.value;
       return u==="g"?q:(fd&&fd.u&&fd.u[u]?q*fd.u[u]:q);
     };
+    /* החשבון גלוי לפני ההוספה: כמה גרם נרשמים ומה יוצא מהם */
+    const showCalc=()=>{
+      const el=$("#foodCalc"), fd=foodByName(fF.elements.food.value), g=grams();
+      if(!el) return;
+      if(!fd||!(g>0)){ el.textContent=""; return }
+      const of=k=>Math.round(fd[k]*g/10)/10;
+      el.textContent=Math.round(g)+' גרם = '+Math.round(fd.kcal*g/100)+' קק"ל · חלבון '+of("p")+
+                     ' · פחמימה '+of("c")+' · שומן '+of("f")+' גרם';
+    };
+    fillUnits(); showCalc();
+    fF.elements.food.onchange=()=>{ fillUnits(); showCalc() };
+    unitSel.onchange=()=>{ defaultQty(); showCalc() };
+    fF.elements.qty.oninput=()=>{ fF.elements.qty.dataset.typed="1"; showCalc() };
     fF.onsubmit=ev=>{
       ev.preventDefault();
       const g=grams(); if(!(g>0)) return toast("כמות לא תקינה");
@@ -11234,14 +11319,19 @@ function bind(){
     if(!(kcal>0&&kcal<=900)) return toast("קלוריות ל־100 גרם חייבות להיות בין 1 ל־900");
     const item={n:name,kcal:Math.round(kcal),p:num("p"),c:num("c"),f:num("f"),mine:true};
     const un=String(f.get("un")||"").trim(), ug=parseFloat(f.get("ug"));
-    if(un&&ug>0) item.u={[un]:Math.round(ug)};
+    /* גרם ליחידה בלי שם היה נזרק בשקט, והמאכל נרשם אחר כך כגרם אחד. בלי שם קוראים לה "יחידה". */
+    if(ug>0) item.u={[un||"יחידה"]:Math.round(ug)};
+    else if(un) return toast("חסר כמה גרם יש ב«"+un+"»");
     /* בדיקת שפיות: המאקרו לא יכול לחרוג מהקלוריות שהוצהרו */
     const fromMacros=item.p*4+item.c*4+item.f*9;
-    if(fromMacros>item.kcal*1.35)
-      toast("שים לב: החלבון, הפחמימה והשומן מסתכמים ל־"+Math.round(fromMacros)+" קק\"ל");
+    const emptyMacro=[["c","פחמימות"],["f","שומן"]].filter(([k])=>String(f.get(k)||"").trim()==="").map(x=>x[1]);
     customFoods.push(item);
-    window.__label=null;
-    persist(); render(); toast("נשמר — "+name);
+    window.__label=null; window.__foodSel=name;
+    persist(); render();
+    if(emptyMacro.length) toast("נשמר, אבל "+emptyMacro.join(" ו")+" נשארו ריקים ונספרים כאפס");
+    else if(fromMacros>item.kcal*1.35||fromMacros<item.kcal*0.65)
+      toast("נשמר, אבל חלבון, פחמימה ושומן מסתכמים ל־"+Math.round(fromMacros)+" קק\"ל ולא ל־"+item.kcal+". בדוק את הערכים");
+    else toast("נשמר — "+name);
   };
   document.querySelectorAll("[data-delfood]").forEach(b=>b.onclick=()=>{
     const n=b.dataset.delfood;
