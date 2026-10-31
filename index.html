@@ -773,6 +773,12 @@ ol.steps li::marker{color:var(--accent-txt);font-weight:700}
 ul.tips{margin:10px 0 0;padding-inline-start:20px}
 ul.tips li{font-size:14px;line-height:1.6;margin-bottom:7px;color:var(--label)}
 ul.tips li::marker{color:var(--accent)}
+/* בכרטיס זה נפתח בלחיצה, כמו ההגדלה. תשעה־עשר מדדים פתוחים זה קיר טקסט. */
+.improve{display:none;margin-top:12px;padding-top:11px;border-top:0.5px solid var(--sep)}
+.pcard.open .improve,details.param .improve{display:block}
+.improve .imhd{font-size:15px;font-weight:600;margin:0}
+.improve .tiny{margin:8px 0 0}
+.improve .imsrc{opacity:.8}
 .codebox .btn{margin-top:12px}
 
 /* ---------- רישום אימון ---------- */
@@ -4115,6 +4121,7 @@ function renderParams(r){
     }else{
       h+='<p class="tiny"><b>מה קרה כאן:</b> אין ערך קודם להשוואה. '+esc(info.real)+'</p>';
     }
+    h+=improveBlock(f.key);
     h+='</div></details>';
   });
   return h||'<p class="tiny">אין פרמטרים לניתוח.</p>';
@@ -4305,6 +4312,88 @@ function goodDir(key,d){
     default: return null;
   }
 }
+/* ----------------------------------------------------------------------------
+   איך משפרים מדד, לפי המטרה שנבחרה.
+   המספרים מגיעים מטבלת המטרות ומהמשקל האחרון, ולכן הם אותם מספרים שמופיעים במסך
+   התזונה. במדדים שאין דרך ישירה להזיז (מלחים, ציון, משקל תקן) זה מה שנאמר —
+   עצה שהומצאה כדי למלא מקום גרועה יותר מ"אין כאן מה לעשות".
+   מקור מופיע רק כשהוא אומת מול המחקר עצמו ובאמת מכסה את המספר שלידו. Morton בדק
+   את הטווח 1.6–2.2, ולכן הוא לא מוצג ליד 1.8–2.4 של מטרות הירידה.
+   ---------------------------------------------------------------------------- */
+const IMPROVE_SRC={
+  protein:"Morton 2018 (חלבון)", rate:"Garthe 2013 (קצב עלייה)", volume:"Schoenfeld 2017 (נפח אימון)",
+  failure:"Refalo 2023 (קרבה לכשל)", creatine:"Kreider 2017 (קריאטין)"
+};
+function improveAdvice(key){
+  const g=curGoal(), dir=g.dir;
+  const last=official().slice(-1)[0];
+  const w=last&&last.weight>0?last.weight:null;
+  const rg2=(a,b)=>String(+Math.min(a,b).toFixed(2))+"–"+String(+Math.max(a,b).toFixed(2));
+  const protLine='חלבון '+g.prot[0]+'–'+g.prot[1]+' גרם לק"ג ליום'+
+    (w?': אצלך '+Math.round(w*g.prot[0])+'–'+Math.round(w*g.prot[1])+' גרם.':'.');
+  const rateLine='קצב היעד: '+rg2(Math.abs(g.rate[0]),Math.abs(g.rate[1]))+'% ממשקל הגוף בשבוע'+
+    (w?', אצלך '+rg2(Math.abs(g.rate[0])*w/100,Math.abs(g.rate[1])*w/100)+' ק"ג.':'.');
+  const calLine=g.adj>0?'עודף של כ־'+Math.round(g.adj*100)+'% מעל מה שאתה שורף (המספר במסך התזונה).'
+                       :'גירעון של כ־'+Math.round(-g.adj*100)+'% ממה שאתה שורף (המספר במסך התזונה).';
+  const weekly='בודקים לפי ממוצע שבועי, לא לפי שקילה בודדת.';
+  const waist='היקף המותניים הוא הבדיקה: סרט מדידה לא מושפע ממים כמו המשקל החכם.';
+  const load='להוסיף עומס לאורך זמן: עוד חזרות, עוד סטים או תרגיל קשה יותר. בלי יומן אימונים אי אפשר לדעת שזה קורה.';
+  const volume='נפח של בערך 10–20 סטים לשריר בשבוע. הכיוון מבוסס היטב, המספר המדויק פחות.';
+  const failure='לא צריך להגיע לכשל מוחלט: לעצור 0–3 חזרות לפניו נותן כמעט את כל התועלת.';
+  const creatine='קריאטין 3–5 גרם ביום הוא התוסף המבוסס ביותר. העלייה בשבועות הראשונים היא בחלקה מים, לא שריר.';
+  const keepTrain='לא להוריד נפח אימון. האימון הוא מה ששומר על השריר בגירעון, לא הדיאטה.';
+  const tooLow=(dir==="down"&&w&&me&&me.height>0&&w/Math.pow(me.height/100,2)<18.5)
+    ?'ה־BMI שלך כבר מתחת ל־18.5. לפני ירידה נוספת כדאי לדבר עם רופא.':null;
+  const fin=(items,src,note)=>({goal:g.lab,items:items.filter(Boolean),src:src||[],note:note||null});
+  const none=t=>({goal:g.lab,items:[],src:[],note:t});
+
+  const fatFamily=()=>{
+    if(dir==="down") return fin([tooLow,calLine,rateLine,protLine,'אימוני התנגדות בזמן הגירעון, כדי שמה שיורד יהיה בעיקר שומן.',weekly]);
+    if(dir==="up") return fin(['במטרה הזו הוא לא אמור לרדת. מה שבידיך הוא שיעלה לאט.',rateLine,
+      g.id==="mass"?'קצב מהיר יותר מוסיף בעיקר שומן, לא שריר.':'זו בחירה מודעת: בקצב הזה יותר מהתוספת הוא שומן.',
+      'אם היקף המותניים עולה עקבית שבועיים־שלושה — להאט.'],["rate"]);
+    return fin(['קלוריות סביב האיזון ואימוני התנגדות. בלי שינוי במשקל, כל שיפור כאן איטי.',protLine,waist],["protein"]);
+  };
+  const muscleFamily=note=>{
+    if(dir==="up") return fin([load,volume,failure,protLine,rateLine,'קצב מהיר מזה לא בונה יותר שריר.',creatine],["volume","failure","protein","rate","creatine"],note);
+    if(dir==="down") return fin(['בגירעון המטרה היא לשמור עליו, לא להעלות אותו.',keepTrain,protLine,rateLine,tooLow],[],note);
+    return fin([load,volume,protLine,'יותר חזרות באותו משקל גוף זו התקדמות, גם כשהמשקל לא זז.'],["volume","protein"],note);
+  };
+
+  switch(key){
+    case "weight":
+      if(dir==="up") return fin([calLine,rateLine,'לא עולה שבועיים ברצף? להוסיף מעט קלוריות.','אם היקף המותניים עולה עקבית — להאט.',weekly],["rate"]);
+      if(dir==="down") return fin([tooLow,calLine,rateLine,protLine,keepTrain,weekly]);
+      return fin(['לשמור על ממוצע שבועי יציב. תנודה של 1–2 ק"ג בין ימים היא מים, מלח ואוכל.','זז יותר מ־0.5 ק"ג לכיוון אחד לאורך שבועיים? להתאים קלוריות.']);
+    case "bf": case "fat": case "subcut": return fatFamily();
+    case "visceral":
+      if(dir==="down") return fin([tooLow,'יורד יחד עם השומן הכולל: '+calLine,waist]);
+      if(dir==="up") return fin(['במטרה הזו לא מצפים שירד. שומרים שהקצב לא מהיר:',rateLine,waist]);
+      return fin([waist,'אם ההיקף עולה עקבית, להוריד מעט קלוריות.']);
+    case "lean": return muscleFamily('כולל מים וגליקוגן, לא רק שריר. יום פחמימות גבוה מעלה אותו בלי שנבנה כלום.');
+    case "smmPct": return muscleFamily('זה אחוז, ולכן הוא עולה גם כשרק השומן יורד, בלי שנוסף שריר.');
+    case "smi": return muscleFamily('מהמדדים האיטיים ביותר: שינוי אמיתי נמדד בחודשים.');
+    case "muscle": return muscleFamily('נע יחד עם שריר השלד ואינו מדד נפרד לשיפור.');
+    case "bmi": return none('נגזר רק ממשקל וגובה, ולכן משפרים דרך המשקל. לא מבדיל בין שריר לשומן ולא כדאי להציב אותו כיעד.');
+    case "water": return none('לא משפרים אותו כמטרה בפני עצמה, בכל מטרה. שתייה קבועה ומדידה באותם תנאים הופכות את שאר המספרים לאמינים יותר.');
+    case "protein": return none('אין קשר ישיר לכמה חלבון אכלת: זה חלק מהגוף שהמכשיר מעריך. אין כאן פעולה. את כמות החלבון באוכל רואים במסך התזונה.');
+    case "salt": return none('בעיקר מינרל של העצם. אין פעולה שתשנה אותו בשבועות, ואין צורך.');
+    case "bmr": return none('המכשיר מחשב אותו מהמסה ללא שומן, ולכן הוא עולה רק כשהיא עולה. אין דרך ישירה להזיז אותו.');
+    case "score": return none('ציון של היצרן שנגזר מכל השאר. לא מכוונים אליו. משפרים את המדדים עצמם.');
+    case "stdWeight": case "weightCtrl": case "fatCtrl": case "muscleCtrl":
+      return none('יעד של המכשיר, לא שלך. הוא מתעלם מהמטרה שבחרת ('+g.lab+'), ולכן לא כדאי לכוון אליו.');
+    default: return null;
+  }
+}
+function improveBlock(key){
+  const a=improveAdvice(key);
+  if(!a) return "";
+  let h='<div class="improve"><p class="imhd">איך משפרים — לפי המטרה שלך: '+esc(a.goal)+'</p>';
+  if(a.items.length) h+='<ul class="tips">'+a.items.map(t=>'<li>'+esc(t)+'</li>').join("")+'</ul>';
+  if(a.note) h+='<p class="tiny">'+esc(a.note)+'</p>';
+  if(a.src.length) h+='<p class="tiny imsrc">מקורות: '+esc(a.src.map(s=>IMPROVE_SRC[s]).join(" · "))+'</p>';
+  return h+'</div>';
+}
 function weeklyCard(key){
   const info=PARAM_INFO[key];
   if(!info) return "";
@@ -4408,6 +4497,7 @@ function weeklyCard(key){
       else
         h+='<p class="tiny">שינוי בתוך התנודה הרגילה. אין כאן מה להסביר.</p>';
       h+=scaleFor(it.key,it.to,it.unit,it.dec);
+      h+=improveBlock(it.key);
       h+='</div>';
     });
     const noisy=cmp.filter(x=>!x.direct).length;
@@ -5661,6 +5751,7 @@ function viewTrend(){
       h+='<p class="tiny">'+esc(it.verdict.why)+'</p>';
       h+='<p class="tiny" style="opacity:.7">'+esc(it.what)+'</p>';
       h+=scaleFor(it.key,it.st.to,it.unit,it.dec);
+      h+=improveBlock(it.key);
       h+='</div>';
     });
     h+='<p class="tiny" style="margin-top:12px">מדדים שאין להם מספיק שקילות בתקופה הזו פשוט לא מופיעים כאן — '+
