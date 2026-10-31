@@ -1114,6 +1114,21 @@ body.noauth::after{display:none}
 }
 .sechead[aria-expanded=true]::after{transform:rotate(225deg)}
 .sec-hide{display:none!important}
+.wizbar{display:flex;gap:6px;margin-bottom:8px}
+.wizbar i{flex:1;height:6px;border-radius:3px;background:var(--fill2);transition:background .2s ease}
+.wizbar i.on{background:var(--accent)}
+.wizn{font-size:13.5px;font-weight:700;color:var(--label2);margin:0 0 12px}
+.bq .bql{display:block;font-size:20px;font-weight:800;color:var(--label);margin-bottom:12px;line-height:1.3}
+.bq .bqhint{display:block;font-size:14px;font-weight:500;color:var(--label2);margin-top:2px}
+.bq .lvl{min-height:56px}
+.bq .seg button{min-height:56px;font-size:20px;font-weight:800}
+.linkbtn{background:none;border:0;padding:0 2px;font:inherit;color:var(--accent-txt);font-weight:700;text-decoration:underline;cursor:pointer;min-height:24px}
+details.sess > summary{list-style:none;cursor:pointer}
+details.sess > summary::-webkit-details-marker{display:none}
+details.sess:not([open]) .sesshead{margin-bottom:0}
+details.sess .bn .bs{display:block;margin-top:1px}
+a.yt.bvid{flex:none;padding:8px 12px;font-size:13.5px;min-height:44px}
+a.yt.bvid svg{width:18px;height:18px}
 select.palt{display:inline-block;width:auto;max-width:100%;padding:6px 10px;font-size:14px;margin-inline-start:4px}
 /* כרטיס מדד סגור: הכותרת והשורה הראשית בלבד */
 .pcard.pfold:not(.open) > :not(.ptop):not(.pline){display:none}
@@ -6805,6 +6820,50 @@ async function readPlanFile(file){
    כשאין סרטון מאומת לתרגיל — נופלים לחיפוש מסונן לסרטונים בלבד,
    ובכל מקרה יש קישור "עוד" כדי שסרטון שיימחק לא ישאיר מבוי סתום. */
 const YT={
+  /* 31/10/2026: לכל תרגיל שמחולל התוכניות נותן. אותרו בחיפוש ביוטיוב, נבחרו לפי התאמת
+     הכותרת לתרגיל, הערוץ והצפיות, והקיום והכותרת אומתו מול יוטיוב. לא נצפו אחד־אחד. */
+  "האק סקוואט במכונה":"0tn5K9NlCfo",
+  "לחיצת חזה במשקולות יד":"5Y3VZsLb1Ys",
+  "מתח במכונת עזר":"gx0RWT7WbmA",
+  "דדליפט רומני":"3VXmecChYYM",
+  "חתירה במוט בהטיה":"FWJR5Ve8bnQ",
+  "לחיצת כתפיים במוט בעמידה":"KP1sYz2VICk",
+  "סיבובי גו בכבל":"PCQCwP1Xy0g",
+  "מכרעים":"wrwwXE_x-pQ",
+  "שכיבות סמיכה שליליות":"dK0FbJvPCug",
+  "גשר ישבן ברגל אחת":"_K_di6h2-Wg",
+  "הולו בודי הולד":"hf00_b2sRdc",
+  "לחיצת חזה במוט":"rT7DgCr-3pg",
+  "לחיצה צרה במוט":"vEUyEOVn3yM",
+  "כפיפת מרפק במוט":"kwG2ipFRgfo",
+  "כפיפת ברכיים במכונה":"vl5nUdE9mWM",
+  "סקוואט בולגרי עם משקולות":"Fmjj7wFJWRE",
+  "עליות אצבעות בעמידה במכונה":"eMTy3qylqnE",
+  "פשיטת מרפק על טבעות":"1BriNYJU0nE",
+  "כפיפת מרפק על טבעות":"qlsA272Cojw",
+  "גוד מורנינג משקל גוף":"0Syp9iyINZ4",
+  "סקוואט בולגרי":"SkNsa3eBwLA",
+  "עליות אצבעות ברגל אחת":"ElcvJ0kjt6c",
+  "שכיבות סמיכה":"IODxDxX7oi4",
+  "לחיצת כתפיים במשקולות יד":"rO_iEImwHyo",
+  "חתירה במשקולת יד":"dFzUjzfih7k",
+  "פייס פול בגומייה":"rep-qVOkqgk",
+  "לחיצת חזה בשיפוע חיובי":"SrqOu55lrYU",
+  "סקוואט במוט":"aOzrA4FgnM0",
+  "שכיבות סמיכה ארכי מוגבהות":"MxVbNel13Ek",
+  "סקוואט קפיצה":"A-cFYWvaHr0",
+  "שכיבות סמיכה צרות":"J0DnG1_S92I",
+  "דדליפט במוט":"r4MzxtBKyNE",
+  "מתח ארכי":"ziQjz1-DmX8",
+  "נורדיק קרל":"3-4pKUhkzoQ",
+  "עמידת ידיים לחיצה מפייק":"z4gmz4cF474",
+  "סקוואט קדמי":"nmUof3vszxM",
+  "שכיבות סמיכה ביד אחת מוגבהות":"xp1tgjT_3k0",
+  "סקוואט פיסטול":"vq5-vdgJc0I",
+  "שכיבות סמיכה ארכי":"MxVbNel13Ek",
+  "מתח ביד אחת":"mTJHClMQPM8",
+  "וי־סיט לעמידת ידיים":"qebeJexc3Ms",
+  "דרגון פלאג":"pvz7k5gO-DE",
   "החזקה טאק פלאנץ'":"M5il8Jpltt8",
   "אדבנסד טאק פלאנץ'":"52kD1wrjYy8",
   "פלאנק לין":"wKV5zVJTYBo",
@@ -6844,7 +6903,8 @@ const YT={
   "משיכה אופקית ביד אחת":"ygCspXq3-Ic"
 };
 function ytSearch(x){
-  const q=((x.en||x.n)+" calisthenics tutorial").trim();
+  /* היה כאן "calisthenics" קבוע, ולכן תרגיל במכונה בחדר כושר חיפש קליסטניקס */
+  const q=((x.en||x.n)+" exercise form tutorial").trim();
   /* sp=EgIQAQ — סינון לסרטונים בלבד, בלי ערוצים ופלייליסטים */
   return "https://www.youtube.com/results?search_query="+encodeURIComponent(q)+"&sp=EgIQAQ%3D%3D";
 }
@@ -6853,6 +6913,11 @@ function ytUrl(x){
   return id?("https://www.youtube.com/watch?v="+id):ytSearch(x);
 }
 const YT_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.6 2.6 0 00-1.8-1.9C18.2 4.9 12 4.9 12 4.9s-6.2 0-7.8.4A2.6 2.6 0 002.4 7.2 27 27 0 002 12a27 27 0 00.4 4.8 2.6 2.6 0 001.8 1.9c1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 001.8-1.9A27 27 0 0022 12a27 27 0 00-.4-4.8z" fill="currentColor"/><path d="M10 15.2l5.2-3.2L10 8.8z" fill="var(--card)"/></svg>';
+/* כפתור קטן לשורת תרגיל: פותח את הסרטון ביוטיוב */
+function exVid(x){
+  if(!x) return "";
+  return '<a class="yt bvid" href="'+ytUrl(x)+'" target="_blank" rel="noopener noreferrer" aria-label="סרטון דוגמה: '+esc(x.n)+'">'+YT_SVG+'סרטון</a>';
+}
 function ytLink(x,label){
   const direct=!!YT[x.n];
   let h='<a class="yt" href="'+ytUrl(x)+'" target="_blank" rel="noopener noreferrer">'+YT_SVG+
@@ -6919,6 +6984,7 @@ function planDetail(p){
       h+='<div class="mus" style="padding:0 13px 10px">'+
          curX.p.map(m=>'<span class="p">'+esc(m)+'</span>').join("")+
          curX.s.map(m=>'<span>'+esc(m)+'</span>').join("")+'</div>';
+      h+='<div style="padding:0 13px 12px">'+exVid(curX)+'</div>';
     }
 
     if(open){
@@ -7468,70 +7534,73 @@ function buildCard(){
   const env=b.env||null;
   const pv=window.__prog;
 
-  let h='<div class="card"><h2>בנה לי תוכנית</h2>';
-  h+='<p class="tiny" style="margin-bottom:14px">ארבע שאלות, ומהן נגזרת התוכנית — כמה אימונים, איך לפצל אותם, ואילו תרגילים. '+
-     'המבנה נקבע לפי הראיות ולא לפי טעם, וכל החלטה מוסברת בסוף.</p>';
-
-  /* 1 — מטרה */
-  h+='<div class="bq"><label class="bql">1 · מה המטרה</label><div class="seg wrapseg" id="bGoal">'+
-     GOALS.map(g=>'<button data-bgoal="'+g.id+'" aria-selected="'+(goal===g.id)+'">'+esc(g.lab)+'</button>').join("")+
-     '</div></div>';
-
-  /* 2 — ותק */
-  h+='<div class="bq"><label class="bql">2 · כמה זמן אתה מתאמן</label><div class="lvls" id="bLevel">';
-  LEVELS.forEach(l=>{
-    h+='<button class="lvl'+(level===l.id?" on":"")+'" data-blevel="'+l.id+'">'+
-       '<b>'+esc(l.lab)+'</b><span>'+esc(l.when)+'</span></button>';
-  });
-  h+='</div></div>';
-
-  /* 3 — תדירות */
-  h+='<div class="bq"><label class="bql">3 · כמה אימונים בשבוע</label><div class="seg" id="bDays">'+
-     [2,3,4,5,6].map(d=>'<button data-bdays="'+d+'" aria-selected="'+(days===d)+'">'+d+'</button>').join("")+
-     '</div>';
-  if(days) h+='<p class="tiny" style="margin-top:7px">'+esc(pickSplit(days,level||"new").name)+'</p>';
-  h+='</div>';
-
-  /* 4 — סביבה. בחירה מרובה: אפשר גם חדר כושר וגם משקל גוף. */
+  /* שאלה אחת בכל פעם: ארבע שאלות יחד עם כל ההסברים היו מסך ארוך ומבלבל.
+     המטרה כבר ידועה מההרשמה, ולכן מתחילים מהשאלה הראשונה שעוד אין עליה תשובה. */
   const envSel=Array.isArray(env)?env:(env?[env]:[]);
-  h+='<div class="bq"><label class="bql">4 · איפה אתה מתאמן <span class="bqhint">אפשר לבחור יותר מאחד</span></label><div class="lvls" id="bEnv">';
-  ENVS.forEach(e=>{
-    h+='<button class="lvl'+(envSel.indexOf(e.id)>-1?" on":"")+'" data-benv="'+e.id+'">'+
-       '<b>'+esc(e.lab)+'</b><span>'+esc(e.note)+'</span></button>';
-  });
-  h+='</div>';
-  if(envSel.length>1)
-    h+='<p class="tiny" style="margin-top:7px">מאוחד: '+esc(envMerge(envSel).lab)+
-       '. המנוע יבחר מכל מה שזמין לך, ויעדיף ציוד חדר כושר כשהוא נבחר.</p>';
-  h+='</div>';
-
   const ready=goal&&level&&days&&envSel.length;
-  h+='<div class="btnrow" style="margin-top:4px">'+
-     '<button class="btn" id="bGo"'+(ready?"":" disabled")+'>בנה תוכנית</button>'+
-     (pv?'<button class="btn sec" id="bClear">נקה</button>':'')+'</div>';
-  if(!ready) h+='<p class="tiny" style="margin-top:8px">ענה על ארבע השאלות כדי להמשיך.</p>';
+  const firstOpen=!level?1:!days?2:!envSel.length?3:3;
+  const step=b.step!=null?Math.max(0,Math.min(3,b.step)):firstOpen;
+
+  /* בלי כותרת בכוונה: הכפתור «בנה לי תוכנית» מעל הוא הכותרת והוא מה שפותח וסוגר.
+     כותרת שנייה הייתה מקפלת שוב את מה שכבר נפתח. */
+  let h='<div class="card">';
+  if(!pv){
+    h+='<div class="wizbar" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="'+(step+1)+'">'+
+       [0,1,2,3].map(i=>'<i class="'+(i<=step?"on":"")+'"></i>').join("")+'</div>';
+    h+='<p class="wizn">שאלה '+(step+1)+' מתוך 4</p>';
+    if(step===0){
+      h+='<div class="bq"><label class="bql">מה המטרה?</label><div class="lvls" id="bGoal">'+
+         GOALS.map(g=>'<button class="lvl'+(goal===g.id?" on":"")+'" data-bgoal="'+g.id+'"><b>'+esc(g.lab)+'</b></button>').join("")+
+         '</div></div>';
+    }else if(step===1){
+      h+='<div class="bq"><label class="bql">כמה זמן אתה מתאמן?</label><div class="lvls" id="bLevel">';
+      LEVELS.forEach(l=>{
+        h+='<button class="lvl'+(level===l.id?" on":"")+'" data-blevel="'+l.id+'">'+
+           '<b>'+esc(l.lab)+'</b><span>'+esc(l.when)+'</span></button>';
+      });
+      h+='</div></div>';
+    }else if(step===2){
+      h+='<div class="bq"><label class="bql">כמה אימונים בשבוע?</label><div class="seg" id="bDays">'+
+         [2,3,4,5,6].map(d=>'<button data-bdays="'+d+'" aria-selected="'+(days===d)+'">'+d+'</button>').join("")+
+         '</div></div>';
+    }else{
+      /* בחירה מרובה: אפשר גם חדר כושר וגם משקל גוף */
+      h+='<div class="bq"><label class="bql">איפה אתה מתאמן? <span class="bqhint">אפשר לבחור יותר מאחד</span></label><div class="lvls" id="bEnv">';
+      ENVS.forEach(e=>{
+        h+='<button class="lvl'+(envSel.indexOf(e.id)>-1?" on":"")+'" data-benv="'+e.id+'">'+
+           '<b>'+esc(e.lab)+'</b><span>'+esc(e.note)+'</span></button>';
+      });
+      h+='</div></div>';
+    }
+    h+='<div class="btnrow" style="margin-top:4px">';
+    if(step===3) h+='<button class="btn" id="bGo"'+(ready?"":" disabled")+'>בנה תוכנית</button>';
+    if(step>0) h+='<button class="btn sec" id="bBack">חזרה</button>';
+    h+='</div>';
+    if(step===0||step===1) h+='<p class="tiny" style="margin-top:10px">המטרה: <b>'+esc((GOALS.filter(g=>g.id===goal)[0]||{}).lab||"")+'</b>'+
+       (step===1?' · <button class="linkbtn" id="bGoalEdit">שנה</button>':'')+'</p>';
+  }
 
   /* ---- תצוגה מקדימה ---- */
   if(pv){
-    h+='<div class="sep2"></div>';
     h+='<div class="headline"><span class="badge b-ok">'+esc(pv.split.name)+'</span>'+
        '<p style="margin:9px 0 0">'+esc(pv.days)+' אימונים בשבוע · '+esc(pv.lvl.lab)+' · '+esc(pv.env.lab)+
-       ' · מטרה: '+esc(pv.goal.lab)+'</p>'+
-       '<p class="tiny" style="margin:7px 0 0">'+esc(pv.split.why)+'</p></div>';
+       ' · מטרה: '+esc(pv.goal.lab)+'</p></div>';
+    h+='<div class="btnrow" style="margin:12px 0 4px"><button class="btn" id="bSave">שמור את התוכנית</button>'+
+       '<button class="btn sec" id="bClear">שנה תשובות</button></div>';
 
     pv.sessions.forEach((s,i)=>{
-      h+='<div class="sess">';
+      h+='<details class="sess"'+(i===0?" open":"")+'><summary>';
       h+='<div class="sesshead"><span class="sessltr">'+esc(s.letter)+'</span>'+
          '<div class="sesst"><b>'+esc(s.title)+'</b><span>'+esc(s.sub)+'</span></div>'+
-         '<span class="badge b-mute">'+s.items.length+' תרגילים</span></div>';
+         '<span class="badge b-mute">'+s.items.length+' תרגילים</span></div></summary>';
       s.items.forEach((it,j)=>{
         h+='<div class="brow"><span class="bnum">'+(j+1)+'</span>'+
-           '<span class="bn">'+esc(it.ex.n)+'</span>'+
-           '<span class="bs num">'+it.pr.sets+'×'+esc(it.pr.reps.replace(" חזרות","").replace(" שניות","ש׳"))+'</span></div>';
+           '<span class="bn">'+esc(it.ex.n)+'<span class="bs num">'+it.pr.sets+'×'+esc(it.pr.reps.replace(" חזרות","").replace(" שניות","ש׳"))+'</span></span>'+
+           exVid(it.ex)+'</div>';
       });
       h+='<p class="tiny sessrest">מנוחה: '+esc(s.items[0]?s.items[0].pr.rest:"")+
-         ' בין הסטים בתרגילים המורכבים, פחות בבידוד.</p>';
-      h+='</div>';
+         ' בין הסטים בתרגילים הגדולים, פחות בתרגילים הקטנים.</p>';
+      h+='</details>';
     });
 
     /* האירובי, אם נבחר — נכנס לתוכנית ככל אימון אחר ולא כהערת שוליים */
@@ -7545,8 +7614,10 @@ function buildCard(){
          '<p class="tiny sessrest">מתי: '+esc(cWhen.lab)+'. '+esc(cWhen.why)+'</p></div>';
     }
 
-    /* חשבון הנפח — מראים אותו, לא מבטיחים אותו */
-    h+='<div class="sep2"></div><h3 class="h3">נפח שבועי לפי שריר</h3>';
+    /* חשבון הנפח והנימוקים: בשביל מי שרוצה, לא בדרך של כולם */
+    h+='<details class="xtra" style="margin-top:12px"><summary class="tiny" style="cursor:pointer;color:var(--accent-txt);font-weight:700">למה התוכנית נראית ככה?</summary>';
+    h+='<p class="tiny" style="margin-top:10px">'+esc(pv.split.why)+'</p>';
+    h+='<h3 class="h3">כמה סטים כל שריר מקבל בשבוע</h3>';
     h+='<p class="tiny" style="margin-bottom:10px">הטווח שרוב הראיות תומכות בו: <b>10–20 סטים לקבוצת שריר בשבוע</b> '+
        '(Schoenfeld ואחרים 2017). סט של שריר משני נספר כחצי.</p><div class="wklist">';
     pv.vol.slice(0,10).forEach(([m,v])=>{
@@ -7597,10 +7668,8 @@ function buildCard(){
     if(pv.goal.dir==="up")
       h+='<p class="tiny"><b>אתה בעודף.</b> זה השלב שבו נפח האימון באמת משתלם — יש ממה לבנות.</p>';
 
-    h+='<div class="btnrow" style="margin-top:14px"><button class="btn" id="bSave">שמור '+
-       pv.sessions.length+' אימונים כתוכניות</button></div>';
-    h+='<p class="tiny" style="margin-top:8px">ייווצרו '+pv.sessions.length+' תוכניות נפרדות. '+
-       'אחר כך אפשר ללחוץ על כל תרגיל ולקבל חלופות — בדיוק כמו בתוכניות שהעלית.</p>';
+    h+='</details>';
+    h+='<p class="tiny" style="margin-top:10px">השמירה יוצרת '+pv.sessions.length+' אימונים נפרדים. אחר כך אפשר ללחוץ על כל תרגיל ולהחליף אותו.</p>';
   }
 
   h+='</div>';
@@ -11930,9 +11999,16 @@ function bind(){
 
   /* ---- מחולל התוכניות ---- */
   const bset=(k,v)=>{ ui.build=ui.build||{}; ui.build[k]=v; window.__prog=null; persist(); render() };
-  document.querySelectorAll("[data-bgoal]").forEach(b=>b.onclick=()=>bset("goal",b.dataset.bgoal));
-  document.querySelectorAll("[data-blevel]").forEach(b=>b.onclick=()=>bset("level",b.dataset.blevel));
-  document.querySelectorAll("[data-bdays]").forEach(b=>b.onclick=()=>bset("days",+b.dataset.bdays));
+  /* תשובה מעבירה לבד לשאלה הבאה */
+  const banswer=(k,v,next)=>{ ui.build=ui.build||{}; ui.build.step=next; bset(k,v) };
+  document.querySelectorAll("[data-bgoal]").forEach(b=>b.onclick=()=>banswer("goal",b.dataset.bgoal,1));
+  document.querySelectorAll("[data-blevel]").forEach(b=>b.onclick=()=>banswer("level",b.dataset.blevel,2));
+  document.querySelectorAll("[data-bdays]").forEach(b=>b.onclick=()=>banswer("days",+b.dataset.bdays,3));
+  const bBack=$("#bBack");
+  if(bBack) bBack.onclick=()=>{ const u=ui.build||(ui.build={}); const firstOpen=!u.level?1:!u.days?2:3;
+    u.step=Math.max(0,(u.step!=null?u.step:firstOpen)-1); persist(); render() };
+  const bge=$("#bGoalEdit");
+  if(bge) bge.onclick=()=>{ (ui.build||(ui.build={})).step=0; persist(); render() };
   document.querySelectorAll("[data-cardio]").forEach(b=>b.onclick=()=>{
     ui.build=ui.build||{};
     ui.build.cardio=(ui.build.cardio===b.dataset.cardio)?null:b.dataset.cardio;
@@ -11987,7 +12063,7 @@ function bind(){
   if(bgo) bgo.onclick=()=>{
     const b=ui.build||{};
     const goal=b.goal||(me&&me.goal)||"mass";
-    if(!b.level||!b.days||!b.env){ toast("ענה על ארבע השאלות"); return }
+    if(!b.level||!b.days||!b.env){ toast("ענה קודם על השאלות"); return }
     try{ window.__prog=buildProgram({goal,level:b.level,days:b.days,env:b.env}) }
     catch(e){ toast("לא הצלחתי לבנות: "+e.message); return }
     if(!window.__prog.sessions.some(s=>s.items.length)){
@@ -11998,7 +12074,7 @@ function bind(){
     render();
   };
   const bclr=$("#bClear");
-  if(bclr) bclr.onclick=()=>{ window.__prog=null; render() };
+  if(bclr) bclr.onclick=()=>{ window.__prog=null; (ui.build||(ui.build={})).step=0; persist(); render() };
 
   const bsave=$("#bSave");
   if(bsave) bsave.onclick=()=>{
@@ -12022,7 +12098,7 @@ function bind(){
         note:cR.n+" פעמים בשבוע · "+cW.lab,
         body:cS.what,swaps:{}});
     }
-    window.__prog=null; ui.planId=null;
+    window.__prog=null; ui.planId=null; if(ui.build) ui.build.step=null;
     persist(); render(); toast("נשמרו "+n+" תוכניות");
     });
   };
