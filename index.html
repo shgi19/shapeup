@@ -9,8 +9,8 @@
      הדף, ואם הקיצור נוצר בעבר — הוא שומר את השם הישן גם אחרי שינוי שם. -->
 <meta name="apple-mobile-web-app-title" content="ShapeUp">
 <meta name="application-name" content="ShapeUp">
-<meta name="theme-color" content="#F5F3EF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E0F12" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F1F2F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0C11" media="(prefers-color-scheme: dark)">
 <!-- הסמל: אש עם מחוג. מוטמע בקובץ ולא נטען מבחוץ, כי האפליקציה
      צריכה לעבוד גם בדאבל-קליק על הקובץ ובלי רשת.
      שניהם ב-base64 בכוונה. בגרסה הראשונה כתבתי את ה-SVG כטקסט גולמי,
@@ -23,108 +23,116 @@
 /* ============================================================================
    ShapeUp — מערכת עיצוב
    ----------------------------------------------------------------------------
-   השפה היא מכשיר מדידה, לא צעצוע: משטחים אטומים ושקטים, קו שוליים בעובי
-   שיער במקום צל כבד, והמספר הוא הגיבור. האפליקציה הזאת עושה דבר אחד —
-   מודדת גוף לאורך זמן — ולכן היא צריכה לקרוא כמו שעון או מד לחץ.
+   השפה ספורטיבית: לוח תוצאות של אימון. המספר הוא הגיבור — גדול, עבה ונטוי
+   (רק ספרות; בעברית אין נטוי). כותרות כבדות, כפתורים מלאי אנרגיה וסרגל צף.
 
-   הצבע: פחם חמים עם נחושת. הנחושת היא צבע המותג ותשומת הלב גם יחד;
-   הכתום הסמנטי הוסר, כי כתום ליד נחושת הורס את שניהם. נשארו שלושה
-   מצבים ברורים — ירוק לטוב, אלמוג לרע, נחושת לשים לב.
+   הצבע: דיו כהה עם כתום אש, כמו הלהבה בסמל. הכתום הוא המותג והפעולה;
+   ירוק לטוב, ורוד־אדום לרע, צהוב לשים לב. הם מופרדים בכוונה מהכתום,
+   כדי שמצב לא יתבלבל עם כפתור.
 
    שלושה מצבים לערכת הצבע ולא שניים: `data-theme` על השורש כשהמשתמש בחר
    במפורש, ובלי סימון — הבחירה של המכשיר דרך prefers-color-scheme.
    ============================================================================ */
 :root{
-  /* בהיר: נייר חם, לא לבן כחלחל. */
-  --bg:#F5F3EF;
-  --glow1:rgba(168,114,42,0.05);
-  --glow2:rgba(168,114,42,0.03);
+  /* בהיר: לבן קר ודיו כהה, עם אותו כתום אש. */
+  --bg:#F1F2F6;
+  --glow1:rgba(255,106,26,0.10);
+  --glow2:rgba(255,106,26,0.04);
+  --stripe:rgba(14,17,23,0.028);
   --card:#FFFFFF;
-  --card2:#FAF8F4;
-  --brd:rgba(28,25,20,0.11);
-  --label:#1A1815;
-  --label2:rgba(26,24,21,0.66);
-  --label3:rgba(26,24,21,0.70);
-  --sep:rgba(28,25,20,0.10);
-  --blue:#A8722A;
-  --accent:#A8722A;
-  --green:#2E8B5F;
-  --btn-bg:#8A5A18;      /* לבן על נחושת כהה — 5.9:1 */
-  --accent-txt:#8A5A18;
-  --warn-txt:#8A5A18;    /* אין כתום נפרד: נחושת היא צבע תשומת הלב */
-  --good-txt:#1F7A4D;
-  --red:#C2453A;
-  --bad-txt:#A8342A;
-  --orange:#A8722A;
-  --purple:#6D5296;
-  --teal:#20718A;
-  --fill:rgba(28,25,20,0.055);
-  --fill2:rgba(28,25,20,0.11);
+  --card2:#F6F7FA;
+  --brd:rgba(14,17,23,0.10);
+  --label:#0E1117;
+  --label2:rgba(14,17,23,0.68);
+  --label3:rgba(14,17,23,0.66);
+  --sep:rgba(14,17,23,0.10);
+  --blue:#C8420C;
+  --accent:#C8420C;
+  --green:#12875A;
+  --btn-bg:#C8420C;       /* לבן על הכתום הזה — מעל 4.5:1. נמדד: #D9480F נותן רק 4.3 */
+  --btn-bg2:#AF3606;
+  --btn-ink:#FFFFFF;
+  --accent-txt:#B93A08;
+  --warn-txt:#8A5D00;
+  --good-txt:#0B6F48;
+  --red:#D81E4A;
+  --bad-txt:#B3143A;
+  --orange:#E09A00;
+  --purple:#6D4BC4;
+  --teal:#0B7A96;
+  --fill:rgba(14,17,23,0.055);
+  --fill2:rgba(14,17,23,0.11);
   --bar:rgba(255,255,255,0.94);
-  --shadow:0 1px 2px rgba(28,25,20,0.05);
+  --shadow:0 10px 26px -20px rgba(14,17,23,0.45);
   --blur:0px;
-  --r-card:16px;
-  --r-inner:11px;
+  --r-card:20px;
+  --r-inner:14px;
 }
-/* מצב לילה — פחם חמים ונחושת. מוגדר פעם אחת ומשמש גם לבחירה מפורשת
-   וגם להעדפת המכשיר, כדי שלא ייווצר הפרש בין השניים. */
+/* מצב לילה — זה המראה המרכזי של האפליקציה. מוגדר גם להעדפת המכשיר וגם
+   לבחירה מפורשת, כדי שלא ייווצר הפרש בין השניים. */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0E0F12;
-    --glow1:rgba(232,178,92,0.055);
-    --glow2:rgba(232,178,92,0.025);
-    --card:#16181D;
-    --card2:#1C1F26;
-    --brd:rgba(255,255,255,0.075);
-    --label:#F2F1EE;
-    --label2:rgba(242,241,238,0.64);
-    --label3:rgba(242,241,238,0.64);
-    --sep:rgba(255,255,255,0.075);
-    --blue:#E8B25C;
-    --accent:#E8B25C;
-    --green:#7FD1A6;
-    --btn-bg:#E8B25C;
-    --accent-txt:#E8B25C;
-    --warn-txt:#E8B25C;
-    --good-txt:#7FD1A6;
-    --red:#E8877A;
-    --bad-txt:#F0A99E;
-    --orange:#E8B25C;
-    --purple:#B9A0E0;
-    --teal:#7EC8D8;
-    --fill:rgba(255,255,255,0.055);
-    --fill2:rgba(255,255,255,0.11);
-    --bar:rgba(14,15,18,0.92);
-    --shadow:0 1px 2px rgba(0,0,0,0.34);
+    --bg:#0A0C11;
+    --glow1:rgba(255,106,26,0.17);
+    --glow2:rgba(255,46,92,0.09);
+    --stripe:rgba(255,255,255,0.032);
+    --card:#14171F;
+    --card2:#1B1F29;
+    --brd:rgba(255,255,255,0.09);
+    --label:#F7F7F5;
+    --label2:rgba(247,247,245,0.70);
+    --label3:rgba(247,247,245,0.62);
+    --sep:rgba(255,255,255,0.09);
+    --blue:#FF7A2F;
+    --accent:#FF7A2F;
+    --green:#3DDC97;
+    --btn-bg:#FF8A3D;
+    --btn-bg2:#FF5A1F;
+    --btn-ink:#1A0A00;
+    --accent-txt:#FF9A5C;
+    --warn-txt:#FFCF5C;
+    --good-txt:#5CE6AB;
+    --red:#FF5A7A;
+    --bad-txt:#FF8DA3;
+    --orange:#FFC53D;
+    --purple:#B79CFF;
+    --teal:#5CD6F0;
+    --fill:rgba(255,255,255,0.065);
+    --fill2:rgba(255,255,255,0.13);
+    --bar:rgba(20,23,31,0.92);
+    --shadow:0 10px 26px -18px rgba(0,0,0,0.9);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E0F12;
-  --glow1:rgba(232,178,92,0.055);
-  --glow2:rgba(232,178,92,0.025);
-  --card:#16181D;
-  --card2:#1C1F26;
-  --brd:rgba(255,255,255,0.075);
-  --label:#F2F1EE;
-  --label2:rgba(242,241,238,0.64);
-  --label3:rgba(242,241,238,0.64);
-  --sep:rgba(255,255,255,0.075);
-  --blue:#E8B25C;
-  --accent:#E8B25C;
-  --green:#7FD1A6;
-  --btn-bg:#E8B25C;
-  --accent-txt:#E8B25C;
-  --warn-txt:#E8B25C;
-  --good-txt:#7FD1A6;
-  --red:#E8877A;
-  --bad-txt:#F0A99E;
-  --orange:#E8B25C;
-  --purple:#B9A0E0;
-  --teal:#7EC8D8;
-  --fill:rgba(255,255,255,0.055);
-  --fill2:rgba(255,255,255,0.11);
-  --bar:rgba(14,15,18,0.92);
-  --shadow:0 1px 2px rgba(0,0,0,0.34);
+  --bg:#0A0C11;
+  --glow1:rgba(255,106,26,0.17);
+  --glow2:rgba(255,46,92,0.09);
+  --stripe:rgba(255,255,255,0.032);
+  --card:#14171F;
+  --card2:#1B1F29;
+  --brd:rgba(255,255,255,0.09);
+  --label:#F7F7F5;
+  --label2:rgba(247,247,245,0.70);
+  --label3:rgba(247,247,245,0.62);
+  --sep:rgba(255,255,255,0.09);
+  --blue:#FF7A2F;
+  --accent:#FF7A2F;
+  --green:#3DDC97;
+  --btn-bg:#FF8A3D;
+  --btn-bg2:#FF5A1F;
+  --btn-ink:#1A0A00;
+  --accent-txt:#FF9A5C;
+  --warn-txt:#FFCF5C;
+  --good-txt:#5CE6AB;
+  --red:#FF5A7A;
+  --bad-txt:#FF8DA3;
+  --orange:#FFC53D;
+  --purple:#B79CFF;
+  --teal:#5CD6F0;
+  --fill:rgba(255,255,255,0.065);
+  --fill2:rgba(255,255,255,0.13);
+  --bar:rgba(20,23,31,0.92);
+  --shadow:0 10px 26px -18px rgba(0,0,0,0.9);
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -880,6 +888,89 @@ a.yt,a.ytmore{min-height:44px}
 }
 .toast.on{opacity:1;transform:translateY(0)}
 hr.s{border:none;border-top:0.5px solid var(--sep);margin:14px 0}
+
+/* ============================================================================
+   השכבה הספורטיבית. כולה עיצוב בלבד, על הטוקנים שלמעלה: שום לוגיקה לא תלויה בה.
+   ============================================================================ */
+/* פסי מהירות באלכסון בראש המסך: אותו זווית של הכותרות והסימונים */
+body::before{
+  content:'';position:fixed;inset:0 0 auto 0;height:300px;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(115deg,transparent 0 30px,var(--stripe) 30px 33px);
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent);
+}
+.lgtitle{font-size:36px;font-weight:900;letter-spacing:-1px;line-height:1.1;padding:20px 0 10px}
+.lgtitle::after{
+  content:'';display:block;width:58px;height:6px;margin-top:10px;border-radius:2px;
+  background:linear-gradient(100deg,var(--btn-bg),var(--btn-bg2));transform:skewX(-22deg);
+}
+.card h2{font-size:17px;font-weight:800;letter-spacing:-0.1px;color:var(--label)}
+.card h2::before{
+  content:'';flex:none;width:6px;height:18px;border-radius:2px;
+  background:linear-gradient(180deg,var(--btn-bg),var(--btn-bg2));transform:skewX(-14deg);
+}
+.card h3{font-weight:800;color:var(--label)}
+
+/* המספר הוא הגיבור: עבה ונטוי, כמו לוח תוצאות */
+.tiles{gap:8px}
+/* ארבעה מספרים: שתיים על שתיים, בלי מספר יתום בשורה לבדו */
+.tiles:has(> .tile:nth-child(4):last-child){grid-template-columns:repeat(2,1fr)}
+.tile{background:var(--card2);border:1px solid var(--brd);border-radius:var(--r-inner);padding:11px 6px 10px}
+.tile .t{font-size:12.5px;font-weight:700;letter-spacing:0;margin-bottom:6px}
+.tile .n{font-size:30px;font-weight:800;font-style:italic;letter-spacing:-1px}
+.tile .d{font-size:12.5px;font-weight:700}
+.pst{border-radius:var(--r-inner);padding:10px 6px}
+.pst b{font-size:22px;font-weight:800;font-style:italic;letter-spacing:-0.6px}
+details.param{border-radius:var(--r-inner)}
+details.param .pn{font-weight:700}
+details.param .pv{font-size:18px;font-weight:800;font-style:italic;letter-spacing:-0.4px}
+.pcard{border-radius:var(--r-inner)}
+.pnm{font-weight:800}
+.pline b.num,.scv b.num{font-weight:800;font-style:italic}
+.improve .imhd{font-weight:800;color:var(--accent-txt)}
+
+/* כפתורים עם אנרגיה */
+.btn{
+  font-weight:800;border-radius:var(--r-inner);padding:14px 18px;
+  background-color:var(--btn-bg);background-image:linear-gradient(100deg,var(--btn-bg),var(--btn-bg2));color:var(--btn-ink);
+  box-shadow:0 10px 22px -12px var(--btn-bg2);transition:transform .15s ease,opacity .15s ease;
+}
+.btn:active{transform:scale(.97);opacity:1}
+.btn.sec,.btn.danger{background:var(--fill);background-image:none;box-shadow:none}
+.btn.mini{font-weight:700}
+:root[data-theme="dark"] .btn:not(.sec):not(.danger){color:var(--btn-ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn:not(.sec):not(.danger){color:var(--btn-ink)}}
+
+/* בורר: הבחירה מלאה בכתום, לא רק מורמת */
+.seg{border-radius:var(--r-inner);-webkit-backdrop-filter:none;backdrop-filter:none}
+.seg button{font-weight:600;border-radius:10px;min-height:44px}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{
+  background-color:var(--btn-bg);background-image:linear-gradient(100deg,var(--btn-bg),var(--btn-bg2));color:var(--btn-ink);box-shadow:none;border-radius:10px;
+}
+
+/* סרגל תחתון צף, והלשונית הפעילה מקבלת רקע */
+body{padding-bottom:calc(98px + env(safe-area-inset-bottom))}
+.tabbar{
+  inset-inline:0;margin-inline:auto;width:min(660px,calc(100% - 16px));
+  bottom:calc(8px + env(safe-area-inset-bottom));padding-bottom:0;
+  border:1px solid var(--brd);border-radius:22px;overflow:hidden;
+  box-shadow:0 14px 34px -14px rgba(0,0,0,.55);
+}
+.tabbar button{font-size:11.5px;font-weight:600;padding:8px 4px 7px;min-width:68px;border-radius:16px;margin:3px 1px}
+.tabbar button[aria-selected=true]{
+  color:var(--accent-txt);font-weight:800;
+  background:color-mix(in srgb,var(--accent) 15%,transparent);
+}
+.tabbar svg{width:27px;height:27px}
+
+/* שדות, תגיות ושלבי הניתוח */
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 24%,transparent)}
+.badge{font-weight:700}
+.step{border-inline-start-width:4px}
+.step .st{font-size:14.5px;font-weight:800;color:var(--label);letter-spacing:0}
+.drop{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.drop svg{color:var(--accent-txt)}
+.headline{border-inline-start:4px solid var(--accent)}
+@media (prefers-reduced-motion:reduce){ .btn{transition:none} .btn:active{transform:none} }
 </style>
 </head>
 <body>
@@ -1499,7 +1590,7 @@ function applyTheme(t){
   const dark=(t==="dark")||(t==="auto"&&window.matchMedia&&
               window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{
-    if(!m.getAttribute("media")) m.setAttribute("content",dark?"#0E0F12":"#F5F3EF");
+    if(!m.getAttribute("media")) m.setAttribute("content",dark?"#0A0C11":"#F1F2F6");
   });
 }
 function setTheme(t){
