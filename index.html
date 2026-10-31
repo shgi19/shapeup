@@ -1114,6 +1114,7 @@ body.noauth::after{display:none}
 }
 .sechead[aria-expanded=true]::after{transform:rotate(225deg)}
 .sec-hide{display:none!important}
+select.palt{display:inline-block;width:auto;max-width:100%;padding:6px 10px;font-size:14px;margin-inline-start:4px}
 /* כרטיס מדד סגור: הכותרת והשורה הראשית בלבד */
 .pcard.pfold:not(.open) > :not(.ptop):not(.pline){display:none}
 .pcard.pfold:not(.open) .pline{margin-bottom:0}
@@ -3917,7 +3918,8 @@ function sectionPass(){
     const def=SEC_DEFAULT[tab];
     let initial=def?def.some(d=>key.indexOf(d)===0):i===0;
     /* חלק שרק עכשיו הופיע, למשל תשובה לשאלה, הוא מה שהמשתמש מחכה לו */
-    if(seen&&!seen[key]) initial=true;
+    /* נרשם כפתוח, אחרת הציור הבא סוגר אותו: כך נעלמו שאלות "בנה לי תוכנית" אחרי תשובה אחת */
+    if(seen&&!seen[key]){ initial=true; secState("c:"+tab)[key]=true }
     secWire(h,open=>{
       c.classList.add("sec"); c.classList.toggle("sec-closed",!open);
       h.setAttribute("aria-expanded",open?"true":"false");
@@ -4251,13 +4253,31 @@ function motionPass(){
   clearTimeout(motionT);
   motionT=setTimeout(()=>{ root.classList.remove("enter"); if(tb) tb.classList.remove("hop") },1500);
 }
+/* render() מצייר את כל המסך מחדש, וכל ציור החזיר לראש הדף: כל תשובה בבניית תוכנית,
+   כל בחירת תקופה וכל סימון הקפיצו למעלה. עכשיו חוזרים לראש הדף רק כשעוברים למסך אחר
+   באמת. בכל השאר נשארים במקום. */
+let viewKeyLast=null;
+function viewKey(){
+  if(!me) return "auth:"+(auth&&auth.screen);
+  if(!me.goal||ui.editGoals) return "setup";
+  return [ui.tab,ui.planId,ui.logId,ui.skillId,ui.skillStep,ui.anId,ui.exIdx,ui.foodView].join("|");
+}
+function keepScroll(){
+  const k=viewKey(), same=k===viewKeyLast;
+  viewKeyLast=k;
+  const y=same?(window.scrollY||0):0;
+  return ()=>window.scrollTo(0,y);
+}
 function render(){
+  const back=keepScroll();
+  try{ renderNow() }finally{ back() }
+}
+function renderNow(){
   const bar=document.querySelector(".tabbar");
   if(!me){
     if(bar) bar.style.display="none";
     document.body.classList.add("noauth");
     app.innerHTML=viewAuth();
-    window.scrollTo(0,0);
     try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
     bindAuth();
     return;
@@ -4267,7 +4287,6 @@ function render(){
     if(bar) bar.style.display="none";
     document.body.classList.add("noauth");
     app.innerHTML=viewSetup();
-    window.scrollTo(0,0);
     try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
     bindSetup();
     return;
@@ -4307,7 +4326,6 @@ function render(){
       '<div class="btnrow"><button class="btn sec" id="storeChk">בדוק מה קורה כאן</button></div></div>'
     : "";
   app.innerHTML='<div class="wrap"><div class="topbrand">'+flameMark("flive")+'<span>ShapeUp</span></div>'+warn+body+'</div>'+askCard()+(function(){ try{ return photoCmpCard() }catch(e){ return "" } })();
-  window.scrollTo(0,0);
   try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
   /* גם החיווט עצמו מוגן — שגיאה בכפתור אחד לא תשתק את סרגל הלשוניות */
   try{ bind() }catch(e){ window.__bindErr=e }
@@ -9546,8 +9564,10 @@ const UNIT_G={"כף":15,"כפית":5,"כוס":200,"פרוסה":30,"יחידה":1
    ו"10 שקדים" אינם עשרה חופנים. בניסיון ראשון סיווגתי גם מכלים כאן, וזה
    שבר את "חזה עוף" ו"טונה" שהסתמכו על מנה וקופסה כברירת מחדל. */
 const BULK_UNITS={"חופן":1,"כוס":1};
-const GRAM_WORDS=/^(גרם|גר|ג|גרמים)$/;
-const KILO_WORDS=/^(קילו|קילוגרם|ק"ג|קג)$/;
+/* גם בצורה אחרי fnorm, שהופך ם ל־מ. בלי זה "200 גרם X" חיפש מאכל בשם "גרמ X",
+   וכל מאכל שלא נכתב בדיוק כמו במאגר לא נמצא או התחלף באחר. */
+const GRAM_WORDS=/^(גרם|גרמ|גר|ג|גרמים|גרמימ)$/;
+const KILO_WORDS=/^(קילו|קילוגרם|קילוגרמ|ק"ג|קג)$/;
 
 /* נרמול לצורך התאמה: אותיות סופיות לצורתן הרגילה ו־"יי" ל־"י",
    כדי ש"שניצלונים" ו"שניצלון" ייראו אותו דבר, וכך גם "עוגיות" ו"עוגייה". */
@@ -9574,7 +9594,51 @@ function hitsIn(nf,w){ return variants(w).some(v=>nf.indexOf(v)>=0) }
    קודם מנסים את הטקסט המלא — כך "חטיף חלבון" נשאר חטיף ולא הופך לאבקה —
    ורק אחר כך בלי מילות היחידה. הזוכה הוא השם הקצר ביותר שכל המילים בו,
    כדי ש"אורז" ייתן אורז לבן ולא נתח ארוך יותר. */
+/* המאכל שאנשים מתכוונים אליו כשהם כותבים מילה אחת. המאגר מכיל גם "חומוס יבש" ו"פתיתי
+   קוקוס", ובלי הטבלה הזאת נבחר המאכל הקצר ביותר ולא הסביר ביותר. u: היחידה כשלא נכתבה. */
+const COMMON_FOOD={
+  "שניצל":{n:"שניצל עוף בתנור",u:"שניצל"}, "שניצל עופ":{n:"שניצל עוף בתנור",u:"שניצל"},
+  "חומוס":{n:"חומוס מוכן",u:"מנה"}, "פתיתימ":{n:"פתיתים מבושלים",u:"מנה"},
+  "ציפס":{n:"צ'יפס מטוגן",u:"מנה"}, "עדשימ":{n:"עדשים מבושלות",u:"מנה"},
+  "אגוזימ":{n:"אגוזי מלך",u:"חופן"}, "עופ":{n:"עוף בגריל",u:"מנה"}, "עופ בתנור":{n:"עוף בגריל",u:"מנה"},
+  "קפה":{n:"קפה שחור",u:"כוס"}, "שווארמה עופ":{n:"שווארמה הודו",u:"מנה במגש"},
+  "שייק חלבונ":{n:"אבקת חלבון"}, "חלבונ מי גבינה":{n:"אבקת חלבון"}
+};
+/* כתיב: שווארמה, שוורמה, שוארמה ושאורמה הם אותה מילה. מורידים את האותיות שמתחלפות. */
+function looseKey(w){ return fnorm(w).replace(/[ויא]/g,"") }
+function commonFood(q){
+  const key=splitWords(q,false).join(" ");
+  const c=COMMON_FOOD[key];
+  return c&&foodByName(c.n)?c:null;
+}
+/* דירוג לכל המאגר. אותו דירוג מחזיר גם אפשרויות חלופיות למשתמש.
+   המילה הראשונה היא המאכל, השאר מפרטים אותו: "שווארמה עוף" היא שווארמה, לא עוף. */
+function rankFoods(q,limit){
+  const words=splitWords(q,false);
+  if(!words.length) return [];
+  const loose=words.map(looseKey);
+  const out=[];
+  allFoods().forEach(f=>{
+    const nf=fnorm(f.n), ws=fnorm(f.n+" "+((f.a||[]).join(" "))).split(" ").filter(Boolean), lk=ws.map(looseKey);
+    let sc=0, first=false;
+    words.forEach((w,i)=>{
+      let g=0;
+      if(variants(w).some(v=>ws.indexOf(v)>=0)) g=3;
+      else if(w.length>=3&&variants(w).some(v=>nf.indexOf(v)>=0)) g=2;
+      else if(loose[i].length>=3&&lk.indexOf(loose[i])>=0) g=2.5;
+      if(g&&i===0) first=true;
+      sc+=g;
+    });
+    if(!sc||!first) return;
+    if(ws[0]===words[0]||lk[0]===loose[0]) sc+=1;
+    sc+=(f.pri||0)*0.2-nf.length*0.01-(/^ffq/i.test(f.n)?1:0);
+    out.push({f,sc});
+  });
+  return out.sort((a,b)=>b.sc-a.sc).slice(0,limit||6).map(x=>x.f);
+}
 function matchFood(q){
+  const com=commonFood(q);
+  if(com) return foodByName(com.n);
   const lists=[splitWords(q,true),splitWords(q,false)];
   /* שמות היחידות נכללים בטקסט לחיפוש — "שניצלון" הוא יחידה של
      "שניצל עוף בתנור", ובלי זה "שני שניצלונים" לא נמצא. */
@@ -9601,6 +9665,9 @@ function matchFood(q){
     });
     if(best) return best;
   }
+  /* המילה הראשונה נמצאה, או שרק הכתיב שונה: זו הערכה טובה יותר מסתם חפיפה */
+  const ranked=rankFoods(q,1);
+  if(ranked.length) return ranked[0];
   /* נפילה שמרנית: רוב המילים חייבות להתאים, ולפחות אחת באורך 3 ומעלה.
      בלי הסף הזה טקסט חסר משמעות מתאים למאכל אקראי. */
   const words=splitWords(q,false);
@@ -9656,13 +9723,19 @@ function parseFoodLine(raw){
   if(qty==null) qty=1;
   const food=matchFood(txt);
   if(!food) return {raw:txt,ok:false,qty,unit};
+  const com=commonFood(txt);
+  if(!unit&&com&&com.u) unit=com.u;
   const gRaw=gramsFor(food,unit,qty);
   /* מצאנו את המאכל אבל לא את הכמות. עדיף לומר את זה מאשר להמציא מספר
      שנראה סביר — מספר שגוי כאן מקלקל את כל היום בשקט. */
   if(gRaw==null) return {raw:txt,ok:false,qty,unit,food:food.n,needUnit:true,
     hint:'לא ידעתי כמה זה. נסה "חופן '+food.n+'" או "30 גרם '+food.n+'".'};
   const grams=Math.round(gRaw);
-  return {raw:txt,ok:true,food:food.n,qty,unit:unit||null,grams:Math.max(1,grams)};
+  /* מדויק רק כשכל מילה שנכתבה מופיעה בשם. אחרת זו הערכה, וכך זה מוצג. */
+  const nameWords=fnorm(food.n).split(" ");
+  const exact=splitWords(txt,false).every(w=>variants(w).some(v=>nameWords.indexOf(v)>=0));
+  return {raw:txt,ok:true,food:food.n,qty,unit:unit||null,grams:Math.max(1,grams),guess:!exact,
+          alts:rankFoods(txt,6).map(f=>f.n).filter(n=>n!==food.n).slice(0,5)};
 }
 /* מפריד פריטים: פסיק, נקודה־פסיק, שורה חדשה, או " ו" כמילת חיבור */
 function parseFoodText(text){
@@ -9811,6 +9884,14 @@ async function labelLinesFromImage(canvas){
    בינלאומיים: השמות בעברית, המזון ישראלי, והנתונים לא נכתבו על ידי משתמשים.
    השאילתה נשלחת רק בלחיצה מפורשת. */
 const MOH_RID="c3cb0630-0650-46c1-a068-82d575c094b2";
+/* החיפוש מצייר מחדש ומוחק מה שכבר בטופס, אז שומרים את השם ומחזירים אותו */
+async function searchFoodThenKeep(name){
+  await searchFoodOnline(name);
+  const nf=document.getElementById("fNewFood");
+  if(nf&&!nf.elements.n.value) nf.elements.n.value=name;
+  const r=document.querySelector("[data-netpick]")||document.getElementById("netTerm");
+  if(r&&r.scrollIntoView) r.scrollIntoView({block:"center"});
+}
 async function searchFoodOnline(term){
   window.__net={busy:true,term};
   render();
@@ -10800,15 +10881,19 @@ function viewFood(){
           return;
         }
         h+='<div class="row" style="padding:9px 0;border-color:var(--sep)"><div class="k">'+
-           '<b>'+esc(x.raw)+'</b><div class="tiny">לא נמצא במאגר. הוסף אותו פעם אחת והוא יישמר.</div></div>'+
+           '<b>'+esc(x.raw)+'</b><div class="tiny">לא נמצא במאגר, אז אין לי מספר אמין. לחיצה על «הוסף» תחפש אותו במאגר של משרד הבריאות, ואז הוא יישמר.</div></div>'+
            '<div class="v"><button class="btn sec mini" data-addmiss="'+esc(x.raw)+'">הוסף</button></div></div>';
         return;
       }
       const fd=foodByName(x.food);
       const k=Math.round(fd.kcal*x.grams/100), p=Math.round(fd.p*x.grams/100);
       h+='<div class="row" style="padding:9px 0;border-color:var(--sep)"><div class="k">'+
-         '<b>'+esc(x.food)+'</b>'+
-         '<div class="tiny">'+esc(x.raw)+' → '+x.qty+(x.unit?' '+x.unit:'')+' · '+p+' גר\' חלבון</div></div>'+
+         '<b>'+esc(x.food.replace(/^FFQ-/,""))+'</b>'+(x.guess?' <span class="badge b-warn" style="font-size:12px;padding:2px 8px">הערכה</span>':'')+
+         '<div class="tiny">כתבת: '+esc(x.raw)+' · '+p+' גר\' חלבון</div>'+
+         (x.alts&&x.alts.length?'<label class="tiny" style="display:block;margin-top:6px">לא זה? <select class="palt" data-palt="'+i+'" aria-label="בחר מאכל אחר">'+
+           '<option value="">בחר מאכל אחר</option>'+x.alts.map(n=>{const a=foodByName(n);
+             return '<option value="'+esc(n)+'">'+esc(n.replace(/^FFQ-/,""))+(a?' · '+a.kcal+' קלוריות ל־100 גרם':'')+'</option>'}).join("")+
+           '</select></label>':'')+'</div>'+
          '<div class="v"><input type="number" class="gin" data-pg="'+i+'" value="'+x.grams+'" step="1" inputmode="numeric"> גרם'+
          '<div class="tiny num">'+k+' קק"ל</div></div></div>';
     });
@@ -11614,16 +11699,32 @@ function bind(){
     /* מקפיץ לטופס "מזון משלי" עם השם מוכן, וגם ממלא את שדה החיפוש המקוון */
     const raw=b.dataset.addmiss;
     const name=raw.replace(/\d+([.,]\d+)?/g,"").split(" ")
-      .filter(w=>w.length>1&&!HE_NUM[w]&&!UNIT_ALIAS[w]&&!UNIT_ALIAS[fnorm(w)])
+      .filter(w=>w.length>1&&!HE_NUM[w]&&!UNIT_ALIAS[w]&&!UNIT_ALIAS[fnorm(w)]&&!GRAM_WORDS.test(w)&&!KILO_WORDS.test(w))
       .join(" ").trim()||raw;
     const nf=$("#fNewFood");
     if(nf){
+      /* החלק הזה סגור כברירת מחדל, ולגלול לטופס מוסתר לא עושה כלום */
+      secReveal(nf);
       nf.elements.n.value=name;
       const ntI=$("#netTerm"); if(ntI) ntI.value=name;
       nf.scrollIntoView({behavior:"smooth",block:"center"});
       nf.elements.kcal.focus();
-      toast("מלא את הערכים, או חפש אותם למטה");
+      toast("מחפש במאגר. אם אין, מלא את הערכים בעצמך");
+      if(window.__autoNet!==false) searchFoodThenKeep(name);
     }
+  });
+  document.querySelectorAll("[data-palt]").forEach(el=>el.onchange=()=>{
+    const x=window.__parsed&&window.__parsed[+el.dataset.palt];
+    const fd=foodByName(el.value);
+    if(!x||!fd) return;
+    x.alts=[x.food].concat((x.alts||[]).filter(n=>n!==fd.n));
+    x.food=fd.n; x.guess=false;
+    /* כמות שנכתבה בגרמים נשארת. בלי כמות מפורשת: לפי היחידה של המאכל החדש. */
+    if(x.unit!=="גרם"&&x.unit!=="קילו"){
+      const g=gramsFor(fd,fd.u&&fd.u[x.unit]?x.unit:null,x.qty);
+      if(g) x.grams=Math.max(1,Math.round(g));
+    }
+    render();
   });
   document.querySelectorAll("[data-pg]").forEach(el=>el.onchange=()=>{
     const i=+el.dataset.pg, v=parseInt(el.value,10);
