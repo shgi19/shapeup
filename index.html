@@ -2247,8 +2247,8 @@ const OCR_CDN="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.mi
 let tessWorker=null, numWorker=null, tessLoading=null;
 
 /* מילון תוויות — מכויל לדוח "Body composition analysis report" של המשקל שלו.
-   הדוח כולו באנגלית, ולכן אין מעבר עברי כלל: מנוע העברית דווקא הרס את הספרות
-   בבדיקות, ומעבר אנגלי נקי מדויק בהרבה.
+   הדוח כאן באנגלית, ולכן אין בו מעבר עברי: מנוע העברית דווקא הרס את הספרות
+   בבדיקות, ומעבר אנגלי נקי מדויק בהרבה. לדוח בעברית יש מסלול נפרד — readHebReport.
 
    המבנה הוא טבלה: תווית | Measurement | Valuation | Normal.
    עמודת Normal מכילה טווחים ("51.5~69.7") שאסור לקרוא כערכים — לכן כל אסימון
@@ -2689,6 +2689,318 @@ function linesOf(d){
   if(d.lines&&d.lines.length) return d.lines;
   return (d.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(p=>p.lines||[]));
 }
+/* ----------------------------------------------------------------------------
+   הדוח בעברית.
+   אותו דוח של אותו מכשיר, אבל התצוגה הפוכה: העמודה הראשית מימין, והסדר בכל
+   שורה הוא טווח | דירוג | ערך | תווית. שלושה דברים מנעו מהקריאה הרגילה לעבוד:
+   התוויות בעברית, חוק "המספר האחרון לפני הטווח" קורא הפוך, ובטקסט הקטן המנוע
+   מפיל נקודות עשרוניות (ובעמודות התרשים ערבב את הספרות עם הציר).
+
+   הפתרון נשען על זה שהפריסה של הדוח קבועה. המעבר העברי לא קורא ערכים — הוא רק
+   מאתר מילים ידועות, ומהן מחשב איפה הדוח יושב בתמונה ובאיזה קנה מידה. כך זה
+   עובד בכל גודל מסך ובכל חיתוך, גם כשחלק מהתוויות נקראו שגוי. אחר כך כל תא של
+   מספר נחתך ומוגדל בנפרד, ונקרא בכמה הגדלות עד שיש הסכמה.
+
+   הקואורדינטות הן של צילום ברוחב 920 פיקסל.
+   ---------------------------------------------------------------------------- */
+const HEB_ANCHORS=[
+  ["בקרת",257,598],["בשומן",220,644],["אנאורגני",810,642],["מלח",857,641],
+  ["ניהול",282,502],["סוג",244,969],["שמנמן",153,1038],["פעיל",167,1239],
+  ["מקטעי",778,1253],["איזון",572,1253],["אינדיקטורים",259,1306],["אחרים",176,1306],
+  ["ייעוץ",869,1505],["בריאותי",818,1504],["והמלצות",707,1545],["תזונה",577,1570]
+];
+/* dp — כמה ספרות אחרי הנקודה המכשיר מדפיס תמיד, וזה מה שמאפשר להחזיר נקודה
+   שנפלה בלי לנחש. rdp — אותו דבר לטווח. unit — בתא יש גם ק"ג בעברית. bar — הערך
+   זז עם אורך הפס, ולכן נתון רק הגובה שלו. */
+const HEB_CELLS=[
+  {key:"weight",  box:[640,560,740,591],  dp:2, rng:[360,560,470,591],  rdp:1},
+  {key:"bf",      box:[640,594,740,624],  dp:1, rng:[360,594,470,624],  rdp:1},
+  {key:"salt",    box:[640,627,740,657],  dp:1, rng:[360,627,470,657],  rdp:1},
+  {key:"protein", box:[640,660,740,690],  dp:1, rng:[360,660,470,690],  rdp:1},
+  {key:"water",   box:[640,693,740,723],  dp:1, rng:[360,693,470,723],  rdp:1},
+  {key:"muscle",  box:[640,726,740,756],  dp:1, rng:[360,726,470,756],  rdp:1},
+  {key:"smmPct",  box:[640,759,740,789],  dp:1, rng:[360,759,470,789],  rdp:1},
+  {key:"stdWeight", box:[30,535,165,565], dp:1, unit:1},
+  {key:"weightCtrl",box:[30,582,165,612], dp:1, unit:1},
+  {key:"fatCtrl",   box:[30,629,165,659], dp:1, unit:1},
+  {key:"muscleCtrl",box:[30,675,165,705], dp:1, unit:1},
+  {key:"subcut",  box:[130,1380,205,1408],dp:1, rng:[25,1380,125,1408], rdp:1},
+  {key:"bmr",     box:[130,1440,205,1470],dp:0, rng:[25,1440,125,1470], rdp:0},
+  {key:"lean",    box:[130,1500,205,1530],dp:1, rng:[25,1500,125,1530], rdp:1},
+  {key:"smi",     box:[130,1560,205,1590],dp:1},
+  {key:"score",   box:[825,1560,885,1598],dp:0},
+  {key:"fat",     bar:[936,958],  dp:1, rng:[355,927,425,947],  rdp:1},
+  /* בלי טווח ל־BMI: הוא מודפס שם באות הקטנה ביותר בדוח, והמנוע קרא 5 כ־6 בכל הקריאות
+     פה אחד — טעות שהצבעה לא תופסת. גם בדוח האנגלי לא נשמר לו טווח. */
+  {key:"bmi",     bar:[1106,1128],dp:1},
+  {key:"visceral",bar:[1204,1226],dp:0, rng:[370,1195,425,1215],rdp:0}
+];
+const HEB_TRIGGER=6, HEB_UNIT_W=18;
+const hebWordNorm=s=>String(s||"").replace(/[^א-ת]/g,"");
+function medianOf(a){ const s=a.slice().sort((x,y)=>x-y); return s.length?s[Math.floor(s.length/2)]:NaN }
+
+/* מחשב קנה מידה והיסט מהמילים שנמצאו. קריאה שגויה אחת לא מזיזה חציון, ואחר כך
+   היא גם נזרקת לפי השארית. פחות מארבע מילים שמסכימות — זה לא הדוח הזה. */
+function fitHebTemplate(words){
+  const hits=[];
+  words.forEach(w=>{
+    if(!w||!w.bbox) return;
+    const n=hebWordNorm(w.text);
+    const a=HEB_ANCHORS.find(x=>x[0]===n);
+    if(a) hits.push({X:a[1],Y:a[2],x:(w.bbox.x0+w.bbox.x1)/2,y:(w.bbox.y0+w.bbox.y1)/2});
+  });
+  if(hits.length<4) return null;
+  const scales=[];
+  for(let i=0;i<hits.length;i++) for(let j=i+1;j<hits.length;j++){
+    if(Math.abs(hits[i].Y-hits[j].Y)>200) scales.push((hits[i].y-hits[j].y)/(hits[i].Y-hits[j].Y));
+  }
+  if(!scales.length) return null;
+  const k=medianOf(scales);
+  if(!(k>0.2&&k<6)) return null;
+  const bx=medianOf(hits.map(h=>h.x-k*h.X)), by=medianOf(hits.map(h=>h.y-k*h.Y));
+  const good=hits.filter(h=>Math.abs(h.x-(k*h.X+bx))<=12*k&&Math.abs(h.y-(k*h.Y+by))<=12*k);
+  return good.length>=4?{k,bx,by,anchors:good.length}:null;
+}
+
+/* מכריע בין כמה קריאות של אותו תא. הספרות יציבות בין הגדלות, הנקודה לא — ולכן
+   מצביעים על הספרות, ואת הנקודה לוקחים מקריאה שראתה אותה או לפי מה שהמכשיר מדפיס. */
+function voteHebCell(reads,dp,f,expect){
+  const asValue=d=>dp>0&&d.length>dp?parseFloat(d.slice(0,-dp)+"."+d.slice(-dp)):parseFloat(d);
+  /* תיקו בין קריאות (5 ו־6 מתבלבלים בטקסט קטן): מכריע מה שהדוח עצמו מחייב */
+  const near=g=>expect==null?0:Math.abs(asValue(g.d)-expect);
+  const groups={};
+  reads.forEach(r=>{
+    const t=String(r.text||"").replace(/[^\d.\-]/g,"");
+    const d=t.replace(/[^\d]/g,"");
+    if(!d) return;
+    const g=groups[d]||(groups[d]={d,n:0,conf:0,dotted:{},neg:false});
+    g.n++; g.conf=Math.max(g.conf,r.conf||0);
+    if(/^-/.test(t)) g.neg=true;
+    const m=t.match(/\d+\.\d+/);
+    if(m) g.dotted[m[0]]=(g.dotted[m[0]]||0)+1;
+  });
+  const list=Object.values(groups).sort((a,b)=>b.n-a.n||near(a)-near(b)||b.conf-a.conf||b.d.length-a.d.length);
+  if(!list.length) return null;
+  const g=list[0], sign=g.neg?-1:1;
+  const ok=v=>!isNaN(v)&&v>=f.min&&v<=f.max;
+  const dotted=Object.keys(g.dotted).sort((a,b)=>g.dotted[b]-g.dotted[a])[0];
+  if(dotted&&ok(sign*parseFloat(dotted))) return {v:sign*parseFloat(dotted),fixed:false,agree:g.n};
+  const v=sign*asValue(g.d);
+  return ok(v)?{v,fixed:dp>0,agree:g.n}:null;
+}
+
+/* טווח התקן: אותו רעיון, ובדרישה מחמירה יותר — אין לו בדיקת חשבון שתתפוס טעות.
+   טווח שלא מכיל משהו קרוב לערך, רחב באופן לא הגיוני, או שהקריאות לא מסכימות עליו
+   בבירור, לא נשמר: עדיף בלי טווח מאשר סרגל שמראה "מחוץ לתקן" בטעות. */
+function voteHebRange(reads,rdp,v){
+  const side=s=>{
+    if(s.indexOf(".")>=0) return parseFloat(s);
+    return rdp>0&&s.length>rdp?parseFloat(s.slice(0,-rdp)+"."+s.slice(-rdp)):parseFloat(s);
+  };
+  const tally={};
+  let total=0;
+  reads.forEach(r=>{
+    const m=String(r.text||"").match(/(\d[\d.]*)\s*[~\-–—]+\s*(\d[\d.]*)/);
+    if(!m) return;
+    total++;
+    const lo=side(m[1]), hi=side(m[2]);
+    if(isNaN(lo)||isNaN(hi)||hi<=lo) return;
+    const span=hi-lo;
+    if(v!=null&&(v<lo-span*2||v>hi+span*2)) return;
+    if(rdp>0&&hi>lo*3) return;
+    const k=lo+"~"+hi;
+    (tally[k]=tally[k]||{lo,hi,n:0}).n++;
+  });
+  const best=Object.values(tally).sort((a,b)=>b.n-a.n)[0];
+  return best&&best.n>=2&&best.n/total>=0.6?{lo:best.lo,hi:best.hi}:null;
+}
+
+/* בסיס הרכב הגוף: מים + חלבון + מלחים + שומן = 100%, ושריר + שומן + מלחים = 100%.
+   כל שורות הטבלה הראשית נבדקות כך, בלי שום דבר חיצוני לדוח. */
+function hebSumCheck(v){
+  const w=[];
+  const has=(...k)=>k.every(x=>v[x]!=null);
+  if(has("bf","water","protein","salt")){
+    const s=v.bf+v.water+v.protein+v.salt;
+    if(Math.abs(s-100)>1.5) w.push('מים, חלבון, מלחים ושומן אמורים להצטבר ל־100%, וכאן יצא '+n1(s)+'%. אחד מהם נקרא שגוי.');
+  }
+  if(has("bf","muscle","salt")){
+    const s=v.bf+v.muscle+v.salt;
+    if(Math.abs(s-100)>1.5) w.push('שריר, שומן ומלחים אמורים להצטבר ל־100%, וכאן יצא '+n1(s)+'%. אחד מהם נקרא שגוי.');
+  }
+  return w;
+}
+
+/* ספרות שהמנוע מבלבל ביניהן בטקסט קטן. כשהחיבור ל־100% נכשל, מנסים להחליף ספרה
+   אחת באחד השדות. מתקנים רק אם יש פתרון יחיד שמסדר את כל הזהויות — אחרת נשארת
+   האזהרה, והמספר עובר לעין של המשתמש. */
+const HEB_CONFUSE={"5":"68","6":"58","8":"5630","3":"8","0":"8","1":"7","7":"1"};
+function hebRepairSums(v,repaired,lines,seenDigits){
+  const off=x=>{
+    const a=x.bf!=null&&x.water!=null&&x.protein!=null&&x.salt!=null?Math.abs(x.bf+x.water+x.protein+x.salt-100):0;
+    const b=x.bf!=null&&x.muscle!=null&&x.salt!=null?Math.abs(x.bf+x.muscle+x.salt-100):0;
+    return Math.max(a,b);
+  };
+  if(off(v)>0.35){
+    const fixes=[];
+    ["bf","water","protein","salt","muscle"].forEach(k=>{
+      if(v[k]==null) return;
+      const s=v[k].toFixed(1);
+      for(let i=0;i<s.length;i++){
+        for(const alt of HEB_CONFUSE[s[i]]||""){
+          const nv=parseFloat(s.slice(0,i)+alt+s.slice(i+1));
+          if(off(Object.assign({},v,{[k]:nv}))<=0.35) fixes.push({k,nv});
+        }
+      }
+    });
+    /* כשכמה תיקונים מסדרים את החשבון, נשאר רק מי שהמנוע באמת ראה באחת הקריאות
+       של אותו תא. שני פתרונות שווים — לא בוחרים, והאזהרה נשארת. */
+    const dig=x=>x.toFixed(1).replace(/\D/g,"");
+    const seen=fixes.filter(x=>seenDigits&&seenDigits[x.k]&&seenDigits[x.k].indexOf(dig(x.nv))>=0);
+    const pick=seen.length===1?seen:(seen.length?[]:fixes);
+    if(pick.length===1){
+      const x=pick[0], f=OCR_FIELDS.find(q=>q.key===x.k);
+      lines.push(f.lab+": "+v[x.k]+" תוקן ל־"+x.nv+" לפי החיבור ל־100%");
+      v[x.k]=x.nv; repaired[x.k]="תוקן לפי החיבור ל־100%";
+    }
+  }
+  /* כמות השומן: משקל פחות מסה רזה, כששתי הדרכים לחשב אותה מסכימות ביניהן */
+  if(v.weight!=null&&v.lean!=null&&v.bf!=null&&v.fat!=null){
+    const exp=+(v.weight-v.lean).toFixed(1);
+    if(exp!==v.fat&&Math.abs(exp-v.weight*v.bf/100)<=0.1&&Math.abs(exp-v.fat)<=1){
+      lines.push("כמות שומן: "+v.fat+" תוקן ל־"+exp+" לפי משקל פחות מסה רזה");
+      v.fat=exp; repaired.fat="תוקן לפי משקל ומסה רזה";
+    }
+  }
+}
+
+async function readHebReport(im,canvas){
+  await loadTesseract();
+  if(!planTxtWorker) planTxtWorker=await Tesseract.createWorker(["heb","eng"]);
+  const A=await planTxtWorker.recognize(canvas,{},{text:true,blocks:true});
+  const toImg=im.width/canvas.width;
+  const fit=fitHebTemplate(wordsOf(A.data).map(w=>w&&w.bbox?{text:w.text,bbox:{
+    x0:w.bbox.x0*toImg,x1:w.bbox.x1*toImg,y0:w.bbox.y0*toImg,y1:w.bbox.y1*toImg}}:null));
+  if(!fit) return null;
+
+  if(!numWorker){
+    numWorker=await Tesseract.createWorker("eng");
+    await numWorker.setParameters({tessedit_char_whitelist:"0123456789.~-",tessedit_pageseg_mode:"7"});
+  }
+  const rect=b=>({x:fit.k*b[0]+fit.bx,y:fit.k*b[1]+fit.by,w:fit.k*(b[2]-b[0]),h:fit.k*(b[3]-b[1])});
+  const cropAt=(r,zoom)=>{
+    const sc=zoom/fit.k, c=document.createElement("canvas");
+    c.width=Math.max(1,Math.round(r.w*sc)); c.height=Math.max(1,Math.round(r.h*sc));
+    const g=c.getContext("2d");
+    g.imageSmoothingEnabled=true; g.imageSmoothingQuality="high";
+    g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height);
+    g.drawImage(im,r.x,r.y,r.w,r.h,0,0,c.width,c.height);
+    return c;
+  };
+  /* מותח ניגודיות וחותך צמוד לדיו עם שוליים לבנים. במדידה זה תפס מקרים שהחיתוך
+     הגולמי החמיץ ולהפך — ולכן משתמשים בשניהם ולא בוחרים אחד. */
+  const cleanAt=(r,zoom)=>{
+    const c=cropAt(r,zoom), g=c.getContext("2d"), W=c.width, H=c.height;
+    const id=g.getImageData(0,0,W,H), d=id.data, L=new Float32Array(W*H);
+    let mn=255,mx=0;
+    for(let i=0;i<L.length;i++){
+      const l=d[i*4]*0.3+d[i*4+1]*0.59+d[i*4+2]*0.11;
+      L[i]=l; if(l<mn) mn=l; if(l>mx) mx=l;
+    }
+    if(mx-mn<40) return c;
+    const th=(mn+mx)/2;
+    let x0=W,x1=-1,y0=H,y1=-1;
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+      const i=y*W+x, v=(L[i]-mn)/(mx-mn)*255;
+      d[i*4]=d[i*4+1]=d[i*4+2]=v;
+      if(L[i]<th){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y }
+    }
+    g.putImageData(id,0,0);
+    if(x1<x0) return c;
+    const pad=Math.round(zoom*6), t=document.createElement("canvas");
+    t.width=x1-x0+1+2*pad; t.height=y1-y0+1+2*pad;
+    const tg=t.getContext("2d");
+    tg.fillStyle="#fff"; tg.fillRect(0,0,t.width,t.height);
+    tg.drawImage(c,x0,y0,x1-x0+1,y1-y0+1,pad,pad,x1-x0+1,y1-y0+1);
+    return t;
+  };
+  const pixels=r=>{
+    const c=cropAt(r,fit.k), g=c.getContext("2d");
+    return {c,d:g.getImageData(0,0,c.width,c.height).data};
+  };
+  /* התא עם היחידה: ק"ג יושב משמאל למספר, וברשימת הספרות הוא נקרא כזבל ("17" לפני
+     הערך). מוצאים איפה הדיו מתחיל, ומדלגים על רוחב היחידה. */
+  const skipUnit=r=>{
+    const {c,d}=pixels(r);
+    let first=-1;
+    for(let x=0;x<c.width&&first<0;x++) for(let y=0;y<c.height;y++){
+      const i=(y*c.width+x)*4;
+      if(d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11<150){ first=x; break }
+    }
+    if(first<0) return r;
+    const cut=first*r.w/c.width+HEB_UNIT_W*fit.k;
+    return {x:r.x+cut,y:r.y,w:r.w-cut,h:r.h};
+  };
+  /* התא שזז: הערך יושב מיד משמאל לפס הצבעוני של התרשים */
+  const beforeBar=bar=>{
+    const r=rect([430,bar[0],815,bar[1]]);
+    const {c,d}=pixels(r);
+    const y=Math.floor(c.height/2);
+    for(let x=0;x<c.width;x++){
+      const i=(y*c.width+x)*4;
+      const mx=Math.max(d[i],d[i+1],d[i+2]), mn=Math.min(d[i],d[i+1],d[i+2]);
+      if(mx-mn>70){
+        const end=r.x+x*r.w/c.width-1.5*fit.k, w=64*fit.k;
+        return {x:end-w,y:r.y,w,h:r.h};
+      }
+    }
+    return null;
+  };
+  /* כל שיטה טועה במקום אחר, ולכן מצביעים ביניהן. שלוש שמסכימות מספיקות;
+     אחרת קוראים גם את השאר. */
+  const readReads=async (r,all)=>{
+    const reads=[];
+    const one=async mk=>{
+      const R=await numWorker.recognize(mk());
+      reads.push({text:(R.data.text||"").trim(),conf:R.data.confidence});
+    };
+    const d=s=>s.text.replace(/[^\d]/g,"");
+    await one(()=>cleanAt(r,3)); await one(()=>cropAt(r,3)); await one(()=>cleanAt(r,2));
+    if(all||!d(reads[0])||d(reads[0])!==d(reads[1])||d(reads[0])!==d(reads[2])){
+      await one(()=>cleanAt(r,4)); await one(()=>cropAt(r,2));
+    }
+    if(all){ await one(()=>cropAt(r,4)); await one(()=>cropAt(r,5)) }
+    return reads;
+  };
+
+  const vals={},src={},repaired={},ranges={},valuation={},lines=[],seenDigits={};
+  for(const cell of HEB_CELLS){
+    const f=OCR_FIELDS.find(x=>x.key===cell.key);
+    const r=cell.bar?beforeBar(cell.bar):cell.unit?skipUnit(rect(cell.box)):rect(cell.box);
+    if(!r) continue;
+    const reads=await readReads(r);
+    const expect=cell.key==="fat"&&vals.weight!=null&&vals.bf!=null?vals.weight*vals.bf/100:null;
+    const got=voteHebCell(reads,cell.dp,f,expect);
+    seenDigits[f.key]=reads.map(x=>String(x.text||"").replace(/\D/g,""));
+    const seen=reads.map(x=>x.text||"—").join(" · ");
+    lines.push(f.lab+": "+(got?got.v:"לא נקרא")+"   ["+seen+"]");
+    if(!got) continue;
+    vals[f.key]=+got.v.toFixed(f.dec);
+    src[f.key]=seen;
+    if(got.fixed) repaired[f.key]="הושלמה נקודה עשרונית";
+    if(cell.rng){
+      const rg=voteHebRange(await readReads(rect(cell.rng),true),cell.rdp,got.v);
+      if(rg){
+        ranges[f.key]=rg;
+        valuation[f.key]=got.v<rg.lo?"נמוך":got.v>rg.hi?"גבוה":"תקין";
+      }
+    }
+  }
+  hebRepairSums(vals,repaired,lines,seenDigits);
+  return {vals,src,repaired,ranges,valuation,lines,text:A.data.text||"",
+          conf:Math.round(A.data.confidence||0)};
+}
+
 async function runOCR(file){
   window.__ocr={busy:true,msg:"מכינה את התמונה…",vals:{},warn:[]};
   render();
@@ -2726,15 +3038,28 @@ async function runOCR(file){
         if(Object.keys(p2.vals).length>Object.keys(p.vals).length){ p=p2; lines=plain; mode="שורות"; }
       }
     }
-    const meta=parseMeta(A.data.text||"");
+    /* דוח באנגלית נותן כאן הרבה ערכים ולא נוגעים בו. מעט ערכים = אולי דוח בעברית,
+       ואז המעבר העברי מחליט לפי המילים שבו. נכשל או לא מצא יותר — נשארים עם מה שיש. */
+    let conf=Math.round(A.data.confidence||0), metaText=A.data.text||"", extraWarn=[];
+    if(Object.keys(p.vals).length<HEB_TRIGGER){
+      window.__ocr.msg="נראה דוח בעברית — קוראת כל מספר בנפרד…"; render();
+      try{
+        const h=await readHebReport(im,canvas);
+        if(h&&Object.keys(h.vals).length>Object.keys(p.vals).length){
+          p=h; mode="עברית"; conf=h.conf; metaText=h.text||metaText;
+          extraWarn=hebSumCheck(h.vals);
+        }
+      }catch(hebErr){ /* התוצאה מהמעבר האנגלי עדיין תקפה, והטופס פתוח להקלדה */ }
+    }
+    const meta=parseMeta(metaText);
     const rec=reconcile(p.vals);
     Object.assign(rec.fixed,p.repaired||{},rec.fixed);
-    const warn=rec.notes.concat(ocrSanity(p.vals));
+    const warn=rec.notes.concat(ocrSanity(p.vals),extraWarn);
     const found=Object.keys(p.vals).length;
     if(!found) warn.unshift("לא זוהה אף ערך. אפשר להקליד ידנית — התמונה נשמרה.");
     window.__ocr={busy:false,vals:p.vals,src:p.src,meta,warn,raw:p.lines,fixed:rec.fixed,
                   ranges:p.ranges,valuation:p.valuation,mode,
-                  conf:Math.round(A.data.confidence||0),found};
+                  conf,found};
   }catch(err){
     window.__ocr={busy:false,vals:{},warn:[
       err.message==="no-net"
