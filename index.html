@@ -1010,8 +1010,64 @@ details.param[open] .pbody,.pcard.open .improve{animation:rise .28s cubic-bezier
 .drop:active{transform:scale(.985)}
 .drop{transition:transform .15s ease,background .15s ease}
 
+
+/* ---------- הלהבה ----------
+   הסמל עצמו בשני צבעים, כמו שאושר. בסימונים הקטנים היא צללית בצבע אחד. */
+:root{--flame:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='12 2 40 60'><path d='M37 2c-1 10 2 14 6 19 5 6 9 11 9 19 0 12-9 22-20 22S12 52 12 40c0-8 4-13 8-18 0 4 1 7 4 9-4-11-1-21 6-29 0 5 1 8 3 10 3-6 4-13 4-10z'/></svg>")}
+.fmark{display:block;flex:none;overflow:visible}
+.fmark .fbody{fill:var(--accent)}
+.fmark .fgauge{stroke:var(--card)}
+.fmark .fhub{fill:var(--card)}
+.brand{font-size:19px;font-weight:900;letter-spacing:-0.3px;color:var(--label)}
+.brand .fmark{width:38px;height:55px}
+.topbrand{display:flex;align-items:center;gap:7px;padding-top:12px;margin-bottom:-12px;
+  font-size:14.5px;font-weight:900;letter-spacing:-0.2px;color:var(--label)}
+.topbrand .fmark{width:21px;height:30px}
+.topbrand .fmark .fgauge{stroke:var(--bg)}
+.topbrand .fmark .fhub{fill:var(--bg)}
+/* להבה חיה: מרצדת לאט מהבסיס */
+@keyframes flick{0%,100%{transform:none}30%{transform:scaleY(1.06) skewX(-1.6deg)}60%{transform:scaleY(.97) skewX(1.4deg)}}
+.flive .fbody{transform-box:fill-box;transform-origin:50% 100%;animation:flick 2.4s ease-in-out infinite}
+/* המחוג קופץ לערך שלו כשנכנסים למסך, כמו מד שנדלק */
+@keyframes needle{0%{transform:rotate(-96deg)}70%{transform:rotate(14deg)}100%{transform:none}}
+.fneedle{transform-box:view-box;transform-origin:32px 49px}
+.enter .fneedle,.brand .fneedle{animation:needle .95s .2s cubic-bezier(.2,.8,.2,1) both}
+
+/* כותרת כרטיס: להבה קטנה במקום הפס */
+.card h2::before{
+  width:13px;height:19px;border-radius:0;transform:none;background:var(--accent);
+  -webkit-mask:var(--flame) center/contain no-repeat;mask:var(--flame) center/contain no-repeat;
+}
+.improve .imhd{display:flex;align-items:center;gap:7px}
+.improve .imhd::before{
+  content:'';flex:none;width:12px;height:17px;background:var(--accent);
+  -webkit-mask:var(--flame) center/contain no-repeat;mask:var(--flame) center/contain no-repeat;
+}
+/* טעינה: הלהבה מהבהבת במקום גלגל */
+@keyframes flamewait{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.08)}}
+.spin{
+  width:26px;height:36px;border:0;border-radius:0;background:var(--accent);transform-origin:50% 100%;
+  -webkit-mask:var(--flame) center/contain no-repeat;mask:var(--flame) center/contain no-repeat;
+  animation:flamewait .9s ease-in-out infinite;
+}
+/* מסך בלי נתונים עדיין */
+.empty::before{
+  content:'';display:block;width:34px;height:49px;margin:0 auto 12px;background:var(--accent);opacity:.75;
+  -webkit-mask:var(--flame) center/contain no-repeat;mask:var(--flame) center/contain no-repeat;
+}
+/* להבה ענקית וחיוורת מאחורי הכותרת. נגללת עם המסך, ולא מפריעה לקרוא. */
+body::after{
+  content:'';position:absolute;top:-6px;inset-inline-end:max(14px,calc(50vw - 330px));width:150px;height:220px;z-index:-1;pointer-events:none;
+  background:var(--accent);opacity:.09;transform-origin:50% 100%;
+  -webkit-mask:var(--flame) center/contain no-repeat;mask:var(--flame) center/contain no-repeat;
+  animation:flick 3.4s ease-in-out infinite;
+}
+body.noauth::after{display:none}
+
 @media (prefers-reduced-motion:reduce){
   .btn{transition:none} .btn:active{transform:none}
+  .flive .fbody,.enter .fneedle,.brand .fneedle,body::after{animation:none!important}
+  .spin{animation:flamewait 1.8s ease-in-out infinite}
   body::before{animation:none}
   .enter>*,.enter .lgtitle::after,.enter .rngbar i,.enter .scbar,.enter .cline,.enter .chart circle,.enter .badge,
   .tabbar.hop button[aria-selected=true] svg,.enter .btn::after,details.param[open] .pbody,.pcard.open .improve{animation:none!important}
@@ -3626,7 +3682,7 @@ function viewAuth(){
      מה הוא רוצה נשלח למקום שלא ביקש. */
   const s=auth.screen;
   let h='<div class="authwrap"><div class="authcard">';
-  h+='<div class="brand"><span class="bmark"></span><span>ShapeUp</span></div>';
+  h+='<div class="brand">'+flameMark("flive")+'<span>ShapeUp</span></div>';
 
   /* אחרי שגיאה הטופס נבנה מחדש — מה שהוקלד חוזר, חוץ מהסיסמה */
   const fv=auth.form||{};
@@ -3979,6 +4035,15 @@ function bindCards(){
    מי שביקש במכשיר שלו פחות תנועה לא מקבל אותה בכלל.
    הטקסט הסופי כבר בדף לפני שהספירה מתחילה: אם הספירה לא רצה, המספר פשוט נכון.
    ---------------------------------------------------------------------------- */
+/* הסמל המאושר: אש עם מחוג, שני צבעים, בלי צל ובלי מדרג. אותה צורה בדיוק כמו באייקון.
+   המחוג נפרד, כדי שיוכל לזוז כשנכנסים למסך. */
+function flameMark(cls){
+  return '<svg class="fmark'+(cls?' '+cls:'')+'" viewBox="10 0 44 64" aria-hidden="true" focusable="false">'+
+    '<path class="fbody" d="M37 2c-1 10 2 14 6 19 5 6 9 11 9 19 0 12-9 22-20 22S12 52 12 40c0-8 4-13 8-18 0 4 1 7 4 9-4-11-1-21 6-29 0 5 1 8 3 10 3-6 4-13 4-10z"/>'+
+    '<g class="fgauge" fill="none" stroke-width="3.6" stroke-linecap="round">'+
+    '<path d="M21 49a11 11 0 0 1 22 0"/><path class="fneedle" d="M32 49l7-8"/></g>'+
+    '<circle class="fhub" cx="32" cy="49" r="3"/></svg>';
+}
 let motionTab=null, motionT=null;
 function wantsMotion(){
   return !(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -4072,7 +4137,7 @@ function render(){
         .replace(/**(.+?)**/g,"<b></b>")+'</p>'+
       '<div class="btnrow"><button class="btn sec" id="storeChk">בדוק מה קורה כאן</button></div></div>'
     : "";
-  app.innerHTML='<div class="wrap">'+warn+body+'</div>'+askCard()+(function(){ try{ return photoCmpCard() }catch(e){ return "" } })();
+  app.innerHTML='<div class="wrap"><div class="topbrand">'+flameMark("flive")+'<span>ShapeUp</span></div>'+warn+body+'</div>'+askCard()+(function(){ try{ return photoCmpCard() }catch(e){ return "" } })();
   window.scrollTo(0,0);
   try{ linkLabels(); a11yPass(); cardPass() }catch(e){}
   /* גם החיווט עצמו מוגן — שגיאה בכפתור אחד לא תשתק את סרגל הלשוניות */
@@ -10305,7 +10370,7 @@ function viewSetup(){
   const first=!me.goal;
   const g=me.goal||"mass", a=(me.act!=null)?me.act:2;
   let h='<div class="authwrap"><div class="authcard" style="max-width:460px">';
-  h+='<div class="brand"><span class="bmark"></span><span>ShapeUp</span></div>';
+  h+='<div class="brand">'+flameMark("flive")+'<span>ShapeUp</span></div>';
   h+='<h1>'+(first?"מה המטרה שלך":"עדכון המטרה")+'</h1>';
   h+='<p class="sub2">'+(first
     ?"שתי שאלות, והיעדים היומיים יחושבו לפי הגוף שלך."
