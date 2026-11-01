@@ -9,8 +9,8 @@
      הדף, ואם הקיצור נוצר בעבר — הוא שומר את השם הישן גם אחרי שינוי שם. -->
 <meta name="apple-mobile-web-app-title" content="ShapeUp">
 <meta name="application-name" content="ShapeUp">
-<meta name="theme-color" content="#F4F4F6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#050506" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E6E7EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C0D0F" media="(prefers-color-scheme: dark)">
 <!-- הסמל: אש עם מחוג. מוטמע בקובץ ולא נטען מבחוץ, כי האפליקציה
      צריכה לעבוד גם בדאבל-קליק על הקובץ ובלי רשת.
      שניהם ב-base64 בכוונה. בגרסה הראשונה כתבתי את ה-SVG כטקסט גולמי,
@@ -1310,7 +1310,250 @@ a.yt svg{color:var(--accent)}
   .lgtitle{font-size:32px}
 }
 
+/* ============================================================================
+   ריאליסטי מחדר הכושר. סיבי פחמן, מתכת מוברשת, פלטות ומוט. השכבה האחרונה.
+   עיצוב בלבד: הצבעים של הפלטות הם צבעי פלטות התחרות, והם לא אומרים טוב או רע.
+   ============================================================================ */
+:root{
+  --bg:#E6E7EA; --card:#F0F1F3; --card2:#DFE1E5; --brd:rgba(10,10,12,0.1);
+  --label3:rgba(10,10,12,0.68); --label2:rgba(10,10,12,0.7); --accent-txt:#A93305;
+  --sel-bg:#2A2C31; --sel-ink:#FFFFFF; --bar:#F0F1F3;
+  --m1:#FCFCFD; --m2:#DDDFE3; --m-hi:rgba(255,255,255,0.95); --m-lo:rgba(10,10,12,0.18); --m-drop:rgba(10,10,12,0.32);
+  --well-hi:rgba(255,255,255,0.85); --well-in:rgba(10,10,12,0.28);
+  --lcd:#A93305; --lcd-glow:transparent;
+  --btn-grad:linear-gradient(180deg,#C8420C,#AF3606); --btn-edge:#6E2103; --btn-hi:rgba(255,255,255,0.35);
+  --sbtn1:#FCFCFD; --sbtn2:#D5D7DC;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C0D0F; --card:#2A2C31; --card2:#0F1013; --brd:rgba(255,255,255,0.1);
+    --label:#F4F4F2; --label2:#C4C6CC; --label3:#B4B7BD; --sep:rgba(255,255,255,0.11);
+    --sel-bg:#55585E; --sel-ink:#FFFFFF; --bar:#2A2C31;
+    --fill:rgba(255,255,255,0.1); --fill2:rgba(255,255,255,0.17);
+    --m1:#3A3C42; --m2:#1F2024; --m-hi:rgba(255,255,255,0.2); --m-lo:rgba(0,0,0,0.65); --m-drop:rgba(0,0,0,0.85);
+    --well-hi:rgba(255,255,255,0.14); --well-in:rgba(0,0,0,1);
+    --lcd:#FF9A5C; --lcd-glow:rgba(255,122,51,0.65);
+    --btn-grad:linear-gradient(180deg,#FFA76B,#FF7A33 38%,#F4530F 72%,#DD4A0B); --btn-edge:#7A2604; --btn-hi:rgba(255,255,255,0.6);
+    --sbtn1:#54565C; --sbtn2:#2E3034;
+    background-image:none;
+  }
+  :root:not([data-theme="light"]) body,:root:not([data-theme="light"]) .moresheet{
+    background-color:#0C0D0F;
+    background-image:
+      radial-gradient(520px 300px at 50% -60px,rgba(255,255,255,.075),transparent 72%),
+      linear-gradient(27deg,#17181B 5px,transparent 5px),linear-gradient(207deg,#17181B 5px,transparent 5px),
+      linear-gradient(27deg,#1E1F23 5px,transparent 5px),linear-gradient(207deg,#1E1F23 5px,transparent 5px),
+      linear-gradient(90deg,#111215 10px,transparent 10px),
+      linear-gradient(#131417 25%,#0D0E10 25%,#0D0E10 50%,transparent 50%,transparent 75%,#191A1D 75%,#191A1D);
+    background-size:100% 600px,20px 20px,20px 20px,20px 20px,20px 20px,20px 20px,20px 20px;
+    background-position:0 0,0 5px,10px 0,0 10px,10px 5px,0 0,0 0;
+    background-repeat:no-repeat,repeat,repeat,repeat,repeat,repeat,repeat;
+    background-attachment:scroll;
+  }
+}
+:root[data-theme="dark"]{
+    --bg:#0C0D0F; --card:#2A2C31; --card2:#0F1013; --brd:rgba(255,255,255,0.1);
+    --label:#F4F4F2; --label2:#C4C6CC; --label3:#B4B7BD; --sep:rgba(255,255,255,0.11);
+    --sel-bg:#55585E; --sel-ink:#FFFFFF; --bar:#2A2C31;
+    --fill:rgba(255,255,255,0.1); --fill2:rgba(255,255,255,0.17);
+    --m1:#3A3C42; --m2:#1F2024; --m-hi:rgba(255,255,255,0.2); --m-lo:rgba(0,0,0,0.65); --m-drop:rgba(0,0,0,0.85);
+    --well-hi:rgba(255,255,255,0.14); --well-in:rgba(0,0,0,1);
+    --lcd:#FF9A5C; --lcd-glow:rgba(255,122,51,0.65);
+    --btn-grad:linear-gradient(180deg,#FFA76B,#FF7A33 38%,#F4530F 72%,#DD4A0B); --btn-edge:#7A2604; --btn-hi:rgba(255,255,255,0.6);
+    --sbtn1:#54565C; --sbtn2:#2E3034;
+    background-image:none;
+}
+:root[data-theme="dark"] body,:root[data-theme="dark"] .moresheet{
+    background-color:#0C0D0F;
+    background-image:
+      radial-gradient(520px 300px at 50% -60px,rgba(255,255,255,.075),transparent 72%),
+      linear-gradient(27deg,#17181B 5px,transparent 5px),linear-gradient(207deg,#17181B 5px,transparent 5px),
+      linear-gradient(27deg,#1E1F23 5px,transparent 5px),linear-gradient(207deg,#1E1F23 5px,transparent 5px),
+      linear-gradient(90deg,#111215 10px,transparent 10px),
+      linear-gradient(#131417 25%,#0D0E10 25%,#0D0E10 50%,transparent 50%,transparent 75%,#191A1D 75%,#191A1D);
+    background-size:100% 600px,20px 20px,20px 20px,20px 20px,20px 20px,20px 20px,20px 20px;
+    background-position:0 0,0 5px,10px 0,0 10px,10px 5px,0 0,0 0;
+    background-repeat:no-repeat,repeat,repeat,repeat,repeat,repeat,repeat;
+    background-attachment:scroll;
+}
+body::after{opacity:.03}
+.lgtitle{text-shadow:0 2px 3px var(--m-lo)}
+
+/* לוח מתכת מוברשת */
+.card,.list,.authcard,.sect,.exr{
+  border:0!important;background-color:var(--card);
+  background-image:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px,rgba(0,0,0,.05) 3px 4px),
+    linear-gradient(180deg,var(--m1),var(--m2));
+  box-shadow:inset 0 1px 0 var(--m-hi),inset 0 -1px 0 var(--m-lo),0 12px 22px -8px var(--m-drop);
+}
+.card,.sect{border-radius:20px}
+.sect.on{background-color:var(--card)}
+.card h2,.exnm,.secn b{text-shadow:0 1px 1px var(--m-lo)}
+.row{border-bottom-color:var(--sep)}
+
+/* שקע במתכת: המספרים והשדות יושבים בפנים */
+.tile,.pcard,.sess,details.param,.skcard,.ytrow,.headline,.calc,.whobox,.lvl,.drop,
+input,select,textarea,.seg,.card .seg,.chart{
+  background-color:var(--card2);background-image:none;
+  box-shadow:inset 0 2px 5px var(--well-in),0 1px 0 var(--well-hi);
+}
+.tile{border-radius:13px;padding:11px 6px 9px;text-align:center}
+.tile .t{font-size:13px;color:var(--label2);margin:0 0 3px;text-align:center}
+.tile .n,.tiles ~ .tiles .tile:first-child .n{
+  font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-style:normal;font-weight:700;
+  font-size:19px;letter-spacing:-.4px;text-align:center;line-height:1.25;
+}
+.tile .d{text-align:center}
+.tiles,.tiles:has(> .tile:nth-child(4):last-child){gap:8px}
+.tile:first-child{padding:14px 8px 12px}
+.tile:first-child .t{text-align:center}
+.tile:first-child .n{font-size:46px;letter-spacing:-2px;color:var(--lcd);text-shadow:0 0 14px var(--lcd-glow);line-height:1.05;text-align:center}
+.tile:first-child .d{text-align:center}
+.tiles ~ .tiles .tile:first-child{padding:11px 6px 9px}
+.tiles ~ .tiles .tile:first-child .n{color:inherit;text-shadow:none}
+.dial + .tiles .tile:first-child{grid-column:auto;padding:11px 6px 9px}
+.dial + .tiles .tile:first-child .t{font-size:13px}
+.dial + .tiles .tile:first-child .n{font-size:19px;letter-spacing:-.4px;color:inherit;text-shadow:none;line-height:1.25}
+.dial + .tiles .tile:first-child .d{font-size:13px;margin-top:2px}
+.pst b{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-style:normal;letter-spacing:-1px}
+.chart{border-radius:14px}
+
+/* שעון המשקל: תמיד כהה, כמו שעון אמיתי */
+.dial{position:relative;width:min(272px,100%);aspect-ratio:1;margin:6px auto 14px;border-radius:50%;padding:11px;
+  background:conic-gradient(#D5D7DB,#6C6F75 12%,#E6E7EA 25%,#55585E 40%,#CFD1D5 52%,#62656B 68%,#E6E7EA 82%,#74777D 92%,#D5D7DB);
+  box-shadow:0 14px 26px -6px var(--m-drop)}
+.dface{position:relative;width:100%;height:100%;border-radius:50%;
+  background:radial-gradient(circle at 50% 28%,#26282D,#0C0D10 72%);box-shadow:inset 0 5px 14px #000,inset 0 0 0 1px #000}
+.dface svg{position:absolute;inset:0;width:100%;height:100%}
+.dneedle{transform-origin:125px 125px;transform:rotate(var(--a))}
+.enter .dneedle{animation:swing 1.4s .15s cubic-bezier(.2,1.25,.4,1) both}
+@keyframes swing{from{transform:rotate(-130deg)}to{transform:rotate(var(--a))}}
+.dial .tile,.dial .tile:first-child{position:absolute;inset-inline:21%;bottom:9%;padding:5px 2px 4px;border-radius:9px;
+  background:linear-gradient(180deg,#040405,#101114);box-shadow:inset 0 2px 5px #000,0 1px 0 rgba(255,255,255,.16)}
+.dial .tile .t,.dial .tile:first-child .t{font-size:12px;color:#C4C6CC;margin:0}
+.dial .tile .n,.dial .tile:first-child .n{font-size:27px;letter-spacing:-1px;color:#FF9A5C;text-shadow:0 0 12px rgba(255,122,51,.7);line-height:1.1}
+.dial .tile .d,.dial .tile:first-child .d{font-size:12.5px;margin:0;color:#C4C6CC}
+.dial .tile .d.up{color:#4ADE9F}
+.dial .tile .d.dn{color:#FF8DA3}
+
+/* מוט עם פלטות */
+.bbell{display:block;width:100%;height:auto;margin:10px 0 2px}
+.bplate{transition:transform .32s cubic-bezier(.3,1.5,.5,1)}
+.enter .bplate{animation:plate .42s calc(.2s + var(--i)*.09s) cubic-bezier(.3,1.5,.5,1) both}
+@keyframes plate{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
+.bnote{text-align:center;margin:0 0 8px}
+
+/* נורות */
+.leds{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;padding:6px;border-radius:10px;background:#050506;
+  box-shadow:inset 0 2px 4px #000,0 1px 0 var(--well-hi)}
+.leds i{height:15px;border-radius:2px;background:#292A2E}
+.leds i.on{background:var(--ledc,#FF6B2B);box-shadow:0 0 7px var(--ledc,#FF6B2B)}
+.leds.ok{--ledc:#34D399}
+.leds.over{--ledc:#FB5C7C}
+.rngbar{background:var(--card2);box-shadow:inset 0 1px 2px var(--well-in),0 1px 0 var(--well-hi)}
+
+/* פלטה לכל תרגיל */
+.disc{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-content:center;text-align:center;color:#fff;
+  background:radial-gradient(circle,#26272B 0 34%,#0F1012 35% 37%,#2A2B30 38% 72%,#101114 73% 76%,#2D2E33 77%);
+  box-shadow:0 4px 8px var(--m-drop),inset 0 1px 0 rgba(255,255,255,.28)}
+.disc b{display:block;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:17px;line-height:1}
+.disc span{font-size:10.5px;line-height:1.15}
+.exhead{gap:11px}
+.exr{border-radius:18px;margin-bottom:11px}
+
+/* כפתור פיזי */
+.btn{background-color:var(--btn-bg2);background-image:var(--btn-grad);border-radius:16px;min-height:54px;font-weight:800;
+  box-shadow:inset 0 1px 0 var(--btn-hi),inset 0 -2px 2px rgba(0,0,0,.22),0 3px 0 var(--btn-edge),0 14px 22px -10px var(--btn-bg2);
+  transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:inset 0 2px 4px rgba(0,0,0,.3),0 0 0 var(--btn-edge)}
+.btn.sec,.btn.danger{background-color:var(--sbtn2);background-image:linear-gradient(180deg,var(--sbtn1),var(--sbtn2));
+  box-shadow:inset 0 1px 0 var(--m-hi),0 2px 3px var(--m-drop)}
+.btn.mini{border-radius:12px;min-height:44px}
+.amsg.first ~ form .btn{background-color:var(--sbtn2);background-image:linear-gradient(180deg,var(--sbtn1),var(--sbtn2));box-shadow:inset 0 1px 0 var(--m-hi),0 2px 3px var(--m-drop)}
+a.yt,a.yt.bvid{background-color:var(--sbtn2);background-image:linear-gradient(180deg,var(--sbtn1),var(--sbtn2));
+  box-shadow:inset 0 1px 0 var(--m-hi),0 2px 3px var(--m-drop)}
+
+/* מתג עם חריצי אחיזה, כמו על מוט */
+.seg{border-radius:15px}
+.seg button{border-radius:12px}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{
+  background-color:var(--sel-bg);color:var(--sel-ink);
+  background-image:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px),
+    linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.16));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 7px var(--m-drop);
+}
+.lvl.on{background-color:var(--sel-bg);color:var(--sel-ink)}
+.lvdot,.lvdot.l1,.lvdot.l2,.lvdot.l3,.lvdot.l4,.lvdot.l5{width:15px;height:15px;box-shadow:0 1px 2px var(--m-drop);
+  -webkit-mask:radial-gradient(circle,transparent 0 2.4px,#000 2.8px);mask:radial-gradient(circle,transparent 0 2.4px,#000 2.8px)}
+input,select,textarea{border-radius:13px}
+input:focus,textarea:focus,select:focus{box-shadow:inset 0 2px 5px var(--well-in),0 0 0 2px var(--accent)}
+
+/* פלוס על פלטה קטנה */
+.secx{width:44px;height:44px;border-radius:50%;color:#fff;
+  background:radial-gradient(circle,#26272B 0 40%,#0F1012 41% 44%,#2D2E33 45%);
+  box-shadow:0 3px 6px var(--m-drop),inset 0 1px 0 rgba(255,255,255,.28)}
+.sect.on .secx,:root[data-theme="dark"] .sect.on .secx{color:#fff;background:radial-gradient(circle,#C8420C 0 40%,#0F1012 41% 44%,#2D2E33 45%)}
+
+/* ההתקדמות בבניית תוכנית: מעמיסים פלטה על מוט */
+.wizbar{position:relative;justify-content:center;align-items:center;gap:3px;height:38px;margin-bottom:10px}
+.wizbar::before{content:"";position:absolute;inset-inline:0;top:50%;height:6px;margin-top:-3px;border-radius:3px;
+  background:linear-gradient(180deg,#E6E7EA,#7C7F86 50%,#2E3034)}
+.wizbar i,.wizbar i.on{position:relative;flex:none;width:11px;height:36px;border-radius:3px;background:var(--fill2);
+  outline:1px dashed var(--label3);outline-offset:-1px}
+.wizbar i.on{outline:0;box-shadow:inset 3px 0 0 rgba(255,255,255,.3),0 2px 3px var(--m-drop)}
+.wizbar i.on:nth-child(1){background:#9E1F2C}
+.wizbar i.on:nth-child(2){background:#1C4FA0}
+.wizbar i.on:nth-child(3){background:#C99A12}
+.wizbar i.on:nth-child(4){background:#1E7A4E}
+
+/* הסרגל התחתון: מתכת, ונורה דולקת מעל הלשונית */
+.tabbar,.tabbar .inner{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;pointer-events:none}
+.tabbar .inner{display:flex;justify-content:center}
+.tabbar #tabMore,.tabbar #tabMore[aria-expanded]{flex:none;pointer-events:auto;width:76px;height:76px;min-height:0;min-width:0;margin:0;padding:3px;border:0;border-radius:50%;cursor:pointer;
+  background:conic-gradient(#D5D7DB,#6C6F75 12%,#E6E7EA 25%,#55585E 40%,#CFD1D5 52%,#62656B 68%,#E6E7EA 82%,#74777D 92%,#D5D7DB);
+  box-shadow:0 10px 20px -4px rgba(0,0,0,.8),0 2px 3px rgba(0,0,0,.6);transition:transform .1s}
+.tabbar #tabMore:active{transform:scale(.93)}
+.tabbar #tabMore svg,.medal{display:block;width:100%;height:100%;color:inherit}
+
+/* התפריט: מסך מלא, וכל מסך הוא מקש מתכת */
+#moreMenu .moresheet{position:absolute;inset:0;width:auto;max-width:none;max-height:none;margin:0;overflow-y:auto;border:0;border-radius:0;
+  padding:calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+  background-color:var(--bg);animation:fadein .18s both;transform:none}
+.menuhead{display:flex;align-items:center;gap:14px;max-width:560px;margin:0 auto 18px}
+.menuhead .medal{flex:none;width:92px;height:92px;border-radius:50%;padding:3px;
+  background:conic-gradient(#D5D7DB,#6C6F75 12%,#E6E7EA 25%,#55585E 40%,#CFD1D5 52%,#62656B 68%,#E6E7EA 82%,#74777D 92%,#D5D7DB);
+  box-shadow:0 10px 20px -4px var(--m-drop)}
+.menuhead b{display:block;font-size:28px;font-weight:800;letter-spacing:-.7px;line-height:1.1;text-shadow:0 2px 3px var(--m-lo)}
+.menuhead span{color:var(--label2);font-size:15.5px}
+.moregrid{grid-template-columns:repeat(2,1fr);gap:10px;max-width:560px;margin:0 auto 14px}
+.moregrid button{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;min-height:72px;padding:10px 12px;border:0;border-radius:18px;
+  font-size:16.5px;font-weight:700;color:var(--label);text-align:start;cursor:pointer;
+  background-color:var(--card);
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px,rgba(0,0,0,.05) 3px 4px),linear-gradient(180deg,var(--m1),var(--m2));
+  box-shadow:inset 0 1px 0 var(--m-hi),inset 0 -1px 0 var(--m-lo),0 3px 0 var(--m-lo),0 10px 16px -8px var(--m-drop);
+  transition:transform .08s,box-shadow .08s}
+.moregrid button:active{transform:translateY(3px);box-shadow:inset 0 2px 4px var(--m-lo)}
+.moregrid button svg,.moregrid button[aria-current=page] svg{flex:none;box-sizing:border-box;width:48px;height:48px;padding:12px;border-radius:50%;color:#fff;
+  background:radial-gradient(circle,#26272B 0 58%,#0F1012 59% 62%,#2D2E33 63%);
+  box-shadow:0 3px 6px var(--m-drop),inset 0 1px 0 rgba(255,255,255,.28)}
+.moregrid button[data-moretab=add]{grid-column:1/-1;min-height:78px;font-size:18px;font-weight:800;color:var(--btn-ink);
+  background-color:var(--btn-bg2);background-image:var(--btn-grad);
+  box-shadow:inset 0 1px 0 var(--btn-hi),inset 0 -2px 2px rgba(0,0,0,.22),0 3px 0 var(--btn-edge),0 14px 22px -10px var(--btn-bg2)}
+.moregrid button[aria-current=page]{color:var(--sel-ink);background-color:var(--sel-bg);border:0;
+  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px),repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px),linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.16))}
+#moreClose{display:block;max-width:560px;margin:0 auto}
+.moregrid button[data-moretab=add][aria-current=page]{color:var(--btn-ink);background-color:var(--btn-bg2);background-image:var(--btn-grad)}
+.authcard{border-radius:24px}
+@media (max-width:360px){
+  .tile:first-child .n{font-size:38px}
+  .tile .n,.tiles ~ .tiles .tile:first-child .n,.dial + .tiles .tile:first-child .n{font-size:17px}
+}
+
 @media (prefers-reduced-motion:reduce){
+  .enter .dneedle,.enter .bplate,.btn,.bplate{animation:none!important;transition:none!important}
   .moreback,.moresheet,.card.sec:not(.sec-closed) > :not(h2),.pcard.pfold.open > :not(.ptop){animation:none!important}
   .btn{transition:none} .btn:active{transform:none}
   .flive .fbody,.enter .fneedle,.brand .fneedle,body::after{animation:none!important}
@@ -1939,7 +2182,7 @@ function applyTheme(t){
   const dark=(t==="dark")||(t==="auto"&&window.matchMedia&&
               window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{
-    if(!m.getAttribute("media")) m.setAttribute("content",dark?"#050506":"#F4F4F6");
+    if(!m.getAttribute("media")) m.setAttribute("content",dark?"#0C0D0F":"#E6E7EA");
   });
 }
 function setTheme(t){
@@ -4028,18 +4271,28 @@ function viewAuth(){
   return h;
 }
 
-/* אחת עשרה לשוניות לא נכנסות ברוחב של טלפון, וגלילה הצידה היא חיפוש בעיוורון.
-   בסרגל נשארות ארבע שמשתמשים בהן כל יום, והשאר בתפריט שנפתח על המסך. */
-const BAR_TABS=["add","dash","food","work"];
-const ICON_MORE='<svg viewBox="0 0 28 28" fill="currentColor" aria-hidden="true"><circle cx="7" cy="14" r="2.3"/><circle cx="14" cy="14" r="2.3"/><circle cx="21" cy="14" r="2.3"/></svg>';
-let moreOpen=false;
+/* למטה רק הלוגו, פלטת משקולת עם הלהבה. הוא פותח תפריט מסך מלא עם כל המסכים,
+   והתפריט הוא גם מה שרואים כשנכנסים. הצורה של הלהבה היא הסמל המאושר. */
+const MENU_ORDER=["add","dash","food","work","plan","trend","truth","steps","photos","learn","data"];
+let moreOpen=false, menuWho=null;
+function medal(id){
+  return '<svg class="medal" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs>'+
+    '<radialGradient id="'+id+'r" cx=".42" cy=".3" r=".8"><stop offset="0" stop-color="#3B3D42"/><stop offset="1" stop-color="#0E0F11"/></radialGradient>'+
+    '<radialGradient id="'+id+'h" cx=".4" cy=".3" r=".85"><stop offset="0" stop-color="#E9EAED"/><stop offset=".55" stop-color="#9B9EA5"/><stop offset="1" stop-color="#4A4C52"/></radialGradient>'+
+    '<linearGradient id="'+id+'f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD08A"/><stop offset=".45" stop-color="#FF7A33"/><stop offset="1" stop-color="#D93C06"/></linearGradient>'+
+    '<path id="'+id+'t" d="M50 50m-37.5 0a37.5 37.5 0 1 1 75 0a37.5 37.5 0 1 1 -75 0"/></defs>'+
+    '<circle cx="50" cy="50" r="49" fill="url(#'+id+'r)"/>'+
+    '<circle cx="50" cy="50" r="46.5" fill="none" stroke="#fff" stroke-opacity=".16"/>'+
+    '<circle cx="50" cy="50" r="31" fill="#0A0B0D"/>'+
+    '<circle cx="50" cy="50" r="29" fill="url(#'+id+'h)"/>'+
+    '<text font-size="7.4" font-weight="800" letter-spacing="1.4" fill="#C4C6CC" style="direction:ltr;unicode-bidi:bidi-override"><textPath href="#'+id+'t">SHAPEUP · SHAPEUP · SHAPEUP ·</textPath></text>'+
+    '<g transform="translate(50 50) scale(.76) translate(-32 -33)">'+
+    '<path fill="url(#'+id+'f)" stroke="#7A2604" stroke-width="1" d="M37 2c-1 10 2 14 6 19 5 6 9 11 9 19 0 12-9 22-20 22S12 52 12 40c0-8 4-13 8-18 0 4 1 7 4 9-4-11-1-21 6-29 0 5 1 8 3 10 3-6 4-13 4-10z"/>'+
+    '<g fill="none" stroke="#2A0E02" stroke-width="3.6" stroke-linecap="round"><path d="M21 49a11 11 0 0 1 22 0"/><path d="M32 49l7-8"/></g>'+
+    '<circle cx="32" cy="49" r="3" fill="#2A0E02"/></g></svg>';
+}
 function renderTabs(){
-  const inMore=BAR_TABS.indexOf(ui.tab)<0;
-  $("#tabs").innerHTML=TABS.filter(t=>BAR_TABS.indexOf(t.id)>=0).map(t=>
-    '<button data-tab="'+t.id+'" aria-selected="'+(ui.tab===t.id)+'">'+ICONS[t.id]+'<span>'+t.label+'</span></button>'
-  ).join("")+
-  '<button id="tabMore" aria-haspopup="dialog" aria-expanded="'+moreOpen+'" aria-selected="'+inMore+'">'+ICON_MORE+
-  '<span>'+esc(inMore?(TABS.filter(t=>t.id===ui.tab)[0]||{label:"עוד"}).label:"עוד")+'</span></button>';
+  $("#tabs").innerHTML='<button id="tabMore" aria-label="תפריט" aria-haspopup="dialog" aria-expanded="'+moreOpen+'">'+medal("mb")+'</button>';
   renderMore();
 }
 function renderMore(){
@@ -4047,8 +4300,9 @@ function renderMore(){
   if(!moreOpen){ if(el) el.remove(); return }
   if(!el){ el=document.createElement("div"); el.id="moreMenu"; document.body.appendChild(el) }
   el.innerHTML='<div class="moreback" id="moreBack"></div>'+
-    '<div class="moresheet" role="dialog" aria-modal="true" aria-label="עוד מסכים">'+
-    '<div class="moregrid">'+TABS.filter(t=>BAR_TABS.indexOf(t.id)<0).map(t=>
+    '<div class="moresheet" role="dialog" aria-modal="true" aria-label="תפריט">'+
+    '<div class="menuhead">'+medal("mh")+'<div><b>ShapeUp</b><span>לאן הולכים?</span></div></div>'+
+    '<div class="moregrid">'+MENU_ORDER.map(id=>TABS.find(t=>t.id===id)).map(t=>
       '<button data-moretab="'+t.id+'" aria-current="'+(ui.tab===t.id?"page":"false")+'">'+ICONS[t.id]+'<span>'+t.label+'</span></button>'
     ).join("")+'</div>'+
     '<button class="btn sec" id="moreClose">סגור</button></div>';
@@ -4060,7 +4314,6 @@ function renderMore(){
   document.getElementById("moreClose").onclick=close;
 }
 function bindTabs(){
-  document.querySelectorAll("#tabs button[data-tab]").forEach(b=>b.onclick=()=>{ moreOpen=false; ui.tab=b.dataset.tab; persist(); render() });
   const m=document.getElementById("tabMore");
   if(m) m.onclick=()=>{ moreOpen=!moreOpen; renderTabs(); bindTabs() };
 }
@@ -4497,6 +4750,8 @@ function renderNow(){
   }
   if(bar) bar.style.display="";
   document.body.classList.remove("noauth");
+  /* נכנסים לתפריט: פעם אחת בכל כניסה לחשבון, לא בכל ציור של המסך */
+  if(me&&me.username&&menuWho!==me.username){ menuWho=me.username; moreOpen=true }
   renderTabs();
   const views={add:viewAdd,dash:viewDash,trend:viewTrend,truth:viewTrue,photos:viewPhotos,steps:viewSteps,learn:viewLearn,
                food:viewFood,work:viewWork,plan:viewPlan,data:viewData};
@@ -4636,8 +4891,8 @@ function renderAnalysis(r){
 
   /* 1. המספרים */
   h+='<div class="step"><div class="st">1 · המספרים</div>';
-  h+='<div class="tiles">';
-  h+=tile("משקל",n2(e.weight),r.compare&&r.compare.dW!=null?sgn(r.compare.dW,2):null,true);
+  const wT=tile("משקל",n2(e.weight),r.compare&&r.compare.dW!=null?sgn(r.compare.dW,2):null,true);
+  h+=e.weight!=null?dialGauge(e.weight,wT)+'<div class="tiles">':'<div class="tiles">'+wT;
   h+=tile("אחוז שומן",n1(e.bf),r.compare&&r.compare.dBf!=null?sgn(r.compare.dBf,1):null,false);
   h+=tile("כמות שומן",n2(e.fat),r.compare&&r.compare.dFat!=null?sgn(r.compare.dFat,2):null,false);
   h+=tile("מסה ללא שומן",n2(e.lean),r.compare&&r.compare.dLean!=null?sgn(r.compare.dLean,2):null,true);
@@ -4789,6 +5044,35 @@ function renderParams(r){
   return h||'<p class="tiny">אין פרמטרים לניתוח.</p>';
 }
 
+/* שעון משקל. הסקאלה 30 ק"ג סביב המשקל, כך שהמחוג תמיד באמצע החלק הקריא */
+function dialGauge(v,inner){
+  const lo=Math.floor((v-15)/5)*5, ang=x=>-130+(x-lo)/30*260, C=125, R=102;
+  const P=(deg,r)=>{const a=(deg-90)*Math.PI/180;return [(C+r*Math.cos(a)).toFixed(1),(C+r*Math.sin(a)).toFixed(1)]};
+  let g='';
+  for(let x=lo;x<=lo+30;x++){
+    const big=x%5===0, a=P(ang(x),R), b=P(ang(x),R-(big?13:6));
+    g+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="'+(big?'#F4F4F2':'#8F929A')+'" stroke-width="'+(big?2.4:1.2)+'"/>';
+    if(big&&Math.abs(ang(x))<=110){const t=P(ang(x),R-27);g+='<text x="'+t[0]+'" y="'+(+t[1]+4.5)+'" text-anchor="middle" font-size="14" font-weight="700" fill="#E6E7EA">'+x+'</text>'}
+  }
+  g+='<g class="dneedle" style="--a:'+ang(v).toFixed(1)+'deg"><path d="M122 139 L124 32 L126 32 L128 139 Z" fill="#FF7A33"/></g>'+
+     '<circle cx="125" cy="125" r="11" fill="#8C8F96"/><circle cx="123" cy="122" r="5" fill="#D5D7DB"/>';
+  return '<div class="dial"><div class="dface"><svg viewBox="0 0 250 250" dir="ltr" aria-hidden="true" focusable="false">'+g+'</svg>'+inner+'</div></div>';
+}
+/* מוט עם פלטות: ארבעה זוגות הם היעד העליון של החלבון */
+function plateBar(val,hi){
+  const pair=Math.max(1,Math.round(hi/4)), on=Math.max(0,Math.min(4,Math.floor(val/pair)));
+  const COL=['#9E1F2C','#1C4FA0','#C99A12','#1E7A4E'], H=[92,84,74,62];
+  let g='<rect x="4" y="50" width="312" height="10" rx="3" fill="#8D9096"/><rect x="4" y="51" width="312" height="3" rx="1.5" fill="#E6E7EA"/>'+
+        '<rect x="44" y="45" width="6" height="20" rx="1.5" fill="#A9ACB3"/><rect x="270" y="45" width="6" height="20" rx="1.5" fill="#A9ACB3"/>';
+  for(let i=0;i<4;i++) [34-i*11,276+i*11].forEach(x=>{
+    const top=55-H[i]/2;
+    g+=i<on
+      ?'<g class="bplate" style="--i:'+i+'"><rect x="'+x+'" y="'+top+'" width="10" height="'+H[i]+'" rx="2.5" fill="'+COL[i]+'"/><rect x="'+x+'" y="'+top+'" width="3" height="'+H[i]+'" rx="1.5" fill="#fff" opacity=".3"/></g>'
+      :'<rect x="'+x+'" y="'+top+'" width="10" height="'+H[i]+'" rx="2.5" fill="none" stroke="var(--label3)" stroke-dasharray="3 3" opacity=".6"/>';
+  });
+  return '<svg class="bbell" viewBox="0 0 320 110" dir="ltr" aria-hidden="true" focusable="false">'+g+'</svg>'+
+         '<p class="tiny bnote">על המוט '+on+' מתוך 4 זוגות. כל זוג = '+pair+' גרם חלבון.</p>';
+}
 function tile(t,n,d,goodUp){
   let cls="flat";
   if(d&&d!=="—"){ const v=parseFloat(d); if(v>0)cls=goodUp?"up":"dn"; else if(v<0)cls=goodUp?"dn":"up" }
@@ -7157,6 +7441,7 @@ function planDetail(p){
 
     h+='<div class="exr'+(open?' open':'')+'">';
     h+='<div class="exhead" data-exi="'+i+'">';
+    if(it.sets) h+='<div class="disc"><b>'+esc(it.sets)+'</b><span>סטים</span></div>';
     h+='<div class="exmain">';
     if(it.tag) h+='<span class="badge '+(it.tag==="בונוס"?"b-mute":"b-info")+'" style="font-size:10px;padding:1px 8px">'+esc(it.tag)+'</span> ';
     h+='<span class="exnm">'+esc(curX?curX.n:(it.name||it.raw))+'</span>';
@@ -11128,6 +11413,7 @@ function viewFood(){
        tile("חלבון (גר\')",tot.p,null,true)+
        tile("פחמימה",tot.c,null,true)+
        tile("שומן",tot.f,null,true)+'</div>';
+    h+=plateBar(tot.p,T.protein[1]);
     h+=bar("קלוריות",tot.kcal,T.kcal[0],T.kcal[1]);
     h+=bar("חלבון",tot.p,T.protein[0],T.protein[1]);
     h+='<p class="tiny" style="margin-top:10px">יעד קלורי <b>'+T.kcal[0]+'–'+T.kcal[1]+'</b> · חלבון <b>'+
@@ -11354,11 +11640,13 @@ function bar(lab,val,lo,hi){
   const pct=Math.max(0,Math.min(120,val/hi*100));
   const inRange=val>=lo&&val<=hi;
   const over=val>hi;
-  const col=over?"var(--red)":inRange?"var(--green)":"var(--blue)";
+  const cls=over?" over":inRange?" ok":"";
+  const lit=Math.round(Math.min(100,pct)/5);
+  let cells="";
+  for(let i=0;i<20;i++) cells+=i<lit?'<i class="on"></i>':'<i></i>';
   return '<div style="margin-top:12px"><div class="rnglbl" style="margin:0 0 5px">'+
     '<span>'+esc(lab)+'</span><span class="num">'+val+' / '+lo+'–'+hi+'</span></div>'+
-    '<div class="rngbar"><i style="position:absolute;inset-inline-start:0;top:0;height:100%;width:'+
-    Math.min(100,pct)+'%;border-radius:980px;background:'+col+'"></i></div></div>';
+    '<div class="leds'+cls+'">'+cells+'</div></div>';
 }
 
 /* ============================================================================
@@ -11377,7 +11665,7 @@ function viewData(){
   h+='<div class="card"><h2>מראה</h2>';
   h+='<div class="seg" id="segTheme">'+THEMES.map(x=>
      '<button data-theme="'+x.id+'" aria-selected="'+(th===x.id)+'">'+x.lab+'</button>').join("")+'</div>';
-  h+='<p class="tiny">מצב כהה הוא המראה המרכזי של האפליקציה. «לפי המכשיר» מתחלף לבד לפי ההגדרה של הטלפון או המחשב.</p>';
+  h+='<p class="tiny">מצב כהה הוא המראה המרכזי של האפליקציה: סיבי פחמן ומתכת. «לפי המכשיר» מתחלף לבד לפי ההגדרה של הטלפון או המחשב.</p>';
   h+='</div>';
 
   h+=profileCard();
